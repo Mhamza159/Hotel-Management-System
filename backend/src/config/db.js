@@ -14,6 +14,9 @@ try {
  * Connects to MongoDB with production connection pool settings.
  */
 const connectDB = async () => {
+  if (mongoose.connection && mongoose.connection.readyState >= 1) {
+    return mongoose.connection;
+  }
   try {
     const conn = await mongoose.connect(config.mongoUri, {
       maxPoolSize: 50, // Allows up to 50 concurrent connections
