@@ -22,18 +22,18 @@
 
 ---
 
-## 🔑 Pre-Configured Demo Credentials
+## 👥 Supported Operational Personas
 
-The live database comes pre-seeded with four authentic enterprise personas ready for immediate review:
+The system architecture implements strict PBAC boundaries across four distinct enterprise personas:
 
-| Persona | Login Email | Password | Primary Capabilities & Panel |
-| :--- | :--- | :--- | :--- |
-| **👑 Super Admin** | `admin@hotel.com` | `Password123!` | Full PBAC Matrix, Revenue Analytics, Audit Logs, Staff Admin |
-| **🛎️ Front Desk Staff** | `reception@hotel.com` | `Password123!` | Flight-Ops Cockpit, Walk-in Booking, Arrivals/Departures, Keycards, Cash |
-| **🧹 Housekeeping Lead** | `housekeeping@hotel.com` | `Password123!` | Cleanliness Board, Dirty ➔ Clean transitions, VIP Flagging |
-| **👤 Verified Guest** | `hamza@hotel.com` | `Password123!` | Guest Portal, Stay History, Instant PDF Invoices, Reviews, Wishlists |
+| Persona | Role Scope & Primary Panels |
+| :--- | :--- |
+| **👑 Super Admin** | Full PBAC Matrix, Revenue Analytics, Immutable Audit Logs, Staff Administration |
+| **🛎️ Front Desk Staff** | Flight-Ops Cockpit, Walk-in Booking, Arrivals/Departures, Keycards, Cash Settlement |
+| **🧹 Housekeeping Lead** | Cleanliness Board, Dirty ➔ Clean transitions, VIP Room Flagging |
+| **👤 Guest** | Public Suite Discovery, Reservation Flow, Guest Portal, Stay History, PDF Invoices |
 
-> *Self-registration is also enabled on the live login screen for creating new guest accounts.*
+> *Security Notice: Production administrative credentials are restricted and provided privately upon authorized request. Local development seed accounts can be generated via `npm run seed`.*
 
 ---
 
@@ -239,15 +239,6 @@ cp .env.example .env
 npm install
 npm run dev      # Starts Vite dev server on http://localhost:5173
 ```
-
----
-
-## 📄 Executive Portfolio Deliverables
-
-Complete summary documents prepared for technical evaluation, HR, and managerial reviews:
-
-- [PROJECT_PORTFOLIO_EXECUTIVE_SUMMARY.docx](./PROJECT_PORTFOLIO_EXECUTIVE_SUMMARY.docx) — Formal Microsoft Word portfolio document
-- [PROJECT_PORTFOLIO_EXECUTIVE_SUMMARY.txt](./PROJECT_PORTFOLIO_EXECUTIVE_SUMMARY.txt) — Plaintext portable portfolio summary
 
 ---
 
