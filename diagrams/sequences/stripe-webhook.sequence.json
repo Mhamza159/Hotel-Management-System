@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Stripe Webhook & Payment Reconciliation Sequence",
+    "output": "stripe-webhook-sequence.html",
+    "viewBox": [1040, 640],
+    "column_fit": "spread",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "ingress-auth",
+        "label": "Signature Verification & Ingress",
+        "focus": ["stripe_cloud", "express_gw", "sig_verifier", "idemp_guard"],
+        "note": "Validates cryptographic webhook signatures and guards against duplicate event replays."
+      },
+      {
+        "id": "reconciliation-db",
+        "label": "State Reconciliation & Document Persistence",
+        "focus": ["express_gw", "booking_svc", "db"],
+        "note": "Updates booking status to CONFIRMED and records payment transaction in MongoDB."
+      },
+      {
+        "id": "invoice-ack",
+        "label": "Invoice Rendering & Stripe Acknowledgement",
+        "focus": ["booking_svc", "receipt_svc", "express_gw", "stripe_cloud"],
+        "note": "Generates PDF invoice buffer and returns HTTP 200 to acknowledge webhook delivery."
+      }
+    ]
+  },
+  "participants": [
+    { "id": "stripe_cloud", "type": "external", "label": "Stripe API", "sublabel": "Event Producer", "brand": "stripe" },
+    { "id": "express_gw", "type": "backend", "label": "Express API", "sublabel": "Webhook Router", "brand": "node-js" },
+    { "id": "sig_verifier", "type": "security", "label": "HMAC Guard", "sublabel": "Signature Verify" },
+    { "id": "idemp_guard", "type": "security", "label": "Idempotency", "sublabel": "Event Deduplication" },
+    { "id": "booking_svc", "type": "backend", "label": "Booking Core", "sublabel": "Ledger Manager" },
+    { "id": "db", "type": "database", "label": "MongoDB", "sublabel": "ACID Store", "brand": "mongodb" },
+    { "id": "receipt_svc", "type": "backend", "label": "Invoice Engine", "sublabel": "PDFKit Worker" }
+  ],
+  "segments": [
+    { "from": 155, "to": 315, "label": "Signature & Idempotency" },
+    { "from": 325, "to": 435, "label": "Booking State Update" },
+    { "from": 440, "to": 565, "label": "Invoicing & Gateway Ack" }
+  ],
+  "messages": [
+    { "id": "event-dispatch", "from": "stripe_cloud", "to": "express_gw", "y": 165, "label": "1. Webhook: Payment Success", "variant": "emphasis" },
+    { "id": "verify-signature", "from": "express_gw", "to": "sig_verifier", "y": 200, "label": "2. Check Digital Signature", "variant": "security" },
+    { "id": "signature-valid", "from": "sig_verifier", "to": "express_gw", "y": 235, "label": "3. Signature Authentic", "variant": "return" },
+    { "id": "check-idempotency", "from": "express_gw", "to": "idemp_guard", "y": 270, "label": "4. Check Duplicate Event", "variant": "security" },
+    { "id": "idempotency-cleared", "from": "idemp_guard", "to": "express_gw", "y": 305, "label": "5. Fresh Event (Not Seen)", "variant": "return" },
+    { "id": "confirm-contract", "from": "express_gw", "to": "booking_svc", "y": 340, "label": "6. Trigger Booking Confirm", "variant": "emphasis" },
+    { "id": "update-mongo", "from": "booking_svc", "to": "db", "y": 375, "label": "7. Status: CONFIRMED in DB", "variant": "emphasis" },
+    { "id": "mongo-committed", "from": "db", "to": "booking_svc", "y": 410, "label": "8. Saved in Database", "variant": "return" },
+    { "id": "build-receipt", "from": "booking_svc", "to": "receipt_svc", "y": 445, "label": "9. Render PDF Invoice", "variant": "dashed" },
+    { "id": "receipt-ready", "from": "receipt_svc", "to": "booking_svc", "y": 480, "label": "10. Invoice Buffer Ready", "variant": "return" },
+    { "id": "service-reconciled", "from": "booking_svc", "to": "express_gw", "y": 515, "label": "11. Reconciliation Done", "variant": "return" },
+    { "id": "stripe-ack", "from": "express_gw", "to": "stripe_cloud", "y": 550, "label": "12. 200 OK: Thank You Ack", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "express_gw", "from": 165, "to": 555, "type": "backend" },
+    { "participant": "sig_verifier", "from": 195, "to": 240, "type": "security" },
+    { "participant": "idemp_guard", "from": 265, "to": 310, "type": "security" },
+    { "participant": "booking_svc", "from": 335, "to": 520, "type": "backend" },
+    { "participant": "db", "from": 370, "to": 415, "type": "database" },
+    { "participant": "receipt_svc", "from": 440, "to": 485, "type": "backend" }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Webhook Ka Asal Maqsad (Plain Story)",
+      "items": [
+        "1. Jab guest ke card se paise kat'te hain, Stripe hotel server ko chitthi bhejta hai ke 'Paise receive ho gaye'.",
+        "2. Yeh kaam background me hota hai chahe customer ne apna browser band bhi kar diya ho."
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Fraud Aur Duplication Se Bachao",
+      "items": [
+        "3. Server Stripe ka cryptographic digital signature check karta hai taake koi hacker jhoota message na bhej sake.",
+        "4. Idempotency guard check karta hai ke yeh payment pehle process to nahi ho chuki (Double billing rokna)."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Booking Confirmation & Receipt",
+      "items": [
+        "5. MongoDB me booking status 'CONFIRMED' ho jata hai aur kamre ki date pakki ho jati hai.",
+        "6. PDFKit receipt banata hai aur server Stripe ko HTTP 200 'Received' keh kar cycle mukammal karta hai."
+      ]
+    }
+  ]
+}

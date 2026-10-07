@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hotel Management System - Detailed Interactive ERD</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --surface: #111827;
+      --surface-elevated: #1a2234;
+      --border: #23304a;
+      --border-subtle: #1c273e;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --primary: #6366f1;
+      --primary-light: #818cf8;
+      --accent-cyan: #06b6d4;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --accent-purple: #a855f7;
+      --pk-color: #f59e0b;
+      --fk-color: #38bdf8;
+      --uk-color: #34d399;
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Navigation Bar */
+    header {
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 28px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #4f46e5, #06b6d4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 20px;
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
+    }
+    .brand-text h1 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+    .brand-text p {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .filter-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .filter-btn:hover, .filter-btn.active {
+      background: var(--surface-elevated);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .filter-btn.active {
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .search-input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      width: 220px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-input:focus {
+      border-color: var(--primary-light);
+    }
+
+    .hub-link {
+      color: var(--accent-cyan);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.25);
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .hub-link:hover {
+      background: rgba(6, 182, 212, 0.2);
+    }
+
+    /* Legend Bar */
+    .legend-bar {
+      background: rgba(15, 23, 42, 0.6);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 10px 28px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge-pk { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+    .badge-fk { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); }
+    .badge-uk { background: rgba(52, 211, 153, 0.2); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.4); }
+    .badge-idx { background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4); }
+
+    /* Canvas / Schema Grid */
+    .canvas-container {
+      flex: 1;
+      padding: 32px 28px;
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+      max-width: 1700px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    @media (max-width: 1300px) {
+      .canvas-container { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 850px) {
+      .canvas-container { grid-template-columns: 1fr; }
+    }
+
+    /* Model Entity Card */
+    .entity-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .entity-card:hover {
+      border-color: var(--primary-light);
+      box-shadow: 0 14px 40px rgba(99, 102, 241, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .entity-card.faded {
+      opacity: 0.25;
+      filter: grayscale(0.5);
+    }
+    .entity-card.highlighted {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 28px rgba(6, 182, 212, 0.35);
+      transform: scale(1.015);
+    }
+
+    /* Card Headers per Domain */
+    .card-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+    .card-header::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+    }
+    .domain-booking .card-header::before { background: var(--primary); }
+    .domain-inventory .card-header::before { background: var(--accent-emerald); }
+    .domain-identity .card-header::before { background: var(--accent-purple); }
+    .domain-financial .card-header::before { background: var(--accent-amber); }
+
+    .entity-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .entity-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .collection-name {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .entity-tag {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+      background: var(--surface-elevated);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    /* Fields Table */
+    .fields-list {
+      list-style: none;
+      font-size: 12.5px;
+      max-height: 480px;
+      overflow-y: auto;
+    }
+
+    .field-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      transition: background 0.15s;
+      gap: 12px;
+    }
+    .field-row:last-child {
+      border-bottom: none;
+    }
+    .field-row:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .field-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .field-key-badge {
+      min-width: 24px;
+      text-align: center;
+    }
+    .field-name {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .field-name.is-pk { color: #fbbf24; }
+    .field-name.is-fk { color: #38bdf8; }
+    .field-name.is-uk { color: #34d399; }
+
+    .field-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+    .field-type {
+      color: var(--text-dim);
+    }
+    .fk-target {
+      color: var(--accent-cyan);
+      font-size: 10px;
+      background: rgba(6, 182, 212, 0.1);
+      padding: 1px 5px;
+      border-radius: 4px;
+      border: 1px solid rgba(6, 182, 212, 0.2);
+    }
+
+    /* Card Footer Relations */
+    .card-footer {
+      background: var(--surface-elevated);
+      border-top: 1px solid var(--border);
+      padding: 10px 18px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .relations-badge {
+      display: flex;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+
+    /* Modal / Inspector Drawer */
+    .inspector-panel {
+      position: fixed;
+      right: -450px;
+      top: 0;
+      bottom: 0;
+      width: 420px;
+      background: #0d1322;
+      border-left: 1px solid var(--border);
+      box-shadow: -10px 0 40px rgba(0,0,0,0.6);
+      z-index: 200;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow-y: auto;
+    }
+    .inspector-panel.open {
+      right: 0;
+    }
+    .inspector-close {
+      align-self: flex-end;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .inspector-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .inspector-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+    .inspector-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .inspector-section h4 {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--accent-cyan);
+      margin-bottom: 8px;
+    }
+    .inspector-list {
+      list-style: none;
+      font-size: 12.5px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">ERD</div>
+      <div class="brand-text">
+        <h1>Hotel Management System — Detailed Schema ERD</h1>
+        <p>Interactive Mongo Collections, Foreign Keys, Embedded Objects & Cardinalities</p>
+      </div>
+    </div>
+
+    <div class="controls">
+      <input type="text" id="searchInput" class="search-input" placeholder="Search field, model, key...">
+      <button class="filter-btn active" data-domain="all">All (8)</button>
+      <button class="filter-btn" data-domain="booking">Reservations</button>
+      <button class="filter-btn" data-domain="inventory">Rooms & Stays</button>
+      <button class="filter-btn" data-domain="identity">Auth & Users</button>
+      <a href="../index.html" class="hub-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Master Hub
+      </a>
+    </div>
+  </header>
+
+  <!-- Legend Bar -->
+  <div class="legend-bar">
+    <div class="legend-item"><span class="badge badge-pk">PK</span> Primary Key (ObjectId)</div>
+    <div class="legend-item"><span class="badge badge-fk">FK</span> Foreign Key (Reference)</div>
+    <div class="legend-item"><span class="badge badge-uk">UK</span> Unique Constraint</div>
+    <div class="legend-item"><span class="badge badge-idx">IDX</span> Compound / Indexed Field</div>
+    <div class="legend-item"><span style="color:var(--text-dim); font-size:14px;">•</span> Click any Model card to inspect detailed relationships & Urdu rationale</div>
+  </div>
+
+  <!-- Canvas Container with 8 Entity Cards -->
+  <main class="canvas-container" id="canvas">
+
+    <!-- 1. BOOKING MODEL (CORE TRANSACTION SUN) -->
+    <article class="entity-card domain-booking" data-model="Booking" data-domain="booking" onclick="inspectModel('Booking')">
+      <div class="card-header">
+        <div class="entity-info">
+          <div>
+            <div class="entity-name">Booking</div>
+            <div class="collection-name">db.bookings</div>
+          </div>
+        </div>
+        <div class="entity-tag" style="color:var(--primary-light);">Core Hub</div>
+      </div>
+      <ul class="fields-list">
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-pk field-key-badge">PK</span>
+            <span class="field-name is-pk">_id</span>
+          </div>
+          <div class="field-right"><span class="field-type">ObjectId</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-uk field-key-badge">UK</span>
+            <span class="field-name is-uk">bookingReference</span>
+          </div>
+          <div class="field-right"><span class="field-type">String</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-fk field-key-badge">FK</span>
+            <span class="field-name is-fk">userId</span>
+          </div>
+          <div class="field-right">
+            <span class="fk-target">User._id</span>
+            <span class="field-type">ObjectId</span>
+          </div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-fk field-key-badge">FK</span>
+            <span class="field-name is-fk">bookedByStaffId</span>
+          </div>
+          <div class="field-right">
+            <span class="fk-target">User._id</span>
+            <span class="field-type">ObjectId</span>
+          </div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-fk field-key-badge">FK</span>
+            <span class="field-name is-fk">rooms[].roomId</span>
+          </div>
+          <div class="field-right">
+            <span class="fk-target">Room._id</span>
+            <span class="field-type">ObjectId[]</span>
+          </div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-idx field-key-badge">IDX</span>
+            <span class="field-name">rooms[].pricePerNight</span>
+          </div>
+          <div class="field-right"><span class="field-type">Number (Frozen)</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-idx field-key-badge">IDX</span>
+            <span class="field-name">checkInDate</span>
+          </div>
+          <div class="field-right"><span class="field-type">Date</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-idx field-key-badge">IDX</span>
+            <span class="field-name">checkOutDate</span>
+          </div>
+          <div class="field-right"><span class="field-type">Date</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-idx field-key-badge">IDX</span>
+            <span class="field-name">status</span>
+          </div>
+          <div class="field-right"><span class="field-type">Enum [pending..]</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-fk field-key-badge">FK</span>
+            <span class="field-name is-fk">couponApplied</span>
+          </div>
+          <div class="field-right">
+            <span class="fk-target">Coupon._id</span>
+            <span class="field-type">ObjectId</span>
+          </div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">totalPrice</span>
+          </div>
+          <div class="field-right"><span class="field-type">Number</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">paidAmount</span>
+          </div>
+          <div class="field-right"><span class="field-type">Number</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">cancellation.appliedTier</span>
+          </div>
+          <div class="field-right"><span class="field-type">Enum [100%, 50%..]</span></div>
+        </li>
+      </ul>
+      <div class="card-footer">
+        <span>Relationships:</span>
+        <div class="relations-badge">
+          <span style="color:#38bdf8;">User (N:1)</span>
+          <span>•</span>
+          <span style="color:#34d399;">Room (N:M)</span>
+          <span>•</span>
+          <span style="color:#fbbf24;">Payment (1:N)</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- 2. ROOM MODEL (HOSPITALITY INVENTORY) -->
+    <article class="entity-card domain-inventory" data-model="Room" data-domain="inventory" onclick="inspectModel('Room')">
+      <div class="card-header">
+        <div class="entity-info">
+          <div>
+            <div class="entity-name">Room</div>
+            <div class="collection-name">db.rooms</div>
+          </div>
+        </div>
+        <div class="entity-tag" style="color:var(--accent-emerald);">Inventory</div>
+      </div>
+      <ul class="fields-list">
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-pk field-key-badge">PK</span>
+            <span class="field-name is-pk">_id</span>
+          </div>
+          <div class="field-right"><span class="field-type">ObjectId</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-uk field-key-badge">UK</span>
+            <span class="field-name is-uk">roomNumber</span>
+          </div>
+          <div class="field-right"><span class="field-type">String (101..)</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-idx field-key-badge">IDX</span>
+            <span class="field-name">type</span>
+          </div>
+          <div class="field-right"><span class="field-type">Enum [deluxe..]</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">pricePerNight</span>
+          </div>
+          <div class="field-right"><span class="field-type">Number</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">capacity</span>
+          </div>
+          <div class="field-right"><span class="field-type">Number</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-idx field-key-badge">IDX</span>
+            <span class="field-name">housekeepingStatus</span>
+          </div>
+          <div class="field-right"><span class="field-type">Enum [clean..]</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-idx field-key-badge">IDX</span>
+            <span class="field-name">averageRating</span>
+          </div>
+          <div class="field-right"><span class="field-type">Number (1-5)</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">totalReviews</span>
+          </div>
+          <div class="field-right"><span class="field-type">Number</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-idx field-key-badge">LOCK</span>
+            <span class="field-name">reservedRanges[].checkIn</span>
+          </div>
+          <div class="field-right"><span class="field-type">Date (Atomic)</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-idx field-key-badge">LOCK</span>
+            <span class="field-name">reservedRanges[].checkOut</span>
+          </div>
+          <div class="field-right"><span class="field-type">Date (Atomic)</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">isDeleted</span>
+          </div>
+          <div class="field-right"><span class="field-type">Boolean (Soft)</span></div>
+        </li>
+      </ul>
+      <div class="card-footer">
+        <span>Relationships:</span>
+        <div class="relations-badge">
+          <span style="color:#34d399;">Booking (M:N)</span>
+          <span>•</span>
+          <span style="color:#f43f5e;">Review (1:N)</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- 3. USER MODEL (IDENTITY & PBAC) -->
+    <article class="entity-card domain-identity" data-model="User" data-domain="identity" onclick="inspectModel('User')">
+      <div class="card-header">
+        <div class="entity-info">
+          <div>
+            <div class="entity-name">User</div>
+            <div class="collection-name">db.users</div>
+          </div>
+        </div>
+        <div class="entity-tag" style="color:var(--accent-purple);">Auth & Roles</div>
+      </div>
+      <ul class="fields-list">
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-pk field-key-badge">PK</span>
+            <span class="field-name is-pk">_id</span>
+          </div>
+          <div class="field-right"><span class="field-type">ObjectId</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-uk field-key-badge">UK</span>
+            <span class="field-name is-uk">email</span>
+          </div>
+          <div class="field-right"><span class="field-type">String</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">name</span>
+          </div>
+          <div class="field-right"><span class="field-type">String</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">password</span>
+          </div>
+          <div class="field-right"><span class="field-type">Bcrypt Hash (10)</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-idx field-key-badge">IDX</span>
+            <span class="field-name">role</span>
+          </div>
+          <div class="field-right"><span class="field-type">Enum [guest, admin..]</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">permissions</span>
+          </div>
+          <div class="field-right"><span class="field-type">String[] (PBAC)</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">loyaltyPoints</span>
+          </div>
+          <div class="field-right"><span class="field-type">Number</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-fk field-key-badge">FK</span>
+            <span class="field-name is-fk">wishlist[]</span>
+          </div>
+          <div class="field-right">
+            <span class="fk-target">Room._id</span>
+            <span class="field-type">ObjectId[]</span>
+          </div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">isActive</span>
+          </div>
+          <div class="field-right"><span class="field-type">Boolean</span></div>
+        </li>
+      </ul>
+      <div class="card-footer">
+        <span>Relationships:</span>
+        <div class="relations-badge">
+          <span style="color:#818cf8;">Booking (1:N)</span>
+          <span>•</span>
+          <span style="color:#c084fc;">Audit (1:N)</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- 4. PAYMENT MODEL (FINANCIAL LEDGER) -->
+    <article class="entity-card domain-financial" data-model="Payment" data-domain="booking" onclick="inspectModel('Payment')">
+      <div class="card-header">
+        <div class="entity-info">
+          <div>
+            <div class="entity-name">Payment</div>
+            <div class="collection-name">db.payments</div>
+          </div>
+        </div>
+        <div class="entity-tag" style="color:var(--accent-amber);">Immutable Ledger</div>
+      </div>
+      <ul class="fields-list">
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-pk field-key-badge">PK</span>
+            <span class="field-name is-pk">_id</span>
+          </div>
+          <div class="field-right"><span class="field-type">ObjectId</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-fk field-key-badge">FK</span>
+            <span class="field-name is-fk">bookingId</span>
+          </div>
+          <div class="field-right">
+            <span class="fk-target">Booking._id</span>
+            <span class="field-type">ObjectId</span>
+          </div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-fk field-key-badge">FK</span>
+            <span class="field-name is-fk">userId</span>
+          </div>
+          <div class="field-right">
+            <span class="fk-target">User._id</span>
+            <span class="field-type">ObjectId</span>
+          </div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-fk field-key-badge">FK</span>
+            <span class="field-name is-fk">receivedByStaffId</span>
+          </div>
+          <div class="field-right">
+            <span class="fk-target">User._id</span>
+            <span class="field-type">ObjectId</span>
+          </div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">amount</span>
+          </div>
+          <div class="field-right"><span class="field-type">Number</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">currency</span>
+          </div>
+          <div class="field-right"><span class="field-type">String [USD, PKR]</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-idx field-key-badge">IDX</span>
+            <span class="field-name">paymentMethod</span>
+          </div>
+          <div class="field-right"><span class="field-type">Enum [stripe, cash..]</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-idx field-key-badge">IDX</span>
+            <span class="field-name">status</span>
+          </div>
+          <div class="field-right"><span class="field-type">Enum [completed..]</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">transactionReference</span>
+          </div>
+          <div class="field-right"><span class="field-type">String (Stripe pi_..)</span></div>
+        </li>
+      </ul>
+      <div class="card-footer">
+        <span>Relationships:</span>
+        <div class="relations-badge">
+          <span style="color:#fbbf24;">Booking (N:1)</span>
+          <span>•</span>
+          <span style="color:#818cf8;">User (N:1)</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- 5. REVIEW MODEL (VERIFIED RATINGS) -->
+    <article class="entity-card domain-inventory" data-model="Review" data-domain="inventory" onclick="inspectModel('Review')">
+      <div class="card-header">
+        <div class="entity-info">
+          <div>
+            <div class="entity-name">Review</div>
+            <div class="collection-name">db.reviews</div>
+          </div>
+        </div>
+        <div class="entity-tag" style="color:var(--accent-rose);">Feedback</div>
+      </div>
+      <ul class="fields-list">
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-pk field-key-badge">PK</span>
+            <span class="field-name is-pk">_id</span>
+          </div>
+          <div class="field-right"><span class="field-type">ObjectId</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-uk field-key-badge">UK</span>
+            <span class="field-name is-uk">bookingId</span>
+          </div>
+          <div class="field-right">
+            <span class="fk-target">Booking._id</span>
+            <span class="field-type">ObjectId (Unique)</span>
+          </div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-fk field-key-badge">FK</span>
+            <span class="field-name is-fk">roomId</span>
+          </div>
+          <div class="field-right">
+            <span class="fk-target">Room._id</span>
+            <span class="field-type">ObjectId</span>
+          </div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-fk field-key-badge">FK</span>
+            <span class="field-name is-fk">guestId</span>
+          </div>
+          <div class="field-right">
+            <span class="fk-target">User._id</span>
+            <span class="field-type">ObjectId</span>
+          </div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-idx field-key-badge">IDX</span>
+            <span class="field-name">rating</span>
+          </div>
+          <div class="field-right"><span class="field-type">Number (1-5)</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">comment</span>
+          </div>
+          <div class="field-right"><span class="field-type">String (1000 max)</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">verifiedStay</span>
+          </div>
+          <div class="field-right"><span class="field-type">Boolean (True)</span></div>
+        </li>
+      </ul>
+      <div class="card-footer">
+        <span>Relationships:</span>
+        <div class="relations-badge">
+          <span style="color:#f43f5e;">Room (N:1)</span>
+          <span>•</span>
+          <span style="color:#fbbf24;">Booking (1:1)</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- 6. COUPON MODEL (DISCOUNTS) -->
+    <article class="entity-card domain-booking" data-model="Coupon" data-domain="booking" onclick="inspectModel('Coupon')">
+      <div class="card-header">
+        <div class="entity-info">
+          <div>
+            <div class="entity-name">Coupon</div>
+            <div class="collection-name">db.coupons</div>
+          </div>
+        </div>
+        <div class="entity-tag" style="color:var(--accent-cyan);">Promotions</div>
+      </div>
+      <ul class="fields-list">
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-pk field-key-badge">PK</span>
+            <span class="field-name is-pk">_id</span>
+          </div>
+          <div class="field-right"><span class="field-type">ObjectId</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-uk field-key-badge">UK</span>
+            <span class="field-name is-uk">code</span>
+          </div>
+          <div class="field-right"><span class="field-type">String [SUMMER20]</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">discountType</span>
+          </div>
+          <div class="field-right"><span class="field-type">Enum [%, fixed]</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">discountValue</span>
+          </div>
+          <div class="field-right"><span class="field-type">Number</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">validUntil</span>
+          </div>
+          <div class="field-right"><span class="field-type">Date</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">usageLimit</span>
+          </div>
+          <div class="field-right"><span class="field-type">Number</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">usedCount</span>
+          </div>
+          <div class="field-right"><span class="field-type">Number</span></div>
+        </li>
+      </ul>
+      <div class="card-footer">
+        <span>Relationships:</span>
+        <div class="relations-badge">
+          <span style="color:#06b6d4;">Booking (1:N)</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- 7. WAITLIST MODEL (ALERTS) -->
+    <article class="entity-card domain-inventory" data-model="Waitlist" data-domain="inventory" onclick="inspectModel('Waitlist')">
+      <div class="card-header">
+        <div class="entity-info">
+          <div>
+            <div class="entity-name">Waitlist</div>
+            <div class="collection-name">db.waitlists</div>
+          </div>
+        </div>
+        <div class="entity-tag" style="color:var(--accent-emerald);">Stock Alerts</div>
+      </div>
+      <ul class="fields-list">
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-pk field-key-badge">PK</span>
+            <span class="field-name is-pk">_id</span>
+          </div>
+          <div class="field-right"><span class="field-type">ObjectId</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-fk field-key-badge">FK</span>
+            <span class="field-name is-fk">userId</span>
+          </div>
+          <div class="field-right">
+            <span class="fk-target">User._id</span>
+            <span class="field-type">ObjectId</span>
+          </div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-fk field-key-badge">FK</span>
+            <span class="field-name is-fk">roomId</span>
+          </div>
+          <div class="field-right">
+            <span class="fk-target">Room._id</span>
+            <span class="field-type">ObjectId</span>
+          </div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">desiredCheckIn</span>
+          </div>
+          <div class="field-right"><span class="field-type">Date</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">status</span>
+          </div>
+          <div class="field-right"><span class="field-type">Enum [active..]</span></div>
+        </li>
+      </ul>
+      <div class="card-footer">
+        <span>Relationships:</span>
+        <div class="relations-badge">
+          <span style="color:#818cf8;">User (N:1)</span>
+          <span>•</span>
+          <span style="color:#34d399;">Room (N:1)</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- 8. AUDITLOG MODEL (COMPLIANCE) -->
+    <article class="entity-card domain-identity" data-model="AuditLog" data-domain="identity" onclick="inspectModel('AuditLog')">
+      <div class="card-header">
+        <div class="entity-info">
+          <div>
+            <div class="entity-name">AuditLog</div>
+            <div class="collection-name">db.auditlogs</div>
+          </div>
+        </div>
+        <div class="entity-tag" style="color:var(--accent-purple);">Audit Trail</div>
+      </div>
+      <ul class="fields-list">
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-pk field-key-badge">PK</span>
+            <span class="field-name is-pk">_id</span>
+          </div>
+          <div class="field-right"><span class="field-type">ObjectId</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="badge badge-fk field-key-badge">FK</span>
+            <span class="field-name is-fk">actorId</span>
+          </div>
+          <div class="field-right">
+            <span class="fk-target">User._id</span>
+            <span class="field-type">ObjectId</span>
+          </div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">action</span>
+          </div>
+          <div class="field-right"><span class="field-type">String [ROOM_UPDATE]</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">targetEntity</span>
+          </div>
+          <div class="field-right"><span class="field-type">String [Room]</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">ipAddress</span>
+          </div>
+          <div class="field-right"><span class="field-type">String (IPv4/v6)</span></div>
+        </li>
+        <li class="field-row">
+          <div class="field-left">
+            <span class="field-name">changes</span>
+          </div>
+          <div class="field-right"><span class="field-type">Object (Diff)</span></div>
+        </li>
+      </ul>
+      <div class="card-footer">
+        <span>Relationships:</span>
+        <div class="relations-badge">
+          <span style="color:#c084fc;">User (N:1)</span>
+        </div>
+      </div>
+    </article>
+
+  </main>
+
+  <!-- Inspector Side Drawer -->
+  <aside class="inspector-panel" id="inspector">
+    <button class="inspector-close" onclick="closeInspector()">&times;</button>
+    <div>
+      <div class="badge badge-idx" id="inspectorDomain" style="display:inline-block; margin-bottom:8px;">Core</div>
+      <h2 class="inspector-title" id="inspectorName">Model Details</h2>
+      <p class="inspector-desc" id="inspectorDesc" style="margin-top:6px;">Select a model to view field-level relationship flow.</p>
+    </div>
+
+    <div class="inspector-section">
+      <h4>Urdu Technical Rationale (Kyun & Kaise?)</h4>
+      <p class="inspector-desc" id="inspectorUrdu">Urdu explanation will appear here.</p>
+    </div>
+
+    <div class="inspector-section">
+      <h4>Direct Foreign Key Links</h4>
+      <ul class="inspector-list" id="inspectorLinks">
+      </ul>
+    </div>
+
+    <div class="inspector-section">
+      <h4>Database Performance Indexes</h4>
+      <ul class="inspector-list" id="inspectorIndexes">
+      </ul>
+    </div>
+  </aside>
+
+  <script>
+    // Model knowledge metadata for interactive inspector
+    const modelData = {
+      Booking: {
+        domain: "Core Transaction Sun",
+        desc: "Central transactional contract binding user, rooms, financial payments, and cancellation tiers.",
+        urdu: "Pura system Booking ke gird ghoomta hai. Isme mehmaan ka ID (userId), book shuda kamray (rooms[]), frozen prices, aur cancellation tier policy (100%, 50%, 0%) store hoti hain. Price snapshot hone ki waja se agar room ka rate 6 maah baad badal jaye, purani booking ka bill hamesha freeze rehta hai.",
+        links: [
+          "userId ──► db.users._id (N:1, Guest owner)",
+          "bookedByStaffId ──► db.users._id (N:1, Receptionist for walk-ins)",
+          "rooms[].roomId ──► db.rooms._id (N:M, Reserved rooms)",
+          "couponApplied ──► db.coupons._id (N:1, Applied discount)",
+          "db.payments.bookingId ◄── db.bookings._id (1:N, Payment history)"
+        ],
+        indexes: [
+          "{ bookingReference: 1 } (Unique, rapid desk search)",
+          "{ userId: 1, createdAt: -1 } (Guest booking history)",
+          "{ checkInDate: 1, checkOutDate: 1 } (Range queries)",
+          "{ status: 1 } (Cron pending timeouts)"
+        ]
+      },
+      Room: {
+        domain: "Hospitality Inventory",
+        desc: "Represents physical hotel rooms, pricing, ratings, and atomic concurrency locks (reservedRanges).",
+        urdu: "Kamron ki inventory. Iski sabse ahem cheez 'reservedRanges' array hai. Jab koi room book hota hai, toh MongoDB ka atomic $findOneAndUpdate operator $elemMatch ke zariye check karta hai ke dates clash to nahi kar rahin. Is se Zero Double-Booking ki guarantee milti hai.",
+        links: [
+          "db.bookings.rooms[].roomId ◄── db.rooms._id (N:M)",
+          "db.reviews.roomId ◄── db.rooms._id (1:N, Average rating source)",
+          "db.waitlists.roomId ◄── db.rooms._id (1:N, Alert subscribers)"
+        ],
+        indexes: [
+          "{ roomNumber: 1 } (Unique uppercase number)",
+          "{ type: 1, pricePerNight: 1, isActive: 1 } (Public room filters)",
+          "{ 'reservedRanges.checkIn': 1, 'reservedRanges.checkOut': 1 } (Date overlap search)"
+        ]
+      },
+      User: {
+        domain: "Identity & PBAC",
+        desc: "Holds guest credentials, staff roles, PBAC scopes, and guest loyalty points.",
+        urdu: "Guests aur Hotel Staff (Admin, Receptionist, Housekeeper) ka account. Passwords bcrypt (10 rounds) se hash hote hain aur select: false rehte hain taake leakage na ho. Staff actions AuditLog me capture hote hain.",
+        links: [
+          "db.bookings.userId ◄── db.users._id (1:N, User bookings)",
+          "db.auditlogs.actorId ◄── db.users._id (1:N, Security trail)",
+          "wishlist[] ──► db.rooms._id (N:M, Bookmarked rooms)"
+        ],
+        indexes: [
+          "{ email: 1 } (Unique login identifier)",
+          "{ role: 1 } (PBAC scope filter)"
+        ]
+      },
+      Payment: {
+        domain: "Financial Ledger",
+        desc: "Immutable financial ledger tracking Stripe intents, card swipes, cash counters, and refunds.",
+        urdu: "Paison ka pakka hisaab. Yeh table immutable hai (kabhi delete nahi hota). Agar receptionist cash counter par payment le toh 'receivedByStaffId' save hota hai taake embezzlement na ho.",
+        links: [
+          "bookingId ──► db.bookings._id (N:1, Booking contract)",
+          "userId ──► db.users._id (N:1, Guest payer)",
+          "receivedByStaffId ──► db.users._id (N:1, Staff collector)"
+        ],
+        indexes: [
+          "{ bookingId: 1 } (Booking invoice reconciliation)",
+          "{ status: 1, paymentMethod: 1 } (Financial reporting)"
+        ]
+      },
+      Review: {
+        domain: "Verified Ratings",
+        desc: "Customer reviews strictly tied to verified completed stays with automated static rating aggregation.",
+        urdu: "Fake reviews rokne ke liye design kiya gaya hai. bookingId UNIQUE hai (1 booking = 1 review). Review save hote hi Mongoose hook Room ki averageRating aur totalReviews foran update kar deta hai.",
+        links: [
+          "bookingId ──► db.bookings._id (1:1, Verified stay check)",
+          "roomId ──► db.rooms._id (N:1, Room being reviewed)",
+          "guestId ──► db.users._id (N:1, Reviewer)"
+        ],
+        indexes: [
+          "{ bookingId: 1 } (Unique 1-review constraint)",
+          "{ roomId: 1, rating: -1 } (Room ratings list)"
+        ]
+      },
+      Coupon: {
+        domain: "Promotions Engine",
+        desc: "Promotional discount codes with usage limits, date windows, and percentage or flat value calculations.",
+        urdu: "Marketing coupons. Booking create hone se pehle check hota hai ke validFrom aur validUntil ke andar hai ya nahi, aur usedCount < usageLimit hai ya nahi.",
+        links: [
+          "db.bookings.couponApplied ◄── db.coupons._id (1:N)"
+        ],
+        indexes: [
+          "{ code: 1 } (Unique coupon code)",
+          "{ validUntil: 1, isActive: 1 } (Active discount queries)"
+        ]
+      },
+      Waitlist: {
+        domain: "Stock Subscriptions",
+        desc: "Automated alerts notifying prospective guests as soon as a booked room cancels or expires.",
+        urdu: "Agar desired dates par room full ho, to guest waitlist join karta hai. Jab Cron unpaid booking expire karta hai ya guest cancel karta hai, to system waitlist se pehle bande ko alert bhejta hai.",
+        links: [
+          "userId ──► db.users._id (N:1)",
+          "roomId ──► db.rooms._id (N:1)"
+        ],
+        indexes: [
+          "{ roomId: 1, desiredCheckIn: 1, status: 1 } (Availability alerts)"
+        ]
+      },
+      AuditLog: {
+        domain: "Compliance & Security",
+        desc: "Append-only security log recording staff actor IDs, target mutations, timestamps, and client IPs.",
+        urdu: "Kissi staff member ne room ka kiraya badla ya booking cancel ki, uska actorId, ipAddress aur JSON changes hamesha ke liye log ho jaate hain.",
+        links: [
+          "actorId ──► db.users._id (N:1, Acting staff)"
+        ],
+        indexes: [
+          "{ actorId: 1, createdAt: -1 } (Staff audit lookup)",
+          "{ targetEntity: 1, targetId: 1 } (Record change history)"
+        ]
+      }
+    };
+
+    // Filter by Domain
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const cards = document.querySelectorAll('.entity-card');
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const domain = btn.getAttribute('data-domain');
+
+        cards.forEach(card => {
+          if (domain === 'all' || card.getAttribute('data-domain') === domain) {
+            card.style.display = 'flex';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    });
+
+    // Real-time Search
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('input', (e) => {
+      const term = e.target.value.toLowerCase();
+      cards.forEach(card => {
+        const text = card.innerText.toLowerCase();
+        if (text.includes(term)) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+
+    // Inspector Click Handler
+    function inspectModel(modelName) {
+      const data = modelData[modelName];
+      if (!data) return;
+
+      cards.forEach(c => {
+        if (c.getAttribute('data-model') === modelName) {
+          c.classList.add('highlighted');
+          c.classList.remove('faded');
+        } else {
+          c.classList.remove('highlighted');
+          c.classList.add('faded');
+        }
+      });
+
+      document.getElementById('inspectorName').innerText = modelName;
+      document.getElementById('inspectorDomain').innerText = data.domain;
+      document.getElementById('inspectorDesc').innerText = data.desc;
+      document.getElementById('inspectorUrdu').innerText = data.urdu;
+
+      const linksList = document.getElementById('inspectorLinks');
+      linksList.innerHTML = data.links.map(l => `<li style="padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.03); color:#38bdf8;">${l}</li>`).join('');
+
+      const idxList = document.getElementById('inspectorIndexes');
+      idxList.innerHTML = data.indexes.map(i => `<li style="padding:4px 0; font-family:var(--font-mono); font-size:11px; color:#c084fc;">${i}</li>`).join('');
+
+      document.getElementById('inspector').classList.add('open');
+    }
+
+    function closeInspector() {
+      document.getElementById('inspector').classList.remove('open');
+      cards.forEach(c => {
+        c.classList.remove('highlighted');
+        c.classList.remove('faded');
+      });
+    }
+  </script>
+</body>
+</html>

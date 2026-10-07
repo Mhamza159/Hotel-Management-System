@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grand Horizon Hotel - Master Architecture & Diagrams Hub</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(22, 30, 49, 0.7);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover: rgba(56, 189, 248, 0.15);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --emerald: #10b981;
+      --rose: #f43f5e;
+      --amber: #f59e0b;
+      --purple: #a855f7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text-main); min-height: 100vh; padding: 2.5rem 1.5rem; background-image: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.12) 0%, transparent 60%); }
+    .container { max-width: 1280px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 3.5rem; }
+    .badge { display: inline-block; padding: 0.35rem 0.85rem; border-radius: 9999px; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.25); color: var(--accent); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+    h1 { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.025em; margin-bottom: 0.75rem; background: linear-gradient(to right, #ffffff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    p.lead { color: var(--text-muted); font-size: 1.15rem; max-width: 640px; margin: 0 auto; line-height: 1.6; }
+    
+    .category-title { font-size: 1.35rem; font-weight: 700; margin: 2.5rem 0 1.25rem; display: flex; align-items: center; gap: 0.75rem; border-bottom: 1px solid var(--card-border); padding-bottom: 0.75rem; }
+    .category-title span { font-size: 0.85rem; font-weight: 500; color: var(--text-muted); }
+    
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 1.5rem; }
+    .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 1.5rem; text-decoration: none; color: inherit; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); backdrop-filter: blur(12px); position: relative; overflow: hidden; }
+    .card:hover { transform: translateY(-4px); border-color: rgba(56, 189, 248, 0.4); box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4); background: var(--card-hover); }
+    .card-type { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+    .type-arch { color: var(--accent); }
+    .type-seq { color: var(--emerald); }
+    .type-data { color: var(--amber); }
+    .type-work { color: var(--purple); }
+    .type-life { color: var(--rose); }
+    
+    .card h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; line-height: 1.4; }
+    .card p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin-bottom: 1.25rem; flex-grow: 1; }
+    .card-footer { display: flex; align-items: center; justify-content: space-between; font-size: 0.825rem; font-weight: 600; color: var(--accent); border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 0.85rem; }
+    .btn-open { display: inline-flex; align-items: center; gap: 0.35rem; }
+    .btn-open:after { content: "→"; transition: transform 0.2s; }
+    .card:hover .btn-open:after { transform: translateX(4px); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">Archify Visual Intelligence Hub</div>
+      <h1>Grand Horizon Hotel System Diagrams</h1>
+      <p class="lead">Complete validated interactive architecture, sequence flows, data pipelines, and state machines for the full-stack MERN application.</p>
+    </header>
+
+    <div class="category-title">
+      📁 diagrams/architecture/
+      <span>(Component maps, cloud boundaries, and relational contracts)</span>
+    </div>
+    <div class="grid">
+      <a href="architecture/hotel-management-architecture.html" class="card">
+        <div>
+          <div class="card-type type-arch">High-Level Architecture</div>
+          <h3>System Overview & Infrastructure</h3>
+          <p>Full-stack topology covering React 18 SPA, Express REST APIs, MongoDB, Stripe, and Cloudinary with guided focus views.</p>
+        </div>
+        <div class="card-footer">
+          <span>architecture/</span>
+          <span class="btn-open">Open Diagram</span>
+        </div>
+      </a>
+
+      <a href="architecture/hotel-erd.html" class="card">
+        <div>
+          <div class="card-type type-arch">Entity Relationship Diagram</div>
+          <h3>Overview Database ERD (Archify)</h3>
+          <p>Relational contracts across User, Room, Booking, Payment, Review, Coupon, AuditLog, and Waitlist models with domain boundaries.</p>
+        </div>
+        <div class="card-footer">
+          <span>architecture/</span>
+          <span class="btn-open">Open Diagram</span>
+        </div>
+      </a>
+
+      <a href="architecture/hotel-erd-detailed.html" class="card" style="border-color: rgba(99, 102, 241, 0.4);">
+        <div>
+          <div class="card-type type-arch" style="background: rgba(99, 102, 241, 0.2); color: #818cf8;">Detailed Schema Explorer</div>
+          <h3>Field-Level Interactive ERD</h3>
+          <p>Deep-dive schema tables with PK, FK, UK badges, data types, embedded structures, index lists, and Urdu rationale drawer.</p>
+        </div>
+        <div class="card-footer">
+          <span>architecture/</span>
+          <span class="btn-open" style="background:#6366f1; color:#fff;">Open Deep Explorer</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="category-title">
+      📁 diagrams/sequences/
+      <span>(Message order, cryptographic handshakes, and token rotation)</span>
+    </div>
+    <div class="grid">
+      <a href="sequences/hotel-booking-sequence.html" class="card">
+        <div>
+          <div class="card-type type-seq">Sequence Diagram</div>
+          <h3>Guest Booking & Checkout Sequence</h3>
+          <p>Time-ordered message trace from room selection and JWT verification to Stripe payment sessions and PDFKit receipt buffers.</p>
+        </div>
+        <div class="card-footer">
+          <span>sequences/</span>
+          <span class="btn-open">Open Diagram</span>
+        </div>
+      </a>
+
+      <a href="sequences/user-login-sequence.html" class="card">
+        <div>
+          <div class="card-type type-seq">Sequence Diagram</div>
+          <h3>User Login & JWT Issuance</h3>
+          <p>Credentials submission, Joi schema validation, case-insensitive MongoDB lookup, bcrypt hash verification, and token signing.</p>
+        </div>
+        <div class="card-footer">
+          <span>sequences/</span>
+          <span class="btn-open">Open Diagram</span>
+        </div>
+      </a>
+
+      <a href="sequences/stripe-webhook-sequence.html" class="card">
+        <div>
+          <div class="card-type type-seq">Sequence Diagram</div>
+          <h3>Stripe Webhook & Reconciliation</h3>
+          <p>Asynchronous webhook delivery, HMAC signature verification, IdempotencyKey check, ledger commit, and HTTP 200 ack.</p>
+        </div>
+        <div class="card-footer">
+          <span>sequences/</span>
+          <span class="btn-open">Open Diagram</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="category-title">
+      📁 diagrams/dataflows/
+      <span>(Multi-stage data transformation, sanitization, and delivery)</span>
+    </div>
+    <div class="grid">
+      <a href="dataflows/system-overview-dataflow.html" class="card">
+        <div>
+          <div class="card-type type-data">Dataflow Pipeline</div>
+          <h3>Complete System Dataflow</h3>
+          <p>5-stage pipeline showing public guest stream, staff workspace, domain processing, MongoDB ACID state, and BI metrics.</p>
+        </div>
+        <div class="card-footer">
+          <span>dataflows/</span>
+          <span class="btn-open">Open Diagram</span>
+        </div>
+      </a>
+
+      <a href="dataflows/user-registration-dataflow.html" class="card">
+        <div>
+          <div class="card-type type-data">Dataflow Pipeline</div>
+          <h3>User Registration Pipeline</h3>
+          <p>From React Hook Form inputs and Zod pre-submit through Express IP throttling, Joi sanitization, and Bcrypt hashing.</p>
+        </div>
+        <div class="card-footer">
+          <span>dataflows/</span>
+          <span class="btn-open">Open Diagram</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="category-title">
+      📁 diagrams/workflows/
+      <span>(Activity diagrams, policy gates, and atomic locks)</span>
+    </div>
+    <div class="grid">
+      <a href="workflows/booking-process-activity.html" class="card">
+        <div>
+          <div class="card-type type-work">Activity / Workflow</div>
+          <h3>Booking & Cancellation Workflow</h3>
+          <p>Operational decision flowchart showing room reservation flow and cancellation refund tier rules (>48h: 100%, 24-48h: 50%, <24h: 0%).</p>
+        </div>
+        <div class="card-footer">
+          <span>workflows/</span>
+          <span class="btn-open">Open Diagram</span>
+        </div>
+      </a>
+
+      <a href="workflows/room-concurrency-workflow.html" class="card">
+        <div>
+          <div class="card-type type-work">Activity / Workflow</div>
+          <h3>Atomic Room Concurrency Lock</h3>
+          <p>How MongoDB $findOneAndUpdate and $not: { $elemMatch } guarantee zero double-bookings under simultaneous millisecond requests.</p>
+        </div>
+        <div class="card-footer">
+          <span>workflows/</span>
+          <span class="btn-open">Open Diagram</span>
+        </div>
+      </a>
+
+      <a href="workflows/pbac-security-workflow.html" class="card">
+        <div>
+          <div class="card-type type-work">Activity / Workflow</div>
+          <h3>PBAC Security & Permissions Workflow</h3>
+          <p>Dual-layer authentication and authorization: JWT verification, Super-Admin bypass, granular permission checks, and 403 audit logging.</p>
+        </div>
+        <div class="card-footer">
+          <span>workflows/</span>
+          <span class="btn-open">Open Diagram</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="category-title">
+      📁 diagrams/lifecycles/
+      <span>(Lifecycle phase progressions, recovery gates, and terminal states)</span>
+    </div>
+    <div class="grid">
+      <a href="lifecycles/booking-lifecycle-state.html" class="card">
+        <div>
+          <div class="card-type type-life">Lifecycle State Diagram</div>
+          <h3>Hotel Reservation State Machine</h3>
+          <p>Booking lifecycle: Draft -> Pending -> Confirmed -> Checked-In -> Checked-Out, with Payment Holds, Reviews, and Cancelled exits.</p>
+        </div>
+        <div class="card-footer">
+          <span>lifecycles/</span>
+          <span class="btn-open">Open Diagram</span>
+        </div>
+      </a>
+
+      <a href="lifecycles/room-operational-lifecycle.html" class="card">
+        <div>
+          <div class="card-type type-life">Lifecycle State Diagram</div>
+          <h3>Housekeeping & Cleanliness Lifecycle</h3>
+          <p>Turnover loop: Available -> Occupied -> Dirty -> Cleaning -> Inspected, with defect-driven Maintenance isolation.</p>
+        </div>
+        <div class="card-footer">
+          <span>lifecycles/</span>
+          <span class="btn-open">Open Diagram</span>
+        </div>
+      </a>
+    </div>
+
+  </div>
+</body>
+</html>

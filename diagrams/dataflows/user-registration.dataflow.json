@@ -1,0 +1,246 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "User Registration Dataflow Pipeline",
+    "output": "user-registration-dataflow.html",
+    "viewBox": [1080, 560],
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "ingress-validation",
+        "label": "Client Ingress & Validation",
+        "focus": ["web_ui", "zod_guard", "express_api", "rate_limit", "joi_validator"],
+        "note": "Client-side validation, rate limiting, and server-side Joi schema enforcement."
+      },
+      {
+        "id": "business-persistence",
+        "label": "Controller & Persistence",
+        "focus": ["joi_validator", "auth_controller", "bcrypt_hasher", "mongo_users"],
+        "note": "Duplicate email checking, role enforcement, Bcrypt hashing, and MongoDB document creation."
+      },
+      {
+        "id": "tokens-session",
+        "label": "Tokens & Client Session",
+        "focus": ["mongo_users", "jwt_generator", "zustand_session"],
+        "note": "Generating dual JWT tokens, sanitizing password from response, and hydating Zustand store."
+      }
+    ]
+  },
+  "stages": [
+    { "label": "Client Ingestion" },
+    { "label": "API Ingress" },
+    { "label": "Validation & Logic" },
+    { "label": "Crypto & Storage" },
+    { "label": "Session Hydration" }
+  ],
+  "nodes": [
+    {
+      "id": "web_ui",
+      "type": "frontend",
+      "label": "Register Form",
+      "sublabel": "React Hook Form",
+      "stage": 0,
+      "row": 0,
+      "brand": "react",
+      "tag": "Vite SPA"
+    },
+    {
+      "id": "zod_guard",
+      "type": "security",
+      "label": "Zod Schema",
+      "sublabel": "Client Validation",
+      "stage": 0,
+      "row": 1,
+      "tag": "Pre-submit"
+    },
+    {
+      "id": "express_api",
+      "type": "backend",
+      "label": "Express API",
+      "sublabel": "POST /auth/register",
+      "stage": 1,
+      "row": 0,
+      "brand": "node-js",
+      "tag": "Helmet + CORS"
+    },
+    {
+      "id": "rate_limit",
+      "type": "security",
+      "label": "Rate Limiter",
+      "sublabel": "IP Throttle Guard",
+      "stage": 1,
+      "row": 1,
+      "tag": "DDoS Shield"
+    },
+    {
+      "id": "joi_validator",
+      "type": "security",
+      "label": "Joi Middleware",
+      "sublabel": "registerSchema",
+      "stage": 2,
+      "row": 0,
+      "tag": "DTO Sanitizer"
+    },
+    {
+      "id": "auth_controller",
+      "type": "backend",
+      "label": "Auth Controller",
+      "sublabel": "Role & Duplicate Guard",
+      "stage": 2,
+      "row": 1,
+      "tag": "Business Logic"
+    },
+    {
+      "id": "bcrypt_hasher",
+      "type": "security",
+      "label": "Bcrypt Engine",
+      "sublabel": "Salt & Hash (10 rounds)",
+      "stage": 3,
+      "row": 0,
+      "tag": "Pre-save Hook"
+    },
+    {
+      "id": "mongo_users",
+      "type": "database",
+      "label": "MongoDB Users",
+      "sublabel": "Users Collection",
+      "stage": 3,
+      "row": 1,
+      "brand": "mongodb",
+      "tag": "Source of Truth"
+    },
+    {
+      "id": "jwt_generator",
+      "type": "security",
+      "label": "JWT Generator",
+      "sublabel": "Access & Refresh Tokens",
+      "stage": 4,
+      "row": 0,
+      "tag": "Token Signer"
+    },
+    {
+      "id": "zustand_session",
+      "type": "frontend",
+      "label": "Zustand Store",
+      "sublabel": "Hydrated Auth State",
+      "stage": 4,
+      "row": 1,
+      "brand": "react",
+      "tag": "Client State"
+    }
+  ],
+  "flows": [
+    {
+      "id": "form-to-zod",
+      "from": "web_ui",
+      "to": "zod_guard",
+      "label": "input data",
+      "classification": "client state",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 30
+    },
+    {
+      "id": "zod-to-api",
+      "from": "zod_guard",
+      "to": "express_api",
+      "label": "POST /register",
+      "classification": "HTTPS JSON",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-to-rate",
+      "from": "express_api",
+      "to": "rate_limit",
+      "label": "ip check",
+      "classification": "rate check",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 30
+    },
+    {
+      "id": "api-to-joi",
+      "from": "express_api",
+      "to": "joi_validator",
+      "label": "req.body",
+      "classification": "payload",
+      "variant": "emphasis"
+    },
+    {
+      "id": "joi-to-ctrl",
+      "from": "joi_validator",
+      "to": "auth_controller",
+      "label": "validated DTO",
+      "classification": "clean body",
+      "variant": "emphasis",
+      "labelDy": 30
+    },
+    {
+      "id": "ctrl-to-bcrypt",
+      "from": "auth_controller",
+      "to": "bcrypt_hasher",
+      "label": "raw password",
+      "classification": "pre-save hook",
+      "variant": "security"
+    },
+    {
+      "id": "bcrypt-to-db",
+      "from": "bcrypt_hasher",
+      "to": "mongo_users",
+      "label": "hashed document",
+      "classification": "User.create()",
+      "variant": "emphasis",
+      "labelDy": 30
+    },
+    {
+      "id": "db-to-jwt",
+      "from": "mongo_users",
+      "to": "jwt_generator",
+      "label": "user._id payload",
+      "classification": "created user",
+      "variant": "security"
+    },
+    {
+      "id": "jwt-to-session",
+      "from": "jwt_generator",
+      "to": "zustand_session",
+      "label": "token pair",
+      "classification": "201 Created",
+      "variant": "emphasis",
+      "labelDy": 30
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "1. Registration Form (Entry Point)",
+      "items": [
+        "Naya mehmaan website par apna naam, email aur password likhta hai.",
+        "Zod client check karta hai ke email theek hai aur password kam az kam 8 haroof ka hai.",
+        "Rate limiter hackers aur bots ko rokta hai taake fake accounts ki bharmaar na ho."
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "2. Security Guard & Password Hashing",
+      "items": [
+        "Controller check karta hai ke email pehle se to mojood nahi hai.",
+        "Customer ko automatic 'GUEST' role diya jata hai (koi hacker khud ko 'Admin' nahi bana sakta).",
+        "Bcrypt engine password ko 10 dafa encrypt karke MongoDB me save karta hai."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "3. Foran Login & Welcome (Session)",
+      "items": [
+        "Account bante hi system foran 2 JWT Digital Tokens (Access + Refresh) generate karta hai.",
+        "Password ko response se hazf (strip) kar diya jata hai taake secure rahe.",
+        "Website user ko bina dobara login mangay seedha welcome dashboard par le jati hai."
+      ]
+    }
+  ]
+}

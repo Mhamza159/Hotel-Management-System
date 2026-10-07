@@ -1,0 +1,1516 @@
+
+{
+  "info": {
+    "name": "Hotel Management System API",
+    "_postman_id": "hotel-mgmt-api-collection-v1",
+    "description": "Postman collection for Hotel Booking and Management System (MERN backend). Features automatic token handling on Login & Register.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Server uptime and health status verification."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Authentication (PBAC)",
+      "item": [
+        {
+          "name": "1. Register Guest",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var json = pm.response.json();",
+                  "    if (json.data && json.data.tokens) {",
+                  "        pm.collectionVariables.set('accessToken', json.data.tokens.accessToken);",
+                  "        pm.collectionVariables.set('refreshToken', json.data.tokens.refreshToken);",
+                  "        console.log('Access token saved automatically to collection variables!');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Hamza Guest\",\n  \"email\": \"hamza@hotel.com\",\n  \"password\": \"Password123!\",\n  \"phone\": \"+923001234567\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            },
+            "description": "Registers a new guest account with default guest permissions. Automatically saves accessToken."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var json = pm.response.json();",
+                  "    if (json.data && json.data.tokens) {",
+                  "        pm.collectionVariables.set('accessToken', json.data.tokens.accessToken);",
+                  "        pm.collectionVariables.set('refreshToken', json.data.tokens.refreshToken);",
+                  "        console.log('Access token saved automatically to collection variables!');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"hamza@hotel.com\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Authenticates user with email & password. Automatically updates accessToken."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Get My Profile (Protected)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "me"]
+            },
+            "description": "Fetches authenticated user profile, active role, and array of assigned permissions."
+          },
+          "response": []
+        },
+        {
+          "name": "4. Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var json = pm.response.json();",
+                  "    if (json.data && json.data.tokens) {",
+                  "        pm.collectionVariables.set('accessToken', json.data.tokens.accessToken);",
+                  "        pm.collectionVariables.set('refreshToken', json.data.tokens.refreshToken);",
+                  "        console.log('Rotated tokens updated automatically!');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/refresh-token",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "refresh-token"]
+            },
+            "description": "Rotates access and refresh tokens seamlessly without requiring re-login."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Idempotency Tests",
+      "item": [
+        {
+          "name": "Test Idempotent Request (Duplicate Prevention)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "idempotency-test-key-101",
+                "description": "Sending identical key multiple times will return cached response with zero duplicate mutations"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"hamza@hotel.com\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Demonstrates Idempotency. Click 'Send' multiple times with the same Idempotency-Key header."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Rooms & Availability",
+      "item": [
+        {
+          "name": "Search Available Rooms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rooms/available?checkInDate=2026-12-01&checkOutDate=2026-12-05",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "rooms", "available"],
+              "query": [
+                {
+                  "key": "checkInDate",
+                  "value": "2026-12-01"
+                },
+                {
+                  "key": "checkOutDate",
+                  "value": "2026-12-05"
+                },
+                {
+                  "key": "type",
+                  "value": "deluxe",
+                  "disabled": true
+                },
+                {
+                  "key": "minCapacity",
+                  "value": "2",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Public endpoint to discover available rooms excluding active overlapping bookings."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Bookings (MVP)",
+      "item": [
+        {
+          "name": "1. Create Booking (Atomic Reservation)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "booking-key-001"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roomIds\": [\"6ab227c7488c3ef2273875be\"],\n  \"checkInDate\": \"2026-12-01\",\n  \"checkOutDate\": \"2026-12-05\",\n  \"numberOfGuests\": 2,\n  \"specialRequests\": \"Quiet room on high floor\",\n  \"paymentMethod\": \"pay_at_desk\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bookings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "bookings"]
+            },
+            "description": "Atomically locks and creates a booking. Zero double-booking guarantee."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Get My Booking History",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bookings/my",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "bookings", "my"]
+            },
+            "description": "Retrieves personal booking history of the authenticated guest."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Front Desk Operations (Staff PBAC)",
+      "item": [
+        {
+          "name": "1. Operational Overview (Arrivals & Departures)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/desk/bookings?type=arrivals",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "desk", "bookings"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "arrivals",
+                  "description": "arrivals | departures | in-house"
+                },
+                {
+                  "key": "date",
+                  "value": "2026-12-01",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "confirmed",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Receptionist operational dashboard for upcoming arrivals, departures, and in-house guests."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Check-In Guest",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/desk/bookings/:id/check-in",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "desk", "bookings", ":id", "check-in"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "REPLACE_WITH_BOOKING_ID",
+                  "description": "MongoDB Booking ID"
+                }
+              ]
+            },
+            "description": "Transitions confirmed reservation to checked-in. Requires checkin:manage permission."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Record Desk Payment (Cash / Offline Card)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 85,\n  \"paymentMethod\": \"cash\",\n  \"transactionReference\": \"RCPT-1001\",\n  \"notes\": \"Paid in full at front desk\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/desk/bookings/:id/payments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "desk", "bookings", ":id", "payments"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "REPLACE_WITH_BOOKING_ID",
+                  "description": "MongoDB Booking ID"
+                }
+              ]
+            },
+            "description": "Records physical payment at desk attributing receivedByStaffId. Updates booking paymentStatus."
+          },
+          "response": []
+        },
+        {
+          "name": "4. Check-Out Guest",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/desk/bookings/:id/check-out",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "desk", "bookings", ":id", "check-out"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "REPLACE_WITH_BOOKING_ID",
+                  "description": "MongoDB Booking ID"
+                }
+              ]
+            },
+            "description": "Checks out guest. BLOCKS if unpaid balance exists. Automatically transitions rooms to 'dirty' for housekeeping."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Cancellations & Refunds (Phase 5)",
+      "item": [
+        {
+          "name": "1. Guest: Submit Cancellation Request",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Flight cancelled due to bad weather. Requesting booking cancellation.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bookings/:id/cancel-request",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "bookings", ":id", "cancel-request"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "REPLACE_WITH_BOOKING_ID",
+                  "description": "MongoDB Booking ID"
+                }
+              ]
+            },
+            "description": "Guest submits cancellation request. Status transitions to 'cancellation-requested'."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Desk: List Pending Cancellation Requests",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/desk/cancellation-requests?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "desk", "cancellation-requests"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Front-desk views all bookings awaiting cancellation approval."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Desk: View Cancellation Review & Policy Inspection",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/desk/bookings/:id/cancellation-review",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "desk", "bookings", ":id", "cancellation-review"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "REPLACE_WITH_BOOKING_ID",
+                  "description": "MongoDB Booking ID"
+                }
+              ]
+            },
+            "description": "Inspection view: shows booking date, time elapsed since booking, total advance paid, and evaluated refund policy tier."
+          },
+          "response": []
+        },
+        {
+          "name": "4. Desk: Approve Cancellation",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Cancellation approved by receptionist. Refund processed as per policy.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/desk/bookings/:id/cancel-approve",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "desk", "bookings", ":id", "cancel-approve"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "REPLACE_WITH_BOOKING_ID",
+                  "description": "MongoDB Booking ID"
+                }
+              ]
+            },
+            "description": "Approves cancellation: unlocks rooms, creates payment refund record, and notifies guest."
+          },
+          "response": []
+        },
+        {
+          "name": "5. Desk: Reject Cancellation",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rejectionReason\": \"Non-refundable promotional booking rate.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/desk/bookings/:id/cancel-reject",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "desk", "bookings", ":id", "cancel-reject"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "REPLACE_WITH_BOOKING_ID",
+                  "description": "MongoDB Booking ID"
+                }
+              ]
+            },
+            "description": "Rejects cancellation request and alerts guest with rejection reason."
+          },
+          "response": []
+        },
+        {
+          "name": "6. Download Booking PDF Tax Invoice",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bookings/:id/invoice",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "bookings", ":id", "invoice"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "REPLACE_WITH_BOOKING_ID",
+                  "description": "MongoDB Booking ID"
+                }
+              ]
+            },
+            "description": "Streams printable A4 PDF tax invoice with luxury styling, dynamic room items, and payment status."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Room Administration & Housekeeping (Phase 6)",
+      "item": [
+        {
+          "name": "1. Admin All Rooms Directory (Paginated & Filtered)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rooms/admin/all?page=1&limit=10&type=deluxe&housekeepingStatus=clean",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "rooms", "admin", "all"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "type", "value": "deluxe" },
+                { "key": "housekeepingStatus", "value": "clean" }
+              ]
+            },
+            "description": "Super-Admin & Staff view to manage physical rooms catalog."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Create Physical Room",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roomNumber\": \"501\",\n  \"type\": \"deluxe\",\n  \"pricePerNight\": 150,\n  \"capacity\": 2,\n  \"description\": \"Luxury Deluxe Suite with Balcony View\",\n  \"amenities\": [\"WiFi\", \"Mini Bar\", \"AC\", \"Smart TV\", \"Balcony\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rooms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "rooms"]
+            },
+            "description": "Creates a new physical room definition in catalog."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Update Room Specifications",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pricePerNight\": 175,\n  \"capacity\": 3,\n  \"amenities\": [\"WiFi\", \"Mini Bar\", \"AC\", \"Smart TV\", \"Balcony\", \"Jacuzzi\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rooms/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "rooms", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "REPLACE_WITH_ROOM_ID",
+                  "description": "Room ID"
+                }
+              ]
+            },
+            "description": "Updates price, capacity, or amenities of an existing room."
+          },
+          "response": []
+        },
+        {
+          "name": "4. Update Housekeeping Cleanliness Status",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"housekeepingStatus\": \"cleaning\",\n  \"notes\": \"Deep cleaning and linen change in progress\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rooms/:id/housekeeping",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "rooms", ":id", "housekeeping"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "REPLACE_WITH_ROOM_ID",
+                  "description": "Room ID"
+                }
+              ]
+            },
+            "description": "Transitions room cleanliness status (clean, dirty, cleaning, maintenance)."
+          },
+          "response": []
+        },
+        {
+          "name": "5. Soft-Delete Room (Active Reservation Guarded)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rooms/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "rooms", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "REPLACE_WITH_ROOM_ID",
+                  "description": "Room ID"
+                }
+              ]
+            },
+            "description": "Safely soft-deletes room from catalog if no active reservations exist."
+          },
+          "response": []
+        },
+        {
+          "name": "6. Upload Room Photos (Cloudinary Stream)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "images",
+                  "type": "file",
+                  "description": "Select up to 5 JPEG/PNG/WEBP photos"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rooms/:id/images",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "rooms", ":id", "images"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "REPLACE_WITH_ROOM_ID",
+                  "description": "Room ID"
+                }
+              ]
+            },
+            "description": "Uploads room photos directly to Cloudinary using in-memory buffer streaming."
+          },
+          "response": []
+        },
+        {
+          "name": "7. Delete Room Photo (Cloudinary & DB)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"publicId\": \"hotel-management/rooms/101/sample_asset_id\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rooms/:id/images",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "rooms", ":id", "images"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "REPLACE_WITH_ROOM_ID",
+                  "description": "Room ID"
+                }
+              ]
+            },
+            "description": "Deletes image remotely from Cloudinary CDN and detaches it from Room document."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Staff & UI Permissions Management (Phase 6)",
+      "item": [
+        {
+          "name": "1. Get Permissions & Role Defaults (UI Tab)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "permissions"]
+            },
+            "description": "Returns all permissions and role default templates for frontend UI tab checkboxes."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Get Staff Directory",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/staff",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "staff"]
+            },
+            "description": "Lists all staff members (receptionists, housekeepers, admins) and their assigned permissions."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Create Staff User",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sarah Jenkins\",\n  \"email\": \"sarah.reception@hotel.com\",\n  \"password\": \"HotelStaffPass123!\",\n  \"phone\": \"+1-555-0199\",\n  \"role\": \"receptionist\",\n  \"permissions\": [\n    \"bookings:view\",\n    \"bookings:confirm\",\n    \"bookings:cancel\",\n    \"checkin:manage\",\n    \"checkout:manage\",\n    \"housekeeping:update\",\n    \"payments:recordCash\",\n    \"payments:recordCard\",\n    \"rooms:create\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/staff",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "staff"]
+            },
+            "description": "Super-Admin creates staff account with default or custom permissions."
+          },
+          "response": []
+        },
+        {
+          "name": "4. Update Staff User Permissions & Role (UI Tab Save)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permissions\": [\n    \"bookings:view\",\n    \"bookings:confirm\",\n    \"bookings:cancel\",\n    \"checkin:manage\",\n    \"checkout:manage\",\n    \"housekeeping:update\",\n    \"payments:recordCash\",\n    \"payments:recordCard\",\n    \"rooms:create\",\n    \"rooms:update\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/users/:id/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "users", ":id", "permissions"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "REPLACE_WITH_USER_ID",
+                  "description": "User ID"
+                }
+              ]
+            },
+            "description": "Dynamically updates user permissions or resets to role defaults ({ resetToDefault: true })."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Guest Loyalty, Reviews & Wishlist (Phase 7)",
+      "item": [
+        {
+          "name": "1. Submit Verified Review (Only Checked-out / Completed Stays)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roomId\": \"REPLACE_WITH_ROOM_ID\",\n  \"bookingId\": \"REPLACE_WITH_BOOKING_ID\",\n  \"rating\": 5,\n  \"comment\": \"Exceptional hospitality, sparkling clean room, and great room service!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reviews",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "reviews"]
+            },
+            "description": "Submit a 1-5 rating & comment. Strictly verified: guest must own a booking with checked-out or completed status."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Get Room Reviews (Public Paginated)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rooms/:id/reviews?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "rooms", ":id", "reviews"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "REPLACE_WITH_ROOM_ID",
+                  "description": "Room ID"
+                }
+              ]
+            },
+            "description": "Fetch public paginated verified reviews for a specific room."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Get Loyalty Points Balance",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/loyalty/balance",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "loyalty", "balance"]
+            },
+            "description": "Returns current guest loyalty points balance and checkout cash discount equivalent."
+          },
+          "response": []
+        },
+        {
+          "name": "4. Join Availability Waitlist",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roomType\": \"deluxe\",\n  \"checkIn\": \"2026-10-01\",\n  \"checkOut\": \"2026-10-05\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/waitlist",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "waitlist"]
+            },
+            "description": "Join availability queue for sold-out roomType and date range."
+          },
+          "response": []
+        },
+        {
+          "name": "5. Get Guest Waitlists",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/waitlist",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "waitlist"]
+            },
+            "description": "Retrieve current guest's active and notified waitlist entries."
+          },
+          "response": []
+        },
+        {
+          "name": "6. Add Room to Wishlist",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/wishlist/:roomId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "wishlist", ":roomId"],
+              "variable": [
+                {
+                  "key": "roomId",
+                  "value": "REPLACE_WITH_ROOM_ID",
+                  "description": "Room ID"
+                }
+              ]
+            },
+            "description": "Bookmark room to guest's personal wishlist."
+          },
+          "response": []
+        },
+        {
+          "name": "7. Get Guest Wishlist",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/wishlist",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "wishlist"]
+            },
+            "description": "Fetch guest's bookmarked rooms with live pricing and rating."
+          },
+          "response": []
+        },
+        {
+          "name": "8. Remove Room from Wishlist",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/wishlist/:roomId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "wishlist", ":roomId"],
+              "variable": [
+                {
+                  "key": "roomId",
+                  "value": "REPLACE_WITH_ROOM_ID",
+                  "description": "Room ID"
+                }
+              ]
+            },
+            "description": "Remove a bookmarked room from wishlist."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Management, Audit & AI Assistant (Phase 8)",
+      "item": [
+        {
+          "name": "1. Get Audit Logs (Protected: audit:view)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/audit-log?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "audit-log"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "Fetch immutable administrative audit logs with pagination and filters."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Get Revenue Analytics (Protected: analytics:view)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/analytics/revenue?from=2026-09-01&to=2026-09-30",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "analytics", "revenue"],
+              "query": [
+                { "key": "from", "value": "2026-09-01" },
+                { "key": "to", "value": "2026-09-30" }
+              ]
+            },
+            "description": "Computes Total Revenue, Net Revenue, ADR, and RevPAR via MongoDB aggregation."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Get Occupancy Analytics (Protected: analytics:view)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/analytics/occupancy?date=2026-09-25",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "analytics", "occupancy"],
+              "query": [
+                { "key": "date", "value": "2026-09-25" }
+              ]
+            },
+            "description": "Computes total active rooms, occupied rooms, and occupancy rate percentage."
+          },
+          "response": []
+        },
+        {
+          "name": "4. Guest AI Chat (Read-Only Scoped)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Show me available rooms for next week\",\n  \"toolCallName\": \"checkAvailability\",\n  \"toolCallArgs\": {\n    \"checkIn\": \"2026-10-01\",\n    \"checkOut\": \"2026-10-05\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chat/user",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "chat", "user"]
+            },
+            "description": "Guest AI assistant with read-only tools scoped to own bookings and room availability."
+          },
+          "response": []
+        },
+        {
+          "name": "5. Staff AI Chat (Operational Metrics)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Check hotel occupancy\",\n  \"toolCallName\": \"getOccupancyStats\",\n  \"toolCallArgs\": {}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chat/staff",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "chat", "staff"]
+            },
+            "description": "Staff AI assistant for operational status lookups and occupancy metrics."
+          },
+          "response": []
+        },
+        {
+          "name": "6. Admin AI Chat (Prepare Mutation - Step 1)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Prepare booking cancellation for BK-SAMPLE\",\n  \"toolCallName\": \"prepareBookingCancellation\",\n  \"toolCallArgs\": {\n    \"bookingReference\": \"BK-SAMPLE\",\n    \"reason\": \"Guest requested cancellation via executive assistant\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chat/admin",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "chat", "admin"]
+            },
+            "description": "Admin AI assistant: returns a signed confirmationToken challenge without mutating state."
+          },
+          "response": []
+        },
+        {
+          "name": "7. Admin AI Confirm Action (Execute Mutation - Step 2)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"confirmationToken\": \"REPLACE_WITH_CONFIRMATION_TOKEN_FROM_STEP_1\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chat/admin/confirm",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "chat", "admin", "confirm"]
+            },
+            "description": "Executes state-altering mutation after validating signed confirmationToken."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

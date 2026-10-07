@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Room Housekeeping & Maintenance Operational Lifecycle",
+    "output": "room-operational-lifecycle.html",
+    "viewBox": [1030, 630],
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "operational-turnover",
+        "label": "Room Turnover & Cleanliness Loop",
+        "focus": ["available", "occupied", "dirty", "cleaning", "inspected"],
+        "note": "Standard daily room turnover cycle from guest occupancy through housekeeping to supervisor inspection."
+      },
+      {
+        "id": "maintenance-outage",
+        "label": "Maintenance & Decommissioning",
+        "focus": ["dirty", "maintenance", "cleaning", "out_of_service"],
+        "note": "Handling room defects, repairs, and permanent decommissioning for major hotel renovations."
+      }
+    ]
+  },
+  "lanes": [
+    { "id": "main", "label": "Room Cleanliness Lifecycle" },
+    { "id": "waiting", "label": "Defect & Maintenance Isolation" },
+    { "id": "terminal", "label": "Decommissioned Out-States" }
+  ],
+  "states": [
+    { "id": "available", "type": "start", "label": "Available", "sublabel": "Ready for check-in", "lane": "main", "col": 0, "step": "01", "tag": "ready" },
+    { "id": "occupied", "type": "active", "label": "Occupied", "sublabel": "Guest in-house", "lane": "main", "col": 1, "step": "02", "tag": "in-stay" },
+    { "id": "dirty", "type": "active", "label": "Dirty", "sublabel": "Pending housekeeping", "lane": "main", "col": 2, "step": "03", "tag": "turnover" },
+    { "id": "cleaning", "type": "active", "label": "Cleaning", "sublabel": "Housekeeper assigned", "lane": "main", "col": 3, "step": "04", "tag": "work" },
+    { "id": "inspected", "type": "success", "label": "Inspected", "sublabel": "Supervisor verified", "lane": "main", "col": 4, "step": "05", "tag": "certified" },
+    { "id": "maintenance", "type": "failure", "label": "Maintenance", "sublabel": "HVAC / plumbing repair", "lane": "waiting", "col": 0, "tag": "repair" },
+    { "id": "out_of_service", "type": "failure", "label": "Out of Service", "sublabel": "Major renovation", "lane": "terminal", "col": 0, "tag": "terminal" }
+  ],
+  "transitions": [
+    { "id": "guest-checkin", "from": "available", "to": "occupied", "variant": "emphasis" },
+    { "id": "guest-checkout", "from": "occupied", "to": "dirty", "variant": "emphasis" },
+    { "id": "start-cleaning", "from": "dirty", "to": "cleaning", "variant": "emphasis" },
+    { "id": "supervisor-pass", "from": "cleaning", "to": "inspected", "variant": "emphasis" },
+    { "id": "defect-found", "from": "dirty", "to": "maintenance", "variant": "security", "fromSide": "bottom", "toSide": "top", "route": "straight" },
+    { "id": "repair-done", "from": "maintenance", "to": "cleaning", "variant": "default", "route": "drop" },
+    { "id": "decommission-room", "from": "maintenance", "to": "out_of_service", "variant": "security", "fromSide": "bottom", "toSide": "top", "route": "straight" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "1. Rozana Safai Ka Cycle (Turnover Loop)",
+      "items": [
+        "01 Available: Kamra bilkul saaf aur naye mehmaan ke liye ready.",
+        "02 Occupied: Mehmaan kamre ke andar mojood hai.",
+        "03 Dirty: Mehmaan rawana hua — system ne khud ba khud kamra 'Dirty' mark kiya.",
+        "04 Cleaning: Housekeeping staff chadarain badal raha hai aur safai kar raha hai.",
+        "05 Inspected: Floor supervisor ne inspection pass ki — kamra dubara 'Available' ho gaya."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "2. Kharabi Aur Marammat (Maintenance)",
+      "items": [
+        "Maintenance: AC ya washroom me kharabi par kamra foran website se hide ho jata hai taake koi book na kar le.",
+        "Out of Service: Badi renovation ya painting ke waqt kamre ko temporary band kar diya jata hai."
+      ]
+    }
+  ]
+}

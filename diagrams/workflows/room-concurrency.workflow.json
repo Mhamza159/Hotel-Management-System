@@ -1,0 +1,85 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Room Inventory Atomic Concurrency & Overlap Prevention",
+    "animation": "trace",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "atomic-lock-path",
+        "label": "Atomic Lock Success Path",
+        "focus": ["guest_select", "build_query", "atomic_update", "eval_result", "confirm_hold"],
+        "note": "Atomic MongoDB $findOneAndUpdate check locking dates into reservedRanges without double-booking."
+      },
+      {
+        "id": "conflict-path",
+        "label": "Overlap Conflict & Waitlist",
+        "focus": ["eval_result", "trigger_waitlist", "notify_waitlist"],
+        "note": "When dates collide, the query returns null, preventing race conditions and routing user to Waitlist."
+      }
+    ],
+    "output": "room-concurrency-workflow.html"
+  },
+  "lanes": [
+    { "id": "client_request", "label": "Guest Reservation & Hold" },
+    { "id": "concurrency_engine", "label": "Atomic Locking Engine" },
+    { "id": "database_tier", "label": "MongoDB Concurrency Store" },
+    { "id": "conflict_recovery", "label": "Conflict Resolution & Waitlist", "variant": "exception" }
+  ],
+  "phases": [
+    { "id": "phase_ingest", "label": "Request Intake", "fromCol": 0, "toCol": 1 },
+    { "id": "phase_atomic", "label": "Atomic Lock Execution", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "phase_resolution", "label": "Confirmation or Conflict", "fromCol": 4, "toCol": 5, "variant": "dashed" }
+  ],
+  "groups": [
+    { "id": "lock_stream", "label": "Atomic concurrency check", "lane": "concurrency_engine", "fromCol": 1, "toCol": 3, "variant": "emphasis" },
+    { "id": "conflict_handling", "label": "Zero double-booking recovery", "lane": "conflict_recovery", "fromCol": 4, "toCol": 5, "variant": "security" }
+  ],
+  "mainPath": ["guest_select", "build_query", "atomic_update", "eval_result", "confirm_hold"],
+  "nodes": [
+    { "id": "guest_select", "lane": "client_request", "col": 0, "type": "frontend", "label": "Select Dates", "sublabel": "checkIn & checkOut", "width": 132 },
+    { "id": "build_query", "lane": "concurrency_engine", "col": 1, "type": "backend", "label": "Build Query", "sublabel": "$not: { $elemMatch }", "width": 132 },
+    { "id": "atomic_update", "lane": "database_tier", "col": 2, "type": "database", "label": "$findOneAndUpdate", "sublabel": "Atomic reservedRanges lock", "tag": "Atomic Lock", "width": 132 },
+    { "id": "eval_result", "lane": "concurrency_engine", "col": 3, "type": "security", "label": "Evaluate Lock", "sublabel": "Doc updated or null?", "tag": "Gate Evaluator", "width": 132 },
+    { "id": "trigger_waitlist", "lane": "conflict_recovery", "col": 4, "type": "backend", "label": "Conflict Detected", "sublabel": "Dates overlap (409)", "tag": "Null Doc", "width": 132 },
+    { "id": "confirm_hold", "lane": "client_request", "col": 5, "type": "backend", "label": "Lock Secured", "sublabel": "15m Checkout Window", "width": 132 },
+    { "id": "notify_waitlist", "lane": "conflict_recovery", "col": 5, "type": "messagebus", "label": "Join Waitlist", "sublabel": "Alert when released", "width": 132 }
+  ],
+  "edges": [
+    { "id": "select-to-query", "from": "guest_select", "to": "build_query", "label": "submit dates", "variant": "default" },
+    { "id": "query-to-mongo", "from": "build_query", "to": "atomic_update", "label": "atomic push", "variant": "emphasis" },
+    { "id": "mongo-to-eval", "from": "atomic_update", "to": "eval_result", "label": "lock result", "variant": "emphasis" },
+    { "id": "eval-to-hold", "from": "eval_result", "to": "confirm_hold", "label": "doc returned", "variant": "emphasis" },
+    { "id": "eval-to-conflict", "from": "eval_result", "to": "trigger_waitlist", "label": "returned null", "variant": "security" },
+    { "id": "conflict-to-waitlist", "from": "trigger_waitlist", "to": "notify_waitlist", "label": "subscribe alert", "variant": "security" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "1. Masla: Double Booking Ka Khatra",
+      "items": [
+        "Agar 2 log ek hi second me ek hi kamra book karein, to aam system dono ko kamra de deta hai.",
+        "Is se hotel counter par larai aur badnami hoti hai."
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "2. Hal: Atomic Date Lock (Zero Double-Booking)",
+      "items": [
+        "Humara system MongoDB me atomic reservedRanges lock lagata hai.",
+        "Jo banda 1 millisecond pehle aata hai, kamra usi waqt uske naam par 15 minute ke liye lock ho jata hai.",
+        "Doosre bande ki request database bina kisi hang ke safely reject kar deta hai."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "3. Doosre Customer Ka Kya Hota Hai? (Waitlist)",
+      "items": [
+        "Doosre customer ko screen par politely 'Waitlist' ka option milta hai.",
+        "Agar pehla banda 15 minute me payment na kare ya booking cancel kare, to system doosre bande ko khud alert bhej deta hai."
+      ]
+    }
+  ]
+}

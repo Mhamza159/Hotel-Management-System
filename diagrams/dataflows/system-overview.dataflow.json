@@ -1,0 +1,228 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Hotel Management System Complete Dataflow",
+    "output": "system-dataflow-rendered.html",
+    "viewBox": [1080, 580],
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "transactional-pipeline",
+        "label": "Guest Booking Pipeline",
+        "focus": ["guest_ui", "express_api", "booking_svc", "mongo_db", "invoice_gen"],
+        "note": "Primary user journey from public reservation request through booking domain into MongoDB and invoice generation."
+      },
+      {
+        "id": "governance-pipeline",
+        "label": "Staff Governance & Analytics Pipeline",
+        "focus": ["desk_ui", "auth_guard", "payment_svc", "mongo_db", "analytics_hub"],
+        "note": "Staff operations protected by PBAC authorization, recording payment events and deriving business analytics."
+      },
+      {
+        "id": "database-convergence",
+        "label": "State Convergence Tier",
+        "focus": ["booking_svc", "payment_svc", "mongo_db"],
+        "note": "Convergence of reservations and payment settlements into the unified ACID MongoDB cluster."
+      }
+    ]
+  },
+  "stages": [
+    { "label": "Client Ingestion" },
+    { "label": "API Ingress" },
+    { "label": "Domain Processors" },
+    { "label": "State & Persistence" },
+    { "label": "Consumers & Artifacts" }
+  ],
+  "nodes": [
+    {
+      "id": "guest_ui",
+      "type": "frontend",
+      "label": "Guest Portal",
+      "sublabel": "Public Website (React)",
+      "stage": 0,
+      "row": 0,
+      "brand": "react",
+      "tag": "Public Users"
+    },
+    {
+      "id": "desk_ui",
+      "type": "frontend",
+      "label": "Staff Portal",
+      "sublabel": "Admin & Receptionist",
+      "stage": 0,
+      "row": 2,
+      "brand": "react",
+      "tag": "Hotel Staff"
+    },
+    {
+      "id": "express_api",
+      "type": "backend",
+      "label": "Express API",
+      "sublabel": "Traffic Controller",
+      "stage": 1,
+      "row": 0,
+      "brand": "node-js",
+      "tag": "Central API"
+    },
+    {
+      "id": "auth_guard",
+      "type": "security",
+      "label": "Security Gate",
+      "sublabel": "PBAC Login Verifier",
+      "stage": 1,
+      "row": 2,
+      "tag": "Permissions"
+    },
+    {
+      "id": "booking_svc",
+      "type": "backend",
+      "label": "Booking Engine",
+      "sublabel": "Dates & Room Locks",
+      "stage": 2,
+      "row": 0,
+      "tag": "Core Logic"
+    },
+    {
+      "id": "payment_svc",
+      "type": "backend",
+      "label": "Payments",
+      "sublabel": "Stripe & Cash Counter",
+      "stage": 2,
+      "row": 2,
+      "brand": "stripe",
+      "tag": "Financials"
+    },
+    {
+      "id": "mongo_db",
+      "type": "database",
+      "label": "MongoDB Hub",
+      "sublabel": "Central Database",
+      "stage": 3,
+      "row": 1,
+      "brand": "mongodb",
+      "tag": "State of Truth"
+    },
+    {
+      "id": "invoice_gen",
+      "type": "backend",
+      "label": "PDF Bill Engine",
+      "sublabel": "PDFKit Receipt Buffer",
+      "stage": 4,
+      "row": 0,
+      "tag": "Guest Receipts"
+    },
+    {
+      "id": "analytics_hub",
+      "type": "database",
+      "label": "Reports Hub",
+      "sublabel": "Daily Hotel Revenue",
+      "stage": 4,
+      "row": 2,
+      "tag": "Management BI"
+    }
+  ],
+  "flows": [
+    {
+      "id": "guest-to-api",
+      "from": "guest_ui",
+      "to": "express_api",
+      "label": "REST booking",
+      "classification": "HTTPS JSON",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "api-to-booking",
+      "from": "express_api",
+      "to": "booking_svc",
+      "label": "Booking DTO",
+      "classification": "Validated input",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "booking-to-db",
+      "from": "booking_svc",
+      "to": "mongo_db",
+      "label": "ACID commits",
+      "classification": "Booking CRUD",
+      "variant": "emphasis",
+      "route": "vertical-channel"
+    },
+    {
+      "id": "staff-to-auth",
+      "from": "desk_ui",
+      "to": "auth_guard",
+      "label": "Staff actions",
+      "classification": "Bearer JWT",
+      "variant": "security",
+      "route": "straight"
+    },
+    {
+      "id": "auth-to-payment",
+      "from": "auth_guard",
+      "to": "payment_svc",
+      "label": "PBAC scopes",
+      "classification": "req.user context",
+      "variant": "security",
+      "route": "straight"
+    },
+    {
+      "id": "payment-to-db",
+      "from": "payment_svc",
+      "to": "mongo_db",
+      "label": "Payment record",
+      "classification": "Status updates",
+      "variant": "emphasis",
+      "route": "vertical-channel"
+    },
+    {
+      "id": "db-to-invoice",
+      "from": "mongo_db",
+      "to": "invoice_gen",
+      "label": "Billing receipt",
+      "classification": "PDF generation",
+      "variant": "emphasis",
+      "route": "vertical-channel"
+    },
+    {
+      "id": "db-to-analytics",
+      "from": "mongo_db",
+      "to": "analytics_hub",
+      "label": "Revenue facts",
+      "classification": "Metrics rollup",
+      "variant": "default",
+      "route": "vertical-channel"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "1. Mehmaan Ka Rasta (Guest Pipeline)",
+      "items": [
+        "Guest website par room select karke booking bhejta hai.",
+        "Express API se hota hua data Booking Engine me jata hai jahan room dates lock hoti hain.",
+        "MongoDB me record save hote hi PDF Bill ban kar guest ko download mil jata hai."
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "2. Hotel Staff Ka Rasta (Staff Operations)",
+      "items": [
+        "Receptionist desk portal se walk-in customer ka check-in aur counter payment darj karta hai.",
+        "PBAC Security Guard check karta hai ke staff member ke paas is kaam ki permission hai ya nahi.",
+        "Payment Engine transaction ko database me record karke shafaf audit trail banata hai."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "3. Markazi Database & Business Reports",
+      "items": [
+        "Donon raste (Guest aur Staff) MongoDB database par aakar milte hain.",
+        "Database se hotel manager ko daily income, total occupancy aur kamron ka munafa Reports Hub me nazar aata hai."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "hotel-management-system-root",
+  "version": "1.0.0",
+  "description": "Hotel Management System Workspace Proxy",
+  "scripts": {
+    "dev": "npm --prefix backend run dev",
+    "server": "npm --prefix backend run dev",
+    "client": "npm --prefix frontend run dev",
+    "frontend": "npm --prefix frontend run dev",
+    "build:frontend": "npm --prefix frontend run build",
+    "build:client": "npm --prefix frontend run build",
+    "start": "npm --prefix backend start",
+    "test": "npm --prefix backend test"
+  }
+}

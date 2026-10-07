@@ -1,0 +1,84 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "PBAC Security & Permission Evaluation Workflow",
+    "animation": "trace",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "authorized-path",
+        "label": "Authorized Access Path",
+        "focus": ["api_req", "verify_jwt", "check_admin", "eval_perm", "exec_handler"],
+        "note": "Standard authorization flow verifying JWT claims and validating required action permissions."
+      },
+      {
+        "id": "denial-path",
+        "label": "Denial & Audit Logging",
+        "focus": ["eval_perm", "audit_deny", "error_403"],
+        "note": "Unauthorized attempts are captured in immutable audit logs and rejected with 403 Forbidden."
+      }
+    ],
+    "output": "pbac-security-workflow.html"
+  },
+  "lanes": [
+    { "id": "client_lane", "label": "Client Request & Controller" },
+    { "id": "auth_middleware", "label": "Authentication Guard" },
+    { "id": "pbac_eval", "label": "PBAC Permission Engine" },
+    { "id": "audit_response", "label": "Audit & Security Barrier", "variant": "exception" }
+  ],
+  "phases": [
+    { "id": "phase_token", "label": "JWT Authentication", "fromCol": 0, "toCol": 1 },
+    { "id": "phase_eval", "label": "PBAC Scope Evaluation", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "phase_outcome", "label": "Execution or Rejection", "fromCol": 4, "toCol": 5, "variant": "dashed" }
+  ],
+  "groups": [
+    { "id": "security_pipeline", "label": "Middleware verification", "lane": "pbac_eval", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "denial_handling", "label": "Compliance violation", "lane": "audit_response", "fromCol": 4, "toCol": 5, "variant": "security" }
+  ],
+  "mainPath": ["api_req", "verify_jwt", "check_admin", "eval_perm", "exec_handler"],
+  "nodes": [
+    { "id": "api_req", "lane": "client_lane", "col": 0, "type": "frontend", "label": "Client Request", "sublabel": "Bearer JWT in header", "width": 132 },
+    { "id": "verify_jwt", "lane": "auth_middleware", "col": 1, "type": "security", "label": "Decode Token", "sublabel": "Verify signature & expiry", "width": 132 },
+    { "id": "check_admin", "lane": "pbac_eval", "col": 2, "type": "security", "label": "Role Inspect", "sublabel": "Load roles & scopes", "tag": "Identity", "width": 132 },
+    { "id": "eval_perm", "lane": "pbac_eval", "col": 3, "type": "security", "label": "Permission Gate", "sublabel": "Admin OR perm in scope", "tag": "Decision", "width": 132 },
+    { "id": "audit_deny", "lane": "audit_response", "col": 4, "type": "database", "label": "Audit Denial", "sublabel": "Log unauthorized attempt", "tag": "AuditLog", "width": 132 },
+    { "id": "error_403", "lane": "audit_response", "col": 5, "type": "security", "label": "403 Forbidden", "sublabel": "Permission denied", "width": 132 },
+    { "id": "exec_handler", "lane": "client_lane", "col": 5, "type": "backend", "label": "Execute Route", "sublabel": "Authorized controller", "width": 132 }
+  ],
+  "edges": [
+    { "id": "req-to-auth", "from": "api_req", "to": "verify_jwt", "label": "dispatches call", "variant": "default" },
+    { "id": "auth-to-admin", "from": "verify_jwt", "to": "check_admin", "label": "req.user attached", "variant": "emphasis" },
+    { "id": "admin-to-perm", "from": "check_admin", "to": "eval_perm", "label": "evaluate scope", "variant": "default" },
+    { "id": "perm-granted", "from": "eval_perm", "to": "exec_handler", "label": "permission match", "variant": "emphasis" },
+    { "id": "perm-denied", "from": "eval_perm", "to": "audit_deny", "label": "missing scope", "variant": "security" },
+    { "id": "audit-to-403", "from": "audit_deny", "to": "error_403", "label": "deny response", "variant": "security" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "1. Ijazat-Nama System (PBAC Security)",
+      "items": [
+        "Hotel me har staff member ki hadd (boundaries) muqarrar hain.",
+        "Housekeeping sirf kamra saaf kar sakti hai, Receptionist check-in kar sakti hai, magar hotel ke bank accounts sirf Manager/Admin dekh sakta hai."
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "2. Super-Admin VIP Pass",
+      "items": [
+        "Super-Admin ke paas master key hoti hai.",
+        "System dekhta hai ke agar user Admin hai to foran aage jane deta hai bina kisi rukawat ke."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "3. Chori Pakarna (Audit & 403 Forbidden)",
+      "items": [
+        "Agar koi ghair-mutaliqa banda kisi secret file ko kholne ki koshish kare, to system 403 Forbidden error deta hai.",
+        "AuditLog me foran record ho jata hai: 'Kis bande ne, kis computer se, kis cheez me ghusne ki koshish ki' taake pakra ja sake."
+      ]
+    }
+  ]
+}

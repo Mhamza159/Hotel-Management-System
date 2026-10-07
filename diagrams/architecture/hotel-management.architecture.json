@@ -1,0 +1,193 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Hotel Management System Architecture",
+    "output": "hotel-management-architecture.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "guest-flow",
+        "label": "Guest Booking Flow",
+        "focus": ["guests", "client", "api", "db"],
+        "note": "Primary user journey from browsing rooms to completing bookings in MongoDB."
+      },
+      {
+        "id": "payments-assets",
+        "label": "Payments & Media Cloud",
+        "focus": ["client", "api", "stripe", "cloudinary"],
+        "note": "Handling hotel room gallery delivery via CDN and PCI-compliant payments via Stripe."
+      },
+      {
+        "id": "background-ops",
+        "label": "Background Operations & Invoices",
+        "focus": ["api", "cron", "pdf", "db"],
+        "note": "Scheduled cleanup, booking expiry checks, and PDF receipt rendering."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "guests",
+      "type": "external",
+      "label": "1. Guests & Staff",
+      "sublabel": "Mobile / Laptop Browser",
+      "pos": [40, 270],
+      "size": [130, 60],
+      "tag": "End Users"
+    },
+    {
+      "id": "client",
+      "type": "frontend",
+      "label": "2. React Web App",
+      "sublabel": "Interactive UI Screens",
+      "brand": "react",
+      "pos": [250, 270],
+      "size": [140, 60]
+    },
+    {
+      "id": "cloudinary",
+      "type": "cloud",
+      "label": "Cloudinary CDN",
+      "sublabel": "Fast Room Images Delivery",
+      "brand": "cloudinary",
+      "pos": [250, 110],
+      "size": [140, 60]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "3. Express API",
+      "sublabel": "Business Logic & Rules",
+      "brand": "node-js",
+      "pos": [470, 270],
+      "size": [140, 60],
+      "tag": "JWT Auth"
+    },
+    {
+      "id": "stripe",
+      "type": "external",
+      "label": "Stripe Payments",
+      "sublabel": "Safe Credit Card Checkout",
+      "brand": "stripe",
+      "pos": [470, 110],
+      "size": [140, 60]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "4. MongoDB Database",
+      "sublabel": "Secure Permanent Storage",
+      "brand": "mongodb",
+      "pos": [740, 270],
+      "size": [140, 60]
+    },
+    {
+      "id": "cron",
+      "type": "backend",
+      "label": "Cron Auto-Watchdog",
+      "sublabel": "Cleans Unpaid Bookings",
+      "pos": [470, 430],
+      "size": [140, 60]
+    },
+    {
+      "id": "pdf",
+      "type": "backend",
+      "label": "PDF Receipt Service",
+      "sublabel": "Downloadable Guest Bills",
+      "pos": [740, 430],
+      "size": [140, 60]
+    }
+  ],
+
+  "connections": [
+    {
+      "id": "guests-to-client",
+      "from": "guests",
+      "to": "client",
+      "label": "Opens App",
+      "variant": "emphasis"
+    },
+    {
+      "id": "client-to-media",
+      "from": "client",
+      "to": "cloudinary",
+      "label": "Streams Photos",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "client-to-api",
+      "from": "client",
+      "to": "api",
+      "label": "2. Books Room",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-to-stripe",
+      "from": "api",
+      "to": "stripe",
+      "label": "3. Charges Card",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "api-to-db",
+      "from": "api",
+      "to": "db",
+      "label": "4. Saves Record"
+    },
+    {
+      "id": "cron-to-api",
+      "from": "cron",
+      "to": "api",
+      "label": "15m Auto Checks",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "api-to-pdf",
+      "from": "api",
+      "to": "pdf",
+      "label": "Renders Invoice"
+    },
+    {
+      "id": "pdf-to-db",
+      "from": "pdf",
+      "to": "db",
+      "label": "Stores Receipt",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Aam Zaban Me Safar (Real-Life Story)",
+      "items": [
+        "1. Customer mobile ya laptop par hotel website kholta hai aur HD kamron ki photos Cloudinary se dekhta hai.",
+        "2. Dates pasand kar ke 'Book Now' dabata hai, Stripe par card se payment hoti hai aur turant booking confirm ho jati hai.",
+        "3. System khud ba khud customer ke liye PDF bill banata hai aur email/download ke liye ready karta hai."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Technical Working (Parde Ke Peeche)",
+      "items": [
+        "React SPA UI ko fast rakhta hai, Express API security aur user authorization (JWT) check karti hai.",
+        "MongoDB cluster me atomic date-locks lagte hain taake ek hi second me do log ek kamra na le sakein.",
+        "Card details kabhi humare database me nahi aati, seedha PCI-DSS compliant Stripe se process hoti hain."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Automated Protections (Hifazati Watchdog)",
+      "items": [
+        "Cron Watchdog har waqt check karta hai: agar kisi ne booking shuru ki magar 15 minute me pay na kiya, toh kamra wapas free ho jata hai.",
+        "Hotel staff aur admin ke tamam actions AuditLog me record hote hain taake ghaple ka koi chance na ho."
+      ]
+    }
+  ]
+}

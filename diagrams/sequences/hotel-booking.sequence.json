@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Hotel Reservation & Payment Sequence",
+    "output": "hotel-booking-sequence.html",
+    "viewBox": [1040, 750],
+    "column_fit": "spread",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "reservation-auth",
+        "label": "Reservation & Authentication",
+        "focus": ["guest", "web", "api", "auth"],
+        "note": "Guest submits booking parameters verified by JWT authentication middleware."
+      },
+      {
+        "id": "inventory-checkout",
+        "label": "Inventory Lock & Stripe Checkout",
+        "focus": ["api", "db", "stripe", "web"],
+        "note": "Locks room availability in MongoDB and generates a Stripe Checkout Session."
+      },
+      {
+        "id": "webhook-fulfillment",
+        "label": "Webhook Fulfillment & Invoicing",
+        "focus": ["stripe", "api", "db", "pdf", "guest"],
+        "note": "Stripe webhook confirms payment, updates booking state, and generates PDF receipt."
+      }
+    ]
+  },
+  "participants": [
+    { "id": "guest", "type": "external", "label": "Guest", "sublabel": "Browser" },
+    { "id": "web", "type": "frontend", "label": "React SPA", "sublabel": "Vite App", "brand": "react" },
+    { "id": "api", "type": "backend", "label": "Express API", "sublabel": "Node.js", "brand": "node-js" },
+    { "id": "auth", "type": "security", "label": "Auth Guard", "sublabel": "JWT Check" },
+    { "id": "db", "type": "database", "label": "MongoDB", "sublabel": "Mongoose", "brand": "mongodb" },
+    { "id": "stripe", "type": "external", "label": "Stripe API", "sublabel": "Payments", "brand": "stripe" },
+    { "id": "pdf", "type": "backend", "label": "Invoice Engine", "sublabel": "PDFKit" }
+  ],
+  "segments": [
+    { "from": 155, "to": 285, "label": "Reservation & Auth" },
+    { "from": 295, "to": 495, "label": "Inventory & Checkout" },
+    { "from": 505, "to": 670, "label": "Payment Webhook & Receipt" }
+  ],
+  "messages": [
+    { "id": "select-room", "from": "guest", "to": "web", "y": 165, "label": "1. Selects Room & Dates", "variant": "default" },
+    { "id": "post-booking", "from": "web", "to": "api", "y": 200, "label": "2. POST /api/bookings", "variant": "emphasis" },
+    { "id": "verify-token", "from": "api", "to": "auth", "y": 235, "label": "3. Verify Login (JWT)", "variant": "security" },
+    { "id": "token-valid", "from": "auth", "to": "api", "y": 270, "label": "4. Guest Confirmed", "variant": "return" },
+    { "id": "check-inventory", "from": "api", "to": "db", "y": 305, "label": "5. Lock Room Dates", "variant": "emphasis" },
+    { "id": "inventory-ok", "from": "db", "to": "api", "y": 340, "label": "6. Locked (Pending)", "variant": "return" },
+    { "id": "create-checkout", "from": "api", "to": "stripe", "y": 375, "label": "7. Create Stripe Session", "variant": "security" },
+    { "id": "session-created", "from": "stripe", "to": "api", "y": 410, "label": "8. Stripe URL Ready", "variant": "return" },
+    { "id": "booking-response", "from": "api", "to": "web", "y": 445, "label": "9. Redirect to Payment", "variant": "return" },
+    { "id": "redirect-stripe", "from": "web", "to": "stripe", "y": 480, "label": "10. Guest Enters Card", "variant": "default" },
+    { "id": "stripe-webhook", "from": "stripe", "to": "api", "y": 515, "label": "11. Webhook: Paid", "variant": "emphasis" },
+    { "id": "confirm-db", "from": "api", "to": "db", "y": 550, "label": "12. Status: CONFIRMED", "variant": "default" },
+    { "id": "build-pdf", "from": "api", "to": "pdf", "y": 585, "label": "13. Render PDF Receipt", "variant": "dashed" },
+    { "id": "pdf-ready", "from": "pdf", "to": "api", "y": 620, "label": "14. PDF Ready", "variant": "return" },
+    { "id": "show-success", "from": "web", "to": "guest", "y": 655, "label": "15. Confirmation & Bill", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "web", "from": 195, "to": 660, "type": "frontend" },
+    { "participant": "api", "from": 200, "to": 630, "type": "backend" },
+    { "participant": "auth", "from": 230, "to": 275, "type": "security" },
+    { "participant": "db", "from": 300, "to": 345, "type": "database" },
+    { "participant": "stripe", "from": 370, "to": 415, "type": "external" },
+    { "participant": "stripe", "from": 475, "to": 520, "type": "external" },
+    { "participant": "db", "from": 545, "to": 555, "type": "database" },
+    { "participant": "pdf", "from": 580, "to": 625, "type": "backend" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Aam Zaban Me Safar (Steps 1-6)",
+      "items": [
+        "1. Guest dates aur room select karke booking shuru karta hai.",
+        "2. System JWT token check karta hai ke guest logged in hai ya nahi.",
+        "3. Database me room par 15-minute ka temporary lock lag jata hai taake doosra koi book na kar sake."
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Paison Ka Mamla (Steps 7-11)",
+      "items": [
+        "4. Server Stripe se secure payment link banwata hai aur guest ko redirect karta hai.",
+        "5. Guest card details daal kar pay karta hai.",
+        "6. Stripe bank se paise kaat kar hotel API ko secret Webhook bhejta hai ke 'Paise receive ho gaye'."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Pakki Booking & Raseed (Steps 12-15)",
+      "items": [
+        "7. Database me booking 'CONFIRMED' ho jati hai aur date lock pakka ho jata hai.",
+        "8. PDFKit engine tax invoice banata hai.",
+        "9. Guest ke mobile/laptop par success message aur download button aa jata hai."
+      ]
+    }
+  ]
+}

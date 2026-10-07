@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "User Authentication & JWT Issuance Sequence",
+    "output": "user-login-sequence.html",
+    "viewBox": [1040, 640],
+    "column_fit": "spread",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "ingress-validation",
+        "label": "Ingress & Input Sanitization",
+        "focus": ["guest", "client", "api", "validator"],
+        "note": "Credentials submission through React client and Joi schema validation."
+      },
+      {
+        "id": "db-and-crypto",
+        "label": "User Retrieval & Bcrypt Match",
+        "focus": ["api", "db", "hasher"],
+        "note": "Retrieving user record including password hash and executing timing-safe bcrypt comparison."
+      },
+      {
+        "id": "tokens-and-session",
+        "label": "Token Signing & Client Redirection",
+        "focus": ["api", "jwt", "client", "guest"],
+        "note": "Generating dual JWT tokens (Access + Refresh) and hydrating frontend session state."
+      }
+    ]
+  },
+  "participants": [
+    { "id": "guest", "type": "external", "label": "Guest / Staff", "sublabel": "Browser" },
+    { "id": "client", "type": "frontend", "label": "React SPA", "sublabel": "Vite Client", "brand": "react" },
+    { "id": "api", "type": "backend", "label": "Express API", "sublabel": "Node.js REST", "brand": "node-js" },
+    { "id": "validator", "type": "security", "label": "Joi Guard", "sublabel": "loginSchema" },
+    { "id": "db", "type": "database", "label": "MongoDB", "sublabel": "Users Coll", "brand": "mongodb" },
+    { "id": "hasher", "type": "security", "label": "Bcrypt", "sublabel": "Hash Match" },
+    { "id": "jwt", "type": "security", "label": "JWT Engine", "sublabel": "Token Signer" }
+  ],
+  "segments": [
+    { "from": 155, "to": 285, "label": "Ingress & Validation" },
+    { "from": 295, "to": 425, "label": "DB Lookup & Crypto Match" },
+    { "from": 435, "to": 565, "label": "Token Issuance & Session" }
+  ],
+  "messages": [
+    { "id": "submit-creds", "from": "guest", "to": "client", "y": 165, "label": "1. Types Email & Password", "variant": "default" },
+    { "id": "post-login", "from": "client", "to": "api", "y": 200, "label": "2. POST /api/v1/auth/login", "variant": "emphasis" },
+    { "id": "validate-dto", "from": "api", "to": "validator", "y": 235, "label": "3. Check Format (Joi)", "variant": "security" },
+    { "id": "dto-valid", "from": "validator", "to": "api", "y": 270, "label": "4. Clean Inputs", "variant": "return" },
+    { "id": "find-user", "from": "api", "to": "db", "y": 305, "label": "5. Find User in DB", "variant": "emphasis" },
+    { "id": "user-record", "from": "db", "to": "api", "y": 340, "label": "6. Return Hashed Record", "variant": "return" },
+    { "id": "compare-hash", "from": "api", "to": "hasher", "y": 375, "label": "7. Match Password (Bcrypt)", "variant": "security" },
+    { "id": "hash-matched", "from": "hasher", "to": "api", "y": 410, "label": "8. Password Verified", "variant": "return" },
+    { "id": "generate-tokens", "from": "api", "to": "jwt", "y": 445, "label": "9. Sign Digital Tokens", "variant": "security" },
+    { "id": "tokens-signed", "from": "jwt", "to": "api", "y": 480, "label": "10. JWT Keys Ready", "variant": "return" },
+    { "id": "auth-response", "from": "api", "to": "client", "y": 515, "label": "11. 200 OK: Login Success", "variant": "return" },
+    { "id": "session-ready", "from": "client", "to": "guest", "y": 550, "label": "12. Opens User Dashboard", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "client", "from": 195, "to": 555, "type": "frontend" },
+    { "participant": "api", "from": 200, "to": 520, "type": "backend" },
+    { "participant": "validator", "from": 230, "to": 275, "type": "security" },
+    { "participant": "db", "from": 300, "to": 345, "type": "database" },
+    { "participant": "hasher", "from": 370, "to": 415, "type": "security" },
+    { "participant": "jwt", "from": 440, "to": 485, "type": "security" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Aam Zaban Me (Steps 1-4)",
+      "items": [
+        "1. User login form me email aur password type karta hai.",
+        "2. Form check karta hai ke email theek likha hai aur password khali to nahi.",
+        "3. Safe data backend server ko bheja jata hai."
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Password Verification (Steps 5-8)",
+      "items": [
+        "4. Server database se user ka encrypted password nikalta hai.",
+        "5. Bcrypt security engine check karta hai ke password match karta hai ya nahi.",
+        "6. Agar ghalat ho toh foran 'Invalid Credentials' ka error aa jata hai."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Digital Pass & Dashboard (Steps 9-12)",
+      "items": [
+        "7. Password sahi hone par system user ko JWT Digital Pass (Token) deta hai.",
+        "8. Ab user ko baar baar password nahi dalna parta, browser seedha Dashboard open kar deta hai."
+      ]
+    }
+  ]
+}

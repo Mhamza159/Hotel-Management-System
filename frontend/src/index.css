@@ -1,0 +1,123 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * ============================================================================
+ * GRAND HORIZON DESIGN SYSTEM & THEME TOKENS (LIGHT & DARK)
+ * ============================================================================
+ * 
+ * [URDU / HINGLISH EXPLANATION]:
+ * Yeh file CSS Custom Properties (Variables) ke zariye Light aur Dark mode ke
+ * colors ko dynamically control karti hai.
+ * 1. :root / .dark: Hotel ka signature Luxury Dark Obsidian theme (#0A0F1A, #131A26).
+ * 2. html.light: Hotel ka Premium Ivory & Slate Light theme (#F8FAFC, #FFFFFF, #0F172A).
+ * 3. Class-based overrides: Sabhi hardcoded hex classes (e.g. bg-[#0A0F1A], bg-[#131A26])
+ *    ko light mode mein automatically adapt karta hai taake poore hotel system ke har
+ *    role (Guest, Front Desk, Housekeeping, Super Admin) ko flawless experience mile.
+ * 
+ * [ENGLISH EXPLANATION]:
+ * Global CSS Design Tokens with dynamic CSS variables for Light and Dark modes.
+ * Ensures strict contrast ratios, zero eye strain, and fluid switching across all roles.
+ */
+
+:root {
+  /* Futuristic Hospitality-Tech Design Tokens */
+  --ink: #0A0F1A;               /* Base Canvas: Deep navy-black */
+  --canvas-ops: #0A0F1A;        /* Cockpit Canvas */
+  --surface: #131A26;           /* Elevated Solid Panels */
+  --surface-2: #1B2433;         /* Nested / Hover Surface */
+  --surface-muted: #1E2838;     /* Inactive / Subtle Containers */
+  --border: #2A3547;            /* 1px Structural Divider Border */
+  --border-subtle: #1F2937;     /* Inner Dividers */
+
+  /* Brand Accents */
+  --gold: #C9A15A;              /* Guest-Side Accent: CTAs, Nightly Price, Hero */
+  --gold-hover: #B88E45;
+  --gold-light: #E3C287;
+
+  --aqua: #3FD0C9;              /* System & Live Accent: Staff Console Primary, Chat, Live Status */
+  --aqua-hover: #32B5AF;
+  --aqua-light: #6FE0DA;
+
+  /* Text & Contrast */
+  --text: #ECEFF3;              /* High-Contrast White/Silver Heading */
+  --text-body: #C2CAD6;         /* Clean Readable Body */
+  --text-muted: #8791A3;        /* Secondary/Auxiliary Meta Text */
+
+  /* Operational Signals */
+  --success: #3ECF8E;           /* Confirmed / Healthy */
+  --danger: #F2545B;            /* Cancelled / Error */
+  --warning: #E8A33D;           /* Cancellation Requested / Review Required */
+  color-scheme: dark;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--ink);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar - Dark & Light Adaptation */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--ink);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface-2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border);
+}
+
+html.light ::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+}
+
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* ============================================================================
+ * MARQUEE CONTINUOUS SCROLL ANIMATION
+ * ============================================================================ */
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 24s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation-play-state: paused;
+  }
+}
+

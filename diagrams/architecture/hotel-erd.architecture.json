@@ -1,0 +1,222 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Hotel Management System Entity Relationship Diagram",
+    "output": "hotel-erd-rendered.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "booking-core",
+        "label": "Core Booking Lifecycle",
+        "focus": ["user", "booking", "room", "payment"],
+        "note": "Central transactional chain linking users, reservations, inventory, and payment ledger."
+      },
+      {
+        "id": "feedback-loyalty",
+        "label": "Loyalty & Verified Ratings",
+        "focus": ["booking", "coupon", "room", "review"],
+        "note": "Promotional discounts applied to bookings and verified stay ratings tied to rooms."
+      },
+      {
+        "id": "governance",
+        "label": "Audit & Stock Subscriptions",
+        "focus": ["user", "audit", "waitlist"],
+        "note": "Administrative audit logging and automated availability waitlist alerts."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "audit",
+      "type": "database",
+      "label": "AuditLog Schema",
+      "sublabel": "Staff Action Trails",
+      "brand": "mongodb",
+      "pos": [60, 120],
+      "size": [150, 60],
+      "tag": "Compliance"
+    },
+    {
+      "id": "user",
+      "type": "database",
+      "label": "User Schema",
+      "sublabel": "Guests & Hotel Staff",
+      "brand": "mongodb",
+      "pos": [60, 300],
+      "size": [150, 60],
+      "tag": "Identity"
+    },
+    {
+      "id": "waitlist",
+      "type": "database",
+      "label": "Waitlist Schema",
+      "sublabel": "Room Stock Alerts",
+      "brand": "mongodb",
+      "pos": [60, 480],
+      "size": [150, 60],
+      "tag": "Alerts"
+    },
+    {
+      "id": "coupon",
+      "type": "database",
+      "label": "Coupon Schema",
+      "sublabel": "Discounts & Offers",
+      "brand": "mongodb",
+      "pos": [360, 120],
+      "size": [160, 60],
+      "tag": "Promotions"
+    },
+    {
+      "id": "booking",
+      "type": "database",
+      "label": "Booking Schema",
+      "sublabel": "Reservations Hub",
+      "brand": "mongodb",
+      "pos": [360, 300],
+      "size": [160, 60],
+      "tag": "Core Entity"
+    },
+    {
+      "id": "payment",
+      "type": "database",
+      "label": "Payment Schema",
+      "sublabel": "Financial Ledger",
+      "brand": "mongodb",
+      "pos": [360, 480],
+      "size": [160, 60],
+      "tag": "Financials"
+    },
+    {
+      "id": "room",
+      "type": "database",
+      "label": "Room Schema",
+      "sublabel": "Inventory & Rates",
+      "brand": "mongodb",
+      "pos": [660, 300],
+      "size": [150, 60],
+      "tag": "Inventory"
+    },
+    {
+      "id": "review",
+      "type": "database",
+      "label": "Review Schema",
+      "sublabel": "Verified Ratings",
+      "brand": "mongodb",
+      "pos": [660, 480],
+      "size": [150, 60],
+      "tag": "Ratings"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Identity & Governance Domain",
+      "wraps": ["audit", "user", "waitlist"],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "Reservation & Ledger Core",
+      "wraps": ["coupon", "booking", "payment"],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "Hospitality Inventory & Feedback",
+      "wraps": ["room", "review"],
+      "pad": 16
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-to-audit",
+      "from": "user",
+      "to": "audit",
+      "label": "logs actor",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "user-to-waitlist",
+      "from": "user",
+      "to": "waitlist",
+      "label": "subscribes",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 30
+    },
+    {
+      "id": "user-to-booking",
+      "from": "user",
+      "to": "booking",
+      "label": "1:N creates",
+      "variant": "emphasis"
+    },
+    {
+      "id": "coupon-to-booking",
+      "from": "coupon",
+      "to": "booking",
+      "label": "discounts",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 30
+    },
+    {
+      "id": "booking-to-payment",
+      "from": "booking",
+      "to": "payment",
+      "label": "1:N ledger",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 30
+    },
+    {
+      "id": "booking-to-room",
+      "from": "booking",
+      "to": "room",
+      "label": "N:M reserves",
+      "variant": "emphasis"
+    },
+    {
+      "id": "room-to-review",
+      "from": "room",
+      "to": "review",
+      "label": "1:N ratings",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 30
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Core Relational Contracts",
+      "items": [
+        "User (1:N) Booking: Guest creates multiple reservations with unique bookingReference codes",
+        "Booking (N:M) Room: Bookings contain room array with frozen pricePerNight snapshots",
+        "Booking (1:N) Payment: Immutable financial ledger tracking Stripe, card, and cash settlements"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Feedback & Pricing Integrity",
+      "items": [
+        "Room (1:N) Review: Strictly verified stays; static aggregation auto-updates room average rating",
+        "Coupon (1:N) Booking: Validates expiration, minimum stay, and percentage or fixed discount limits"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Governance & Stock Monitoring",
+      "items": [
+        "User (1:N) AuditLog: Immutable security audit trail recording staff actions, IPs, and changes",
+        "User (1:N) Waitlist: Notifies interested guests immediately when booked dates become vacant"
+      ]
+    }
+  ]
+}

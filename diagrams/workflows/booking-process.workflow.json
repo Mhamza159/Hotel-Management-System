@@ -1,0 +1,86 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Room Booking & Cancellation Activity Workflow",
+    "animation": "trace",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "happy-path",
+        "label": "Reservation & Stay Path",
+        "focus": ["search_dates", "lock_inventory", "stripe_checkout", "confirm_booking", "complete_stay"],
+        "note": "Standard guest journey from searching inventory to checkout and stay completion."
+      },
+      {
+        "id": "cancellation-path",
+        "label": "Cancellation & Refund Tiering",
+        "focus": ["confirm_booking", "evaluate_tier", "execute_refund"],
+        "note": "Automated cancellation policy enforcement calculating 100%, 50%, or 0% refunds."
+      }
+    ],
+    "output": "booking-process-activity.html"
+  },
+  "lanes": [
+    { "id": "guest_ui", "label": "Guest Interface" },
+    { "id": "booking_core", "label": "Booking Engine" },
+    { "id": "cancellation_tier", "label": "Cancellation Policy", "variant": "exception" },
+    { "id": "payment_gateway", "label": "Financial Settlement" }
+  ],
+  "phases": [
+    { "id": "phase_select", "label": "Selection & Lock", "fromCol": 0, "toCol": 1 },
+    { "id": "phase_pay", "label": "Payment & Confirmation", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "phase_lifecycle", "label": "Stay or Cancellation", "fromCol": 4, "toCol": 5, "variant": "dashed" }
+  ],
+  "groups": [
+    { "id": "booking_flow", "label": "Core booking stream", "lane": "booking_core", "fromCol": 1, "toCol": 3, "variant": "emphasis" },
+    { "id": "cancellation_gate", "label": "Refund decision tier", "lane": "cancellation_tier", "fromCol": 4, "toCol": 5, "variant": "security" }
+  ],
+  "mainPath": ["search_dates", "lock_inventory", "stripe_checkout", "confirm_booking", "complete_stay"],
+  "nodes": [
+    { "id": "search_dates", "lane": "guest_ui", "col": 0, "type": "frontend", "label": "Search & Select", "sublabel": "Room type + dates", "width": 132 },
+    { "id": "lock_inventory", "lane": "booking_core", "col": 1, "type": "backend", "label": "Check Availability", "sublabel": "Atomic lock window", "width": 132 },
+    { "id": "stripe_checkout", "lane": "payment_gateway", "col": 2, "type": "external", "label": "Stripe Checkout", "sublabel": "Charge card / token", "width": 132 },
+    { "id": "confirm_booking", "lane": "booking_core", "col": 3, "type": "backend", "label": "Confirm Booking", "sublabel": "Status: CONFIRMED", "width": 132 },
+    { "id": "evaluate_tier", "lane": "cancellation_tier", "col": 4, "type": "security", "label": "Tier Decision", "sublabel": ">48h:100%, 24-48h:50%", "tag": "Policy Gate", "width": 132 },
+    { "id": "execute_refund", "lane": "payment_gateway", "col": 5, "type": "backend", "label": "Process Refund", "sublabel": "Reversal & release", "width": 132 },
+    { "id": "complete_stay", "lane": "guest_ui", "col": 5, "type": "frontend", "label": "Complete Stay", "sublabel": "Check-out & review", "width": 132 }
+  ],
+  "edges": [
+    { "id": "search-to-lock", "from": "search_dates", "to": "lock_inventory", "label": "dates selected", "variant": "default" },
+    { "id": "lock-to-pay", "from": "lock_inventory", "to": "stripe_checkout", "label": "dates locked", "variant": "emphasis" },
+    { "id": "pay-to-confirm", "from": "stripe_checkout", "to": "confirm_booking", "label": "payment verified", "variant": "emphasis" },
+    { "id": "confirm-to-stay", "from": "confirm_booking", "to": "complete_stay", "label": "normal stay", "variant": "emphasis" },
+    { "id": "confirm-to-tier", "from": "confirm_booking", "to": "evaluate_tier", "label": "cancel request", "variant": "security" },
+    { "id": "tier-to-refund", "from": "evaluate_tier", "to": "execute_refund", "label": "tier calculated", "variant": "security" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "1. Normal Booking Ka Safar (Happy Path)",
+      "items": [
+        "Guest website par kamra aur dates select karta hai.",
+        "System room par lock lagata hai aur Stripe payment hone par booking confirm karta hai.",
+        "Guest hotel aata hai, stay karta hai aur check-out par review chhorta hai."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "2. Agar Guest Cancel Kare? (Refund Policy)",
+      "items": [
+        "Check-in se 48 ghante pehle cancel: 100% Full Refund (tamam raqam wapas).",
+        "24 se 48 ghante ke darmayan: 50% Half Refund (aadhe paise wapas).",
+        "24 ghante ke andar ya mehmaan na aaye (No-Show): 0% Refund (zero wapsi)."
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "3. Kamre Ki Auto Availability",
+      "items": [
+        "Refund calculate hote hi system Stripe se paise customer ke bank wapas bhejta hai.",
+        "Room ke dates lock release ho jaate hain taake naya customer usi waqt book kar sake."
+      ]
+    }
+  ]
+}

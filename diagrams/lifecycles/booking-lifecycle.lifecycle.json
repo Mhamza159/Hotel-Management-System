@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Hotel Reservation Lifecycle State Diagram",
+    "output": "booking-lifecycle-state.html",
+    "viewBox": [1030, 630],
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "main-lifecycle",
+        "label": "Standard Stay Progression",
+        "focus": ["draft", "pending", "confirmed", "checked_in", "checked_out"],
+        "note": "Complete sequential progression from initial booking draft to check-in and final check-out."
+      },
+      {
+        "id": "interruptions",
+        "label": "Payment Gate & Cancellation Review",
+        "focus": ["pending", "deposit_hold", "confirmed", "cancel_review"],
+        "note": "Payment processing interruptions and formal cancellation requests under review."
+      },
+      {
+        "id": "terminal-exits",
+        "label": "Terminal Exits",
+        "focus": ["cancel_review", "cancelled", "no_show"],
+        "note": "Terminal departure states including cancellation with refunds and no-show forfeiture."
+      }
+    ]
+  },
+  "lanes": [
+    { "id": "main", "label": "Reservation Lifecycle" },
+    { "id": "waiting", "label": "Interruptions & Gates" },
+    { "id": "terminal", "label": "Terminal Out-States" }
+  ],
+  "states": [
+    { "id": "draft", "type": "start", "label": "Draft", "sublabel": "Room selected", "lane": "main", "col": 0, "step": "01", "tag": "init" },
+    { "id": "pending", "type": "active", "label": "Pending", "sublabel": "Dates reserved", "lane": "main", "col": 1, "step": "02", "tag": "hold" },
+    { "id": "confirmed", "type": "active", "label": "Confirmed", "sublabel": "Payment verified", "lane": "main", "col": 2, "step": "03", "tag": "booked" },
+    { "id": "checked_in", "type": "active", "label": "Checked-In", "sublabel": "Key handed over", "lane": "main", "col": 3, "step": "04", "tag": "in-stay" },
+    { "id": "checked_out", "type": "success", "label": "Checked-Out", "sublabel": "Stay finalized", "lane": "main", "col": 4, "step": "05", "tag": "done" },
+    { "id": "cancel_review", "type": "waiting", "label": "Cancel Review", "sublabel": "Refund tier check", "lane": "waiting", "col": 0, "tag": "review" },
+    { "id": "deposit_hold", "type": "waiting", "label": "Deposit Hold", "sublabel": "Stripe checkout session", "lane": "waiting", "col": 1, "tag": "session" },
+    { "id": "cancelled", "type": "failure", "label": "Cancelled", "sublabel": "Refunded & released", "lane": "terminal", "col": 0, "tag": "terminal" },
+    { "id": "no_show", "type": "failure", "label": "No-Show", "sublabel": "Forfeited deposit", "lane": "terminal", "col": 1, "tag": "terminal" }
+  ],
+  "transitions": [
+    { "id": "init-booking", "from": "draft", "to": "pending", "variant": "default" },
+    { "id": "payment-success", "from": "pending", "to": "confirmed", "variant": "emphasis" },
+    { "id": "guest-arrival", "from": "confirmed", "to": "checked_in", "variant": "emphasis" },
+    { "id": "stay-complete", "from": "checked_in", "to": "checked_out", "variant": "emphasis" },
+    { "id": "cancel-check", "from": "confirmed", "to": "cancel_review", "variant": "security", "fromSide": "bottom", "toSide": "top", "route": "straight" },
+    { "id": "cancel-approved", "from": "cancel_review", "to": "cancelled", "variant": "security", "fromSide": "bottom", "toSide": "top", "route": "straight" },
+    { "id": "deposit-wait", "from": "checked_in", "to": "deposit_hold", "variant": "security", "fromSide": "bottom", "toSide": "top", "route": "straight" },
+    { "id": "guest-no-show", "from": "deposit_hold", "to": "no_show", "variant": "security", "fromSide": "bottom", "toSide": "top", "route": "straight" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "1. Booking Ke 5 Kamyab Marhale (Normal Flow)",
+      "items": [
+        "01 Draft: Customer ne dates aur kamra pasand kiya.",
+        "02 Pending: System ne 15 minute ka timer shuru kiya taake user aaram se pay kar sake.",
+        "03 Confirmed: Paise kat gaye, kamra confirm ho gaya.",
+        "04 Checked-In: Mehmaan hotel pohanch gaya aur receptionist ne chabi thama di.",
+        "05 Checked-Out: Mehmaan rawana hua, tax bill download hua aur rating de di."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "2. Rukawatein & Khatma (Cancel ya No-Show)",
+      "items": [
+        "Cancel Review: Mehmaan ne booking radd karne ki request ki — system refund calculate karta hai.",
+        "Cancelled: Kamra foran hotel website par doosron ke liye dubara khali ho jata hai.",
+        "No-Show: Mehmaan aya hi nahi — advance raqam hotel policy ke tehat zabt ho jati hai."
+      ]
+    }
+  ]
+}
