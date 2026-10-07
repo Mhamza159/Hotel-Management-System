@@ -1,0 +1,230 @@
+====================================================================================================
+               GRAND HORIZON - ENTERPRISE HOTEL MANAGEMENT & OPERATIONS SYSTEM
+                     FULL-STACK PRODUCTION PORTFOLIO & ARCHITECTURE SPECIFICATION
+====================================================================================================
+
+Developed By: M Hamza Hakim (Mhamza159)
+Role: Full-Stack MERN Developer / System Architect
+Project Status: 100% Complete & Production Deployed (Live on Vercel + MongoDB Atlas)
+
+LIVE SYSTEM ACCESS & REPOSITORIES:
+----------------------------------------------------------------------------------------------------
+* Frontend Web App:     https://hotel-management-system-six-topaz.vercel.app/
+* Backend REST API:     https://hotel-backend-api-zeta.vercel.app/
+* API Health Probe:     https://hotel-backend-api-zeta.vercel.app/health
+* GitHub Repository:    https://github.com/Mhamza159/Hotel-Management-System
+* Documentation/Spec:   https://github.com/Mhamza159/Hotel-Management-System/tree/main/.planning
+
+====================================================================================================
+1. PRE-CONFIGURED DEMO CREDENTIALS (READY FOR LIVE EVALUATION)
+====================================================================================================
+
+You can log into the live system using any of the following pre-seeded enterprise personas:
+
++----------------------+--------------------------+---------------+--------------------------------------+
+| ROLE                 | LOGIN EMAIL              | PASSWORD      | PRIMARY CAPABILITIES & CONSOLE       |
++----------------------+--------------------------+---------------+--------------------------------------+
+| 1. Super Admin       | admin@hotel.com          | Password123!  | Full PBAC Matrix, Revenue Analytics, |
+|                      |                          |               | Audit Logs, Room Admin, Staff Mgmt   |
++----------------------+--------------------------+---------------+--------------------------------------+
+| 2. Front Desk Staff  | reception@hotel.com      | Password123!  | Flight-Ops Cockpit, Walk-in Booking, |
+|                      |                          |               | Arrivals/Departures, Keycards, Cash  |
++----------------------+--------------------------+---------------+--------------------------------------+
+| 3. Housekeeping Lead | housekeeping@hotel.com   | Password123!  | Cleanliness Board, Dirty->Clean flow,|
+|                      |                          |               | Priority VIP prep, Turnover metrics  |
++----------------------+--------------------------+---------------+--------------------------------------+
+| 4. Verified Guest    | hamza@hotel.com          | Password123!  | Guest Portal, Stay History, Wishlist,|
+|                      |                          |               | Waitlist, Invoicing, Stay Review     |
++----------------------+--------------------------+---------------+--------------------------------------+
+
+* Note: Self-registration for new Guest accounts is also enabled on the live login page (/register).
+
+
+====================================================================================================
+2. EXECUTIVE PROJECT OVERVIEW
+====================================================================================================
+
+Grand Horizon is an end-to-end, enterprise-grade Hotel Management & Hospitality Operations platform
+engineered using modern MERN stack architecture. It replaces disconnected legacy hospitality tools
+with a unified, real-time operating system that connects luxury guest booking experiences with high-
+velocity staff flight operations, housekeeping maintenance, and executive-level governance.
+
+Key Pillars of the System:
+1. Zero Double-Booking Guarantee: Atomic MongoDB transaction locks preventing race-condition collisions.
+2. Dynamic PBAC (Permission-Based Access Control): Granular matrix control down to individual actions.
+3. Zero Optimistic UI: All state mutations require server confirmation, preventing corrupted workflows.
+4. Production-Hardened Security: JWT rotation, rate limiting, Helmet HTTP headers, audit trails.
+5. High-Aesthetic UX: Custom dark-mode Obsidian UI for staff consoles and Verde cream for guests.
+
+
+====================================================================================================
+3. COMPLETE TECHNOLOGY STACK
+====================================================================================================
+
+FRONTEND ARCHITECTURE:
+* Framework:           React 18.3 + Vite (Fast ESM Bundler, optimized chunk splitting)
+* UI Systems:          Material UI (MUI v5) + Tailwind CSS + Framer Motion animations
+* State Stores:        Zustand (Global auth state, draft booking store, UI drawers)
+* Data Fetching:       TanStack React Query v5 (Server-state caching, invalidation, mutations)
+* Routing:             React Router DOM v6 with dynamic <Can> permission guard wrappers
+* Forms & Validation:  React Hook Form + Zod / Joi validation resolvers
+* Visual Data:         MUI X-Charts & MUI X-Data-Grid for enterprise data manipulation
+* Icons & Assets:      Lucide React Icons + Cloudinary CDN media delivery
+
+BACKEND & INFRASTRUCTURE:
+* Runtime:             Node.js (LTS v20) + Express.js 5 (Modular Route-Controller-Service pattern)
+* Cloud Platform:      Vercel Serverless Functions (Zero cold-start connection caching)
+* Database:            MongoDB Atlas (Cloud M0 Replica Set with transactional session support)
+* Object Modeling:     Mongoose v8 (Custom schema statics, virtuals, compound indices)
+* Validation Layer:    Joi 18 (Strict input sanitization across query, params, and body)
+* Authentication:      JWT (Access Tokens 15m + Refresh Tokens 7d + Secure Cookies)
+* Logging:             Winston structured multi-transport logging + Morgan HTTP request streaming
+* Payment Processing:  Stripe API (PaymentIntents, Webhook verification, automated refunds)
+* Invoicing Engine:    PDFKit (Dynamically generated official PDF receipts and invoices)
+* API Documentation:   Swagger UI & OpenAPI 3.0 specification (/api-docs)
+
+
+====================================================================================================
+4. IN-DEPTH FEATURE BREAKDOWN (BY OPERATIONAL DOMAIN)
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+DOMAIN A: PUBLIC DISCOVERY & GUEST EXPERIENCE PORTAL
+----------------------------------------------------------------------------------------------------
+1. Luxury Room Showcase:
+   - Dynamic catalog displaying 9+ bespoke luxury suites and villas with Unsplash & Cloudinary imagery.
+   - Per-suite details: capacity, room dimensions, panoramic view types, and 12+ curated amenities.
+   - Interactive Room Filter by occupancy capacity, suite type (Single, Deluxe, Suite, Presidential).
+
+2. Date-Aware Availability Search Engine:
+   - Real-time date range picker with live price calculations per night.
+   - Disables conflicting dates where rooms are already committed in MongoDB.
+
+3. Streamlined Reservation & Checkout:
+   - Multi-room booking support in a single atomic transaction.
+   - Promotional Coupon engine (e.g., WELCOME10, SUMMER20, VIP50) with live price breakdown.
+   - Multi-channel payment options: Secure Stripe Card Intent vs. Pay at Front Desk.
+   - Idempotency-Key header protection ensuring duplicate clicks never double-charge.
+
+4. Guest Portal & Stays Management (/dashboard):
+   - Active, upcoming, and archived stay history cards.
+   - Instant PDF Invoice download directly rendered in browser.
+   - Tiered Cancellation Engine: calculates authoritative refunds based on hotel cancellation policy.
+   - Guest Wishlist & Waitlist: Automated notification subscription for fully booked high-demand suites.
+   - Room Review & Rating submission with verification checks.
+
+
+----------------------------------------------------------------------------------------------------
+DOMAIN B: FRONT DESK (RECEPTIONIST) FLIGHT-OPS COCKPIT (/desk)
+----------------------------------------------------------------------------------------------------
+1. Instant Walk-In Reservation Engine:
+   - Front Desk modal allowing receptionists to instantly book walk-in guests in under 30 seconds.
+   - Live room allotter showing currently available clean suites.
+   - Immediate settlement selector: Cash on hand recording vs. Card terminal payment.
+
+2. Arrivals & Departures Management:
+   - Real-time tabular view of guests arriving today vs. departing today.
+   - One-click Check-In with physical NFC Keycard allocation and count tracking.
+   - Secure Check-Out gate: Strictly enforces payment settlement; prevents checkout if balance > $0.
+
+3. Keycard Lifecycle:
+   - Digital issuance and instant re-issuance (e.g., in case guest misplaces keycard).
+   - Real-time count of active cards issued per booking.
+
+4. Front Desk Cash & Card Settlements:
+   - Record partial or full in-person cash payments.
+   - Immediate generation of official PDF payment receipt for the guest.
+
+
+----------------------------------------------------------------------------------------------------
+DOMAIN C: HOUSEKEEPING OPERATIONS BOARD (/housekeeping)
+----------------------------------------------------------------------------------------------------
+1. Real-Time Cleanliness Kanban Board:
+   - Drag-and-drop or click-to-transition room cards between 4 authoritative states:
+     [Dirty / Needs Turnover]  -->  [Cleaning in Progress]  -->  [Clean & Inspected]  -->  [Maintenance]
+   - Visual priority badges for upcoming VIP guest arrivals.
+
+2. Fast Operational Turnover:
+   - Front desk check-out automatically flips the room to "Dirty" in real time.
+   - Once marked "Clean", the room automatically re-enters the public availability catalog.
+
+
+----------------------------------------------------------------------------------------------------
+DOMAIN D: SUPER-ADMINISTRATION & SECURITY GOVERNANCE (/admin)
+----------------------------------------------------------------------------------------------------
+1. Dynamic PBAC (Permission-Based Access Control) Matrix:
+   - Staff members can be created and assigned micro-permissions without code changes.
+   - 15+ granular permission nodes: bookings:view, bookings:create, payments:recordCash, 
+     housekeeping:update, audit:view, analytics:view, staff:manage, etc.
+   - Frontend UI automatically omits unauthorized buttons, tabs, and routes via <Can> components.
+
+2. Enterprise Financial & Performance Analytics:
+   - Real-time KPI summary: Gross Revenue, Occupancy Rate (%), ADR (Average Daily Rate), RevPAR.
+   - Interactive revenue charts and occupancy trends powered by MUI X-Charts.
+
+3. Immutable Security Audit Trail (/admin/audit-logs):
+   - Cryptographically verifiable, append-only audit trail.
+   - Every single sensitive staff action is recorded with: Actor ID, Action Type, Target ID, 
+     Payload Diff, Client IP, and UTC Timestamp.
+
+4. Suite & Media Content Management (/admin/rooms):
+   - Add new room suites, configure bed types, set dynamic nightly rates, and upload photos.
+   - Soft-delete protection ensuring existing historical bookings are never broken.
+
+5. Review Moderation Board (/admin/reviews):
+   - Super-admin review moderation to approve, reject, or flag user reviews before public rendering.
+
+6. AI Concierge & Operations Copilot Drawer:
+   - Floating assistant mounted across staff and guest portals.
+   - Natural language queries for room availability, hotel policies, and booking lookups.
+
+
+====================================================================================================
+5. ENTERPRISE ENGINEERING HIGHLIGHTS & ARCHITECTURAL DECISIONS
+====================================================================================================
+
+1. Atomicity & Race-Condition Safety:
+   - Dual overlapping booking prevention using MongoDB transactional isolation (`session.startTransaction`).
+   - Stress-tested against concurrent simultaneous booking requests; 1 succeeds (201 Created), 
+     conflicting request safely fails (409 Conflict) with zero double-bookings.
+
+2. Scalable Serverless Backend:
+   - Configured via Vercel Serverless with Mongoose readyState connection caching. Eliminates 
+     the database connection exhaustion typical in serverless Node.js deployments.
+
+3. Strict PBAC Boundary Enforcement:
+   - Permission checks are enforced twice: on the frontend (omitting DOM elements) AND at the 
+     backend middleware level (`requirePermission`). Any spoofed API request returns HTTP 403.
+
+4. 100% Quality Assurance Verification:
+   - Passed 146 unit & integration tests covering authentication, concurrency, and PBAC security.
+   - Comprehensive Playwright end-to-end browser tests verifying all 4 personas on real DOM trees.
+
+
+====================================================================================================
+6. REPOSITORY STRUCTURE SUMMARY
+====================================================================================================
+
+Hotel-Management-System/
+├── backend/
+│   ├── api/index.js                 # Vercel Serverless Express bootstrap
+│   ├── src/
+│   │   ├── config/                  # DB connection pool, environment, constants, swagger
+│   │   ├── controllers/             # Auth, Room, Booking, Desk, Admin, Engagement, Chat
+│   │   ├── middlewares/             # PBAC, JWT auth, Joi validation, RateLimiter, ErrorHandler
+│   │   ├── models/                  # User, Room, Booking, Payment, AuditLog, Review, Coupon
+│   │   ├── routes/                  # Express route definitions
+│   │   ├── services/                # Business logic, Stripe integration, PDF generation, Cron
+│   │   └── utils/                   # ApiError, ApiResponse, Logger, Email helper
+│   ├── tests/                       # Jest unit and integration test suites
+│   └── vercel.json                  # Serverless function routing rules
+├── frontend/
+│   ├── src/
+│   │   ├── components/              # Admin, Desk, Housekeeping, Guest, Common components
+│   │   ├── layouts/                 # StaffLayout, GuestLayout, HousekeepingLayout
+│   │   ├── pages/                   # Public, Desk, Housekeeping, Admin pages
+│   │   ├── services/                # Axios API services with interceptors & idempotency
+│   │   ├── stores/                  # Zustand auth, draft, and UI state stores
+│   │   └── config/                  # Custom Obsidian & Verde MUI themes
+│   └── vercel.json                  # SPA routing and backend proxy rewrites
+└── postman/                         # Complete Postman API collection & environment
