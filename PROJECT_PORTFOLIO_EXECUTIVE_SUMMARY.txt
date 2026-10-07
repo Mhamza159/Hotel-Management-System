@@ -174,9 +174,45 @@ DOMAIN D: SUPER-ADMINISTRATION & SECURITY GOVERNANCE (/admin)
 5. Review Moderation Board (/admin/reviews):
    - Super-admin review moderation to approve, reject, or flag user reviews before public rendering.
 
-6. AI Concierge & Operations Copilot Drawer:
-   - Floating assistant mounted across staff and guest portals.
-   - Natural language queries for room availability, hotel policies, and booking lookups.
+6. Staff Directory & Role Provisioning (/admin/staff):
+   - Complete employee onboarding interface; assign roles and custom baseline permissions.
+
+
+----------------------------------------------------------------------------------------------------
+DOMAIN E: ADVANCED CROSS-CUTTING MODULES & INNOVATIONS
+----------------------------------------------------------------------------------------------------
+1. Spotlight Command Palette (Ctrl+K / Cmd+K):
+   - Omnipresent keyboard-driven launcher enabling instant navigation across all suites, bookings,
+     guest records, and administrative controls in under 2 keystrokes.
+
+2. Multi-Role AI Operations Copilot (/admin/copilot & floating ChatDrawer):
+   - Dual-mode conversational assistant:
+     * Guest Concierge: Answers hotel policy questions, dining amenities, and room availability.
+     * Staff Copilot: Natural-language booking lookups, occupancy summaries, and policy reminders.
+
+3. Tiered Guest Loyalty Rewards Program (/api/v1/loyalty):
+   - Automated point calculation on completed bookings.
+   - 4-Tier progression (Bronze -> Silver -> Gold -> Platinum) unlocking dynamic member perks 
+     and exclusive room upgrade rates.
+
+4. High-Demand Room Waitlist Engine (/api/v1/waitlist):
+   - Guests can join a real-time waitlist for fully occupied dates.
+   - Automated notification triggers when a cancellation occurs, releasing rooms to waitlisted guests.
+
+5. Background Watchdog Cron Service:
+   - Automated 15-minute scheduled background worker that automatically cancels and releases rooms
+     from abandoned or unpaid draft reservations, ensuring inventory is never artificially locked.
+
+6. Bespoke Multi-Themed Visual Design System:
+   - Obsidian Dark UI (Ink #0A0F1A, Aqua #3FD0C9, Gold #C9A15A) for high-density Staff/Admin cockpits.
+   - Verde Emerald Cream UI for warm luxury guest booking journeys.
+   - Warm Minimal Planner UI for distraction-free housekeeping operations.
+
+7. Cloudinary Media Asset Management (/admin/rooms):
+   - Drag-and-drop media modal with instant preview, tag categorization, and Cloudinary CDN storage.
+
+8. Interactive Swagger / OpenAPI 3.0 Documentation:
+   - Complete live API documentation and interactive test harness hosted at `/api-docs`.
 
 
 ====================================================================================================
