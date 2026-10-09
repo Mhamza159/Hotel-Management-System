@@ -42,9 +42,11 @@ router.use(authenticate);
 // 0A. WALK-IN GUEST RESERVATION & LOBBY SETTLEMENT
 // ----------------------------------------------------------------------------
 // POST /api/v1/desk/walk-in
+// Note: `bookings:create` guest ke default permissions me bhi hai (online booking ke liye),
+// is liye walk-in ko front-desk permission `checkin:manage` se gate kiya gaya hai.
 router.post(
   "/walk-in",
-  requirePermission(PERMISSIONS.BOOKINGS_CREATE),
+  requirePermission(PERMISSIONS.CHECKIN_MANAGE),
   validate(createWalkInBookingSchema),
   DeskController.createWalkInBooking
 );

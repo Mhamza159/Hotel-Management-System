@@ -6,6 +6,9 @@ const Coupon = require('../models/Coupon');
 const { BOOKING_STATUS, PAYMENT_STATUS, ROLES } = require('../config/constants');
 const ApiError = require('../utils/apiError');
 
+// Payment methods jin me guest counter par pay karta hai (online gateway nahi)
+const PAY_AT_DESK_METHODS = ['pay_at_desk', 'cash', 'card', 'offline-card'];
+
 /**
  * ============================================================================
  * BOOKING SERVICE (The Core Commercial Engine)
@@ -233,20 +236,22 @@ class BookingService {
       // ----------------------------------------------------------------------
       // STEP 4: INITIAL STATUS DETERMINATION & BOOKING CREATION
       // ----------------------------------------------------------------------
-      // Pay at desk: Mehmaan counter par paise dega, booking direct confirmed ho jati hai
-      // Online: Pehle pending hoti hai, Stripe payment complete hone par confirm hoti hai
-      const initialStatus =
-        paymentMethod === 'pay_at_desk'
-          ? BOOKING_STATUS.CONFIRMED
-          : BOOKING_STATUS.PENDING;
+      // Pay at desk (cash / card / pay_at_desk): Mehmaan counter par paise dega,
+      // booking direct confirmed ho jati hai aur koi expiry timer nahi lagta.
+      // Online (stripe / online / pay_now_stripe): Pehle pending hoti hai, online
+      // payment complete hone par confirm hoti hai.
+      const isPayAtDesk = PAY_AT_DESK_METHODS.includes(paymentMethod);
+
+      const initialStatus = isPayAtDesk
+        ? BOOKING_STATUS.CONFIRMED
+        : BOOKING_STATUS.PENDING;
 
       const initialPaymentStatus = 'unpaid';
 
       // Agar online checkout hai to 5 minute ka expiry timer set karein (Cron service release karegi)
-      const expiresAt =
-        paymentMethod === 'pay_at_desk'
-          ? null
-          : new Date(Date.now() + 5 * 60 * 1000);
+      const expiresAt = isPayAtDesk
+        ? null
+        : new Date(Date.now() + 5 * 60 * 1000);
 
       // ----------------------------------------------------------------------
       // STEP 3.5: COUPON & LOYALTY POINTS DISCOUNT CALCULATION

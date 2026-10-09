@@ -15,10 +15,12 @@ export const engagementService = {
 
   /**
    * Get guest's saved wishlist of rooms
-   * @returns {Promise<{ wishlist: Array }>}
+   * Backend returns a bare array of rooms; always resolves to an array.
+   * @returns {Promise<Array>}
    */
   async getWishlist() {
-    return api.get('/wishlist');
+    const data = await api.get('/wishlist');
+    return Array.isArray(data) ? data : data?.wishlist || [];
   },
 
   /**
@@ -41,10 +43,12 @@ export const engagementService = {
 
   /**
    * Get guest's active date waitlist subscriptions
-   * @returns {Promise<{ waitlists: Array }>}
+   * Backend returns a bare array of entries; always resolves to an array.
+   * @returns {Promise<Array>}
    */
   async getWaitlists() {
-    return api.get('/waitlist');
+    const data = await api.get('/waitlist');
+    return Array.isArray(data) ? data : data?.waitlists || [];
   },
 
   /**

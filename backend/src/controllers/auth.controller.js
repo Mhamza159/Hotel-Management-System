@@ -285,6 +285,42 @@ const getStaffList = async (req, res, next) => {
 };
 
 /**
+ * Privilege-escalation guard for staff administration.
+ * Super-Admin par koi pabandi nahi. Baqi `staff:manage` holders ke liye:
+ * 1. `super-admin` role sirf Super-Admin assign kar sakta hai.
+ * 2. Koi apna khud ka role / permissions modify nahi kar sakta.
+ * 3. Sirf wahi permissions grant ki ja sakti hain jo actor ke apne paas hain.
+ *
+ * @param {Object} actor - Logged-in user (req.user)
+ * @param {Object} params
+ * @param {string} params.targetRole - Role jo assign hoga
+ * @param {string[]} params.addedPermissions - Nayi grant hone wali permissions
+ * @param {string} [params.targetUserId] - Jis user ko modify kiya ja raha hai
+ */
+const assertCanGrantAccess = (actor, { targetRole, addedPermissions = [], targetUserId = null }) => {
+  if (actor.role === ROLES.SUPER_ADMIN) {
+    return;
+  }
+
+  if (targetRole === ROLES.SUPER_ADMIN) {
+    throw new ApiError(403, "Only Super-Admin can assign the super-admin role.");
+  }
+
+  if (targetUserId && targetUserId.toString() === actor._id.toString()) {
+    throw new ApiError(403, "You cannot modify your own role or permissions.");
+  }
+
+  const actorPermissions = Array.isArray(actor.permissions) ? actor.permissions : [];
+  const notHeld = addedPermissions.filter((perm) => !actorPermissions.includes(perm));
+  if (notHeld.length > 0) {
+    throw new ApiError(
+      403,
+      `You cannot grant permissions you do not hold yourself: ${notHeld.join(", ")}.`
+    );
+  }
+};
+
+/**
  * Allows Super-Admin (or staff with STAFF_MANAGE) to create a new staff account.
  * Route: POST /api/v1/auth/staff
  */
@@ -327,6 +363,11 @@ const createStaffUser = async (req, res, next) => {
     } else {
       assignedPermissions = ROLE_DEFAULT_PERMISSIONS[role] || [];
     }
+
+    assertCanGrantAccess(req.user, {
+      targetRole: role,
+      addedPermissions: role === ROLES.SUPER_ADMIN ? [] : assignedPermissions,
+    });
 
     const user = await User.create({
       name,
@@ -396,6 +437,7 @@ const updateUserPermissions = async (req, res, next) => {
     }
 
     // Role update
+    let nextRole = user.role;
     if (role) {
       if (!Object.values(ROLES).includes(role)) {
         throw new ApiError(
@@ -403,17 +445,13 @@ const updateUserPermissions = async (req, res, next) => {
           `Invalid role '${role}'. Allowed: ${Object.values(ROLES).join(", ")}`
         );
       }
-      user.role = role;
-    }
-
-    // Active/Inactive toggle
-    if (isActive !== undefined) {
-      user.isActive = Boolean(isActive);
+      nextRole = role;
     }
 
     // Permissions update logic (Default template vs Custom permissions list)
+    let nextPermissions = [...user.permissions];
     if (resetToDefault) {
-      user.permissions = ROLE_DEFAULT_PERMISSIONS[user.role] || [];
+      nextPermissions = ROLE_DEFAULT_PERMISSIONS[nextRole] || [];
     } else if (permissions !== undefined) {
       if (!Array.isArray(permissions)) {
         throw new ApiError(
@@ -427,7 +465,22 @@ const updateUserPermissions = async (req, res, next) => {
           throw new ApiError(400, `Invalid permission '${perm}'.`);
         }
       }
-      user.permissions = [...new Set(permissions)]; // deduplicate
+      nextPermissions = [...new Set(permissions)]; // deduplicate
+    }
+
+    // Privilege-escalation guard: changes ko apply karne se pehle verify karein
+    assertCanGrantAccess(req.user, {
+      targetRole: nextRole,
+      addedPermissions: nextPermissions.filter((perm) => !user.permissions.includes(perm)),
+      targetUserId: user._id,
+    });
+
+    user.role = nextRole;
+    user.permissions = nextPermissions;
+
+    // Active/Inactive toggle
+    if (isActive !== undefined) {
+      user.isActive = Boolean(isActive);
     }
 
     await user.save();

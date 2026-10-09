@@ -153,7 +153,7 @@ export function App() {
         <Route
           path="/desk/walk-in"
           element={
-            <ProtectedRoute requiredPermission={PERMISSIONS.BOOKINGS_CREATE}>
+            <ProtectedRoute requiredPermission={PERMISSIONS.CHECKIN_MANAGE}>
               <StaffLayout
                 title="Walk-In Guest Registration"
                 subtitle="Book rooms on behalf of walk-in guests with in-person settlement & instant check-in"

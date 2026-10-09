@@ -84,7 +84,7 @@ export const StaffPbacMatrixPage = () => {
         icon: CalendarCheck,
         permissions: [
           { key: 'bookings:view', label: 'View All Bookings', desc: 'Browse guest bookings and stay details' },
-          { key: 'bookings:create', label: 'Create Reservations', desc: 'Book rooms on behalf of walk-in guests' },
+          { key: 'bookings:create', label: 'Create Reservations', desc: 'Create own online reservations (walk-ins use Guest Check-In)' },
           { key: 'bookings:confirm', label: 'Confirm Reservations', desc: 'Finalize and approve pending bookings' },
           { key: 'bookings:cancel', label: 'Audit & Process Cancellations', desc: 'Approve or reject guest cancellation requests' },
         ],
@@ -94,7 +94,7 @@ export const StaffPbacMatrixPage = () => {
         title: 'Front Desk & Cleanliness',
         icon: ConciergeBell,
         permissions: [
-          { key: 'checkin:manage', label: 'Guest Check-In', desc: 'Perform physical check-in and issue room keys' },
+          { key: 'checkin:manage', label: 'Guest Check-In', desc: 'Perform physical check-in, issue room keys, and register walk-in guests' },
           { key: 'checkout:manage', label: 'Guest Check-Out', desc: 'Perform check-out and flag rooms as dirty' },
           { key: 'housekeeping:update', label: 'Housekeeping Cleanliness Board', desc: 'Transition room cleanliness (clean, dirty, cleaning)' },
         ],

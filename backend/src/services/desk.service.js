@@ -982,11 +982,12 @@ class DeskService {
    * 
    * @param {Object} params
    * @param {string} params.actorId - Logged-in staff member ki ObjectId
+   * @param {Object} [params.staffUser] - Logged-in staff member ka document (payment permission check ke liye)
    * @param {string} params.clientIp - Client IP address
    * @param {Object} params.data - Walk-in payload (guestName, guestPhone, roomIds, dates, etc.)
    * @returns {Promise<Object>} Populated Booking document with Reference code
    */
-  static async createWalkInBooking({ actorId, clientIp = null, data }) {
+  static async createWalkInBooking({ actorId, staffUser = null, clientIp = null, data }) {
     const {
       guestName,
       guestPhone,
@@ -1001,6 +1002,26 @@ class DeskService {
       instantCheckIn = true,
       specialRequests = '',
     } = data;
+
+    // 0. PAYMENT PERMISSION GUARD
+    // Counter par paise lene ke liye wahi PBAC rules jo recordInPersonPayment me hain.
+    // Yeh check kisi bhi database write se pehle hota hai.
+    const collectsPaymentNow =
+      ['cash', 'offline-card', 'card'].includes(paymentMethod) &&
+      (paymentAmount === undefined || paymentAmount === null || Number(paymentAmount) > 0);
+
+    if (collectsPaymentNow && staffUser && staffUser.role !== ROLES.SUPER_ADMIN) {
+      const requiredPermission =
+        paymentMethod === 'cash'
+          ? PERMISSIONS.PAYMENTS_RECORD_CASH
+          : PERMISSIONS.PAYMENTS_RECORD_CARD;
+
+      if (!staffUser.permissions?.includes(requiredPermission)) {
+        throw ApiError.forbidden(
+          `You do not have permission to record ${paymentMethod === 'cash' ? 'cash' : 'card'} payments`
+        );
+      }
+    }
 
     // 1. DATES VALIDATION & NIGHTS CALCULATION
     const checkIn = new Date(checkInDate);
@@ -1078,9 +1099,7 @@ class DeskService {
 
     // 5. IF INSTANT CHECK-IN: VALIDATE ROOM CLEANLINESS
     if (instantCheckIn) {
-      const unreadyRooms = rooms.filter(
-        (r) => r.housekeepingStatus !== 'clean' || r.isOccupied
-      );
+      const unreadyRooms = rooms.filter((r) => r.housekeepingStatus !== 'clean');
       if (unreadyRooms.length > 0) {
         const unreadyNumbers = unreadyRooms.map((r) => `#${r.roomNumber}`).join(', ');
         throw ApiError.badRequest(
@@ -1113,44 +1132,82 @@ class DeskService {
 
     const bookingRef = Booking.generateBookingReference();
 
-    // 7. ATOMIC BOOKING RECORD CREATION
-    const booking = await Booking.create({
-      bookingReference: bookingRef,
-      userId: guest._id,
-      bookedByStaffId: actorId,
-      guestInfo: {
-        fullName: guestName.trim(),
-        phone: guestPhone.trim(),
-        email: guest.email,
-        idDocument: guestIdDocument ? guestIdDocument.trim() : null,
-      },
-      rooms: bookedRooms,
-      checkInDate: checkIn,
-      checkOutDate: checkOut,
-      numberOfGuests: numberOfGuests || 1,
-      specialRequests: specialRequests ? specialRequests.trim() : '',
-      totalPrice: totalPrice,
-      paidAmount: finalPaidAmount,
-      status: bookingStatus,
-      paymentStatus: bookingPaymentStatus,
-      checkedInAt: instantCheckIn ? new Date() : null,
-    });
+    // 7. ATOMIC ROOM DATE LOCK (same guard as online bookings)
+    // Har room ke reservedRanges me range sirf tab push hoti hai jab koi overlapping
+    // range mojood na ho, taake online aur walk-in bookings aapas me takra na sakein.
+    const lockedRoomIds = [];
+    const releaseLocks = async () => {
+      if (lockedRoomIds.length > 0) {
+        await Room.updateMany(
+          { _id: { $in: lockedRoomIds } },
+          { $pull: { reservedRanges: { bookingReference: bookingRef } } }
+        );
+      }
+    };
 
-    // 8. UPDATE ROOM OCCUPANCY IF INSTANT CHECK-IN
-    if (instantCheckIn) {
-      await Room.updateMany(
-        { _id: { $in: roomIds } },
+    for (const room of rooms) {
+      const lockedRoom = await Room.findOneAndUpdate(
         {
-          $set: { isOccupied: true },
-          $push: {
-            reservedRanges: {
-              bookingReference: bookingRef,
-              checkInDate: checkIn,
-              checkOutDate: checkOut,
+          _id: room._id,
+          isActive: true,
+          isDeleted: false,
+          reservedRanges: {
+            $not: {
+              $elemMatch: {
+                checkIn: { $lt: checkOut },
+                checkOut: { $gt: checkIn },
+              },
             },
           },
-        }
+        },
+        {
+          $push: {
+            reservedRanges: {
+              checkIn,
+              checkOut,
+              bookingReference: bookingRef,
+            },
+          },
+        },
+        { new: true }
       );
+
+      if (!lockedRoom) {
+        await releaseLocks();
+        throw ApiError.conflict(
+          `Room #${room.roomNumber} is no longer available for the chosen stay duration.`
+        );
+      }
+      lockedRoomIds.push(room._id);
+    }
+
+    // 8. BOOKING RECORD CREATION (locks release ho jate hain agar yeh fail ho)
+    let booking;
+    try {
+      booking = await Booking.create({
+        bookingReference: bookingRef,
+        userId: guest._id,
+        bookedByStaffId: actorId,
+        guestInfo: {
+          fullName: guestName.trim(),
+          phone: guestPhone.trim(),
+          email: guest.email,
+          idDocument: guestIdDocument ? guestIdDocument.trim() : null,
+        },
+        rooms: bookedRooms,
+        checkInDate: checkIn,
+        checkOutDate: checkOut,
+        numberOfGuests: numberOfGuests || 1,
+        specialRequests: specialRequests ? specialRequests.trim() : '',
+        totalPrice: totalPrice,
+        paidAmount: finalPaidAmount,
+        status: bookingStatus,
+        paymentStatus: bookingPaymentStatus,
+        checkedInAt: instantCheckIn ? new Date() : null,
+      });
+    } catch (error) {
+      await releaseLocks();
+      throw error;
     }
 
     // 9. RECORD FINANCIAL PAYMENT IN LEDGER IF PAID NOW

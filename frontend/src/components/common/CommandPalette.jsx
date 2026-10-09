@@ -51,7 +51,7 @@ const ALL_COMMANDS = [
   },
   // Front Desk
   { id: 'desk', label: 'Arrivals & Departures', description: 'Front desk live operations', path: '/desk', icon: ConciergeBell, color: '#3FD0C9', permission: PERMISSIONS.BOOKINGS_VIEW },
-  { id: 'walk-in', label: 'Walk-In Booking', description: 'Counter reservation and instant lobby check-in', path: '/desk/walk-in', icon: ConciergeBell, color: '#3FD0C9', permission: PERMISSIONS.BOOKINGS_CREATE },
+  { id: 'walk-in', label: 'Walk-In Booking', description: 'Counter reservation and instant lobby check-in', path: '/desk/walk-in', icon: ConciergeBell, color: '#3FD0C9', permission: PERMISSIONS.CHECKIN_MANAGE },
   { id: 'cancellations', label: 'Cancellations Queue', description: 'Authoritative refund policy queue', path: '/desk/cancellations', icon: Clock, color: '#C9A15A', permission: PERMISSIONS.BOOKINGS_CANCEL },
   { id: 'housekeeping', label: 'Housekeeping Board', description: 'Real-time room cleanliness statuses', path: '/housekeeping', icon: Sparkles, color: '#3ECF8E', permission: PERMISSIONS.HOUSEKEEPING_UPDATE },
   // Administration

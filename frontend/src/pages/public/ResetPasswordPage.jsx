@@ -55,7 +55,7 @@ export const ResetPasswordPage = () => {
 
       await authService.resetPassword({
         token: data.token,
-        password: data.password,
+        newPassword: data.password,
       });
 
       setIsSuccess(true);

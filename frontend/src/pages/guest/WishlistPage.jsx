@@ -16,8 +16,8 @@ export const WishlistPage = () => {
   const fetchWishlist = async () => {
     try {
       setLoading(true);
-      const res = await engagementService.getWishlist();
-      setWishlist(res?.wishlist || []);
+      const rooms = await engagementService.getWishlist();
+      setWishlist(rooms);
     } catch (err) {
       console.error('Failed to load wishlist:', err);
     } finally {
@@ -86,7 +86,7 @@ export const WishlistPage = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {wishlist.map((room) => {
-              const image = room.images?.[0] || 'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=800&q=80';
+              const image = room.images?.[0]?.url || 'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=800&q=80';
 
               return (
                 <div

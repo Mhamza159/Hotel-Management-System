@@ -91,7 +91,7 @@ export const DeskDashboardPage = () => {
   const { user } = useAuthStore();
   const userPerms = Array.isArray(user?.permissions) ? user.permissions : [];
   const isSuperAdmin = user?.role === ROLES.SUPER_ADMIN;
-  const canCreateBooking = isSuperAdmin || userPerms.includes(PERMISSIONS.BOOKINGS_CREATE);
+  const canCreateBooking = isSuperAdmin || userPerms.includes(PERMISSIONS.CHECKIN_MANAGE);
   const canCheckIn = isSuperAdmin || userPerms.includes(PERMISSIONS.CHECKIN_MANAGE);
   const canCheckOut = isSuperAdmin || userPerms.includes(PERMISSIONS.CHECKOUT_MANAGE);
   const canRecordPayment =

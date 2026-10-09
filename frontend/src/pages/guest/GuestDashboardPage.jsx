@@ -50,12 +50,10 @@ export const GuestDashboardPage = () => {
           setBookings(bookingsRes.value?.bookings || []);
         }
         if (wishlistRes.status === 'fulfilled') {
-          const list = wishlistRes.value?.wishlist || [];
-          setWishlistCount(list.length);
+          setWishlistCount(wishlistRes.value.length);
         }
         if (waitlistRes.status === 'fulfilled') {
-          const list = waitlistRes.value?.waitlists || [];
-          setWaitlistCount(list.length);
+          setWaitlistCount(waitlistRes.value.length);
         }
       } catch (err) {
         console.error('Failed to load guest dashboard:', err);

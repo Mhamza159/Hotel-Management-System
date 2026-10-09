@@ -49,7 +49,7 @@ const NAVIGATION_SECTIONS = [
         to: '/desk/walk-in',
         label: 'Walk-In Booking',
         icon: CalendarPlus,
-        permission: PERMISSIONS.BOOKINGS_CREATE,
+        permission: PERMISSIONS.CHECKIN_MANAGE,
       },
       {
         to: '/desk/cancellations',

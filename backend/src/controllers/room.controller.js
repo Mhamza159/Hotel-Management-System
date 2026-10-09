@@ -221,7 +221,7 @@ class RoomController {
   static async deleteImage(req, res, next) {
     try {
       const { id } = req.params;
-      const publicId = req.params.publicId || req.body.publicId || req.query.publicId;
+      const publicId = req.params.publicId || req.body?.publicId || req.query.publicId;
 
       const result = await RoomService.deleteRoomImage(id, publicId);
       return ApiResponse.success(res, 200, result, result.message);

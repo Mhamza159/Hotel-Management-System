@@ -291,7 +291,8 @@ class DeskController {
       const { id: bookingId } = req.params;
       const staffId = req.user._id;
       const staffRole = req.user.role;
-      const { notes } = req.body;
+      // Express 5 me bina body wali PATCH request par req.body undefined hota hai
+      const { notes } = req.body || {};
 
       const result = await CancellationService.approveCancellation({
         bookingId,
@@ -350,7 +351,8 @@ class DeskController {
    * create karti hai with immediate check-in option and in-person payment settlement.
    * 
    * Security Guard:
-   * Requires JWT token + `bookings:create` permission.
+   * Requires JWT token + `checkin:manage` permission. Payment collected at the
+   * counter additionally requires `payments:recordCash` / `payments:recordCard`.
    */
   static async createWalkInBooking(req, res, next) {
     try {
@@ -359,6 +361,7 @@ class DeskController {
 
       const booking = await DeskService.createWalkInBooking({
         actorId,
+        staffUser: req.user,
         clientIp,
         data: req.body,
       });

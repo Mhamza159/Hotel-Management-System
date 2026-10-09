@@ -167,12 +167,11 @@ export const RoomDetailPage = () => {
     Promise.all([
       roomService.getRoomDetails(id),
       roomService.getRoomReviews(id, { limit: 5 }).catch(() => ({ reviews: [] })),
-      user ? engagementService.getWishlist().catch(() => ({ wishlist: [] })) : Promise.resolve({ wishlist: [] }),
+      user ? engagementService.getWishlist().catch(() => []) : Promise.resolve([]),
     ])
-      .then(([roomData, reviewsData, wishlistData]) => {
+      .then(([roomData, reviewsData, wList]) => {
         setRoom(roomData.room || roomData);
         setReviews(reviewsData.reviews || []);
-        const wList = wishlistData.wishlist || [];
         setInWishlist(wList.some((item) => (typeof item === 'string' ? item === id : item._id === id)));
       })
       .catch((err) => {

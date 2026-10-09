@@ -55,7 +55,7 @@ export const authService = {
 
   /**
    * Set new password using reset token
-   * @param {{ token, password }} payload
+   * @param {{ token, newPassword }} payload
    * @returns {Promise<{ message }>}
    */
   async resetPassword(payload) {

@@ -23,8 +23,8 @@ export const WaitlistPage = () => {
   const fetchWaitlists = async () => {
     try {
       setLoading(true);
-      const res = await engagementService.getWaitlists();
-      setWaitlists(res?.waitlists || []);
+      const entries = await engagementService.getWaitlists();
+      setWaitlists(entries);
     } catch (err) {
       console.error('Failed to load waitlists:', err);
     } finally {
