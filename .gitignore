@@ -28,3 +28,6 @@ Thumbs.db
 
 # Private executive portfolio docs with credentials
 PROJECT_PORTFOLIO_EXECUTIVE_SUMMARY.*
+
+# Local-only internal analysis (contains security findings)
+PROJECT_OVERVIEW.md
