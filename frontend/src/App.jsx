@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
+import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/useAuthStore';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { ROLES, PERMISSIONS } from './config/constants';
@@ -47,6 +47,11 @@ import { AdminCopilotPage } from './pages/admin/AdminCopilotPage';
 import { ConciergePage } from './pages/public/ConciergePage';
 import { ChatDrawer } from './components/common/ChatDrawer';
 import { CommandPalette } from './components/common/CommandPalette';
+import { DesktopHomeRedirect } from './components/common/DesktopHomeRedirect';
+import { isDesktop } from './config/runtime';
+
+// Staff desktop app me guest-facing pages band hain; unhe staff home par bhej dein
+const webOnly = (element) => (isDesktop ? <Navigate to="/" replace /> : element);
 
 /**
  * ============================================================================
@@ -67,71 +72,73 @@ import { CommandPalette } from './components/common/CommandPalette';
  * administrative modules.
  */
 export function App() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
   return (
     <>
       <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/rooms" element={<RoomCatalogPage />} />
-        <Route path="/rooms/:id" element={<RoomDetailPage />} />
-        <Route path="/concierge" element={<ConciergePage />} />
+        {/* Public Routes (desktop: staff home redirect) */}
+        <Route path="/" element={isDesktop ? <DesktopHomeRedirect /> : <LandingPage />} />
+        <Route path="/rooms" element={webOnly(<RoomCatalogPage />)} />
+        <Route path="/rooms/:id" element={webOnly(<RoomDetailPage />)} />
+        <Route path="/concierge" element={webOnly(<ConciergePage />)} />
 
         {/* Auth Routes */}
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/register" element={webOnly(<RegisterPage />)} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Guest Protected Checkout Flow */}
         <Route
           path="/checkout"
-          element={
+          element={webOnly(
             <ProtectedRoute allowedRoles={[ROLES.GUEST, ROLES.SUPER_ADMIN]}>
               <CheckoutPage />
             </ProtectedRoute>
-          }
+          )}
         />
 
         {/* Guest Portals */}
         <Route
           path="/dashboard"
-          element={
+          element={webOnly(
             <ProtectedRoute allowedRoles={[ROLES.GUEST, ROLES.SUPER_ADMIN]}>
               <GuestDashboardPage />
             </ProtectedRoute>
-          }
+          )}
         />
         <Route
           path="/my-bookings"
-          element={
+          element={webOnly(
             <ProtectedRoute allowedRoles={[ROLES.GUEST, ROLES.SUPER_ADMIN]}>
               <MyBookingsPage />
             </ProtectedRoute>
-          }
+          )}
         />
         <Route
           path="/my-bookings/:id"
-          element={
+          element={webOnly(
             <ProtectedRoute allowedRoles={[ROLES.GUEST, ROLES.SUPER_ADMIN]}>
               <BookingDetailPage />
             </ProtectedRoute>
-          }
+          )}
         />
         <Route
           path="/wishlist"
-          element={
+          element={webOnly(
             <ProtectedRoute allowedRoles={[ROLES.GUEST, ROLES.SUPER_ADMIN]}>
               <WishlistPage />
             </ProtectedRoute>
-          }
+          )}
         />
         <Route
           path="/waitlist"
-          element={
+          element={webOnly(
             <ProtectedRoute allowedRoles={[ROLES.GUEST, ROLES.SUPER_ADMIN]}>
               <WaitlistPage />
             </ProtectedRoute>
-          }
+          )}
         />
 
         {/* Staff Operations: Arrivals & Departures */}
@@ -446,8 +453,8 @@ export function App() {
         />
       </Routes>
 
-      {/* Global Overlays */}
-      <ChatDrawer />
+      {/* Global Overlays (desktop: assistant needs a staff session) */}
+      {(!isDesktop || isAuthenticated) && <ChatDrawer />}
       <CommandPalette />
     </>
   );

@@ -10,6 +10,9 @@
     "build:frontend": "npm --prefix frontend run build",
     "build:client": "npm --prefix frontend run build",
     "start": "npm --prefix backend start",
-    "test": "npm --prefix backend test"
+    "test": "npm --prefix backend test",
+    "desktop": "npm --prefix desktop start",
+    "desktop:build-web": "npm --prefix desktop run build:web",
+    "desktop:dist": "npm --prefix desktop run dist"
   }
 }

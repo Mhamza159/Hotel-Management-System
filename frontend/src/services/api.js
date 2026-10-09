@@ -1,7 +1,9 @@
 import axios from 'axios';
 import { useAuthStore } from '../stores/useAuthStore';
+import { API_BASE_URL } from '../config/runtime';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+// Web: VITE_API_BASE_URL ya '/api/v1'. Staff desktop: hotel Hub ka address.
+const BASE_URL = API_BASE_URL;
 
 export const api = axios.create({
   baseURL: BASE_URL,

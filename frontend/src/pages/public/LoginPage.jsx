@@ -8,6 +8,11 @@ import AuthSplitLayout from '../../layouts/AuthSplitLayout';
 import { authService } from '../../services/auth.service';
 import { KeycardLoader } from '../../components/common/KeycardLoader';
 import { ROLES } from '../../config/constants';
+import { isDesktop } from '../../config/runtime';
+import {
+  getStaffHomePath,
+  STAFF_ONLY_MESSAGE,
+} from '../../components/common/DesktopHomeRedirect';
 
 const loginSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Please enter a valid email address'),
@@ -41,6 +46,13 @@ export const LoginPage = () => {
 
       const response = await authService.login(data);
       const user = response.user;
+
+      // Staff desktop app: guest accounts ko andar aane na dein
+      if (isDesktop && !getStaffHomePath(user.role)) {
+        authService.logout();
+        setServerError(STAFF_ONLY_MESSAGE);
+        return;
+      }
 
       // Smart redirection based on role or intended destination
       const from = location.state?.from?.pathname;
@@ -95,13 +107,17 @@ export const LoginPage = () => {
     <AuthSplitLayout
       headlinePart1="Welcome back."
       headlinePart2="to your sanctuary."
-      title="Sign In"
-      subtitle="Welcome back to Grand Horizon. Sign in to manage your stay."
+      title={isDesktop ? 'Staff Sign In' : 'Sign In'}
+      subtitle={
+        isDesktop
+          ? 'Grand Horizon staff console. Sign in with your staff account.'
+          : 'Welcome back to Grand Horizon. Sign in to manage your stay.'
+      }
     >
-      {serverError && (
+      {(serverError || location.state?.notice) && (
         <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 flex items-start space-x-2.5 text-rose-700 text-xs">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
-          <span>{serverError}</span>
+          <span>{serverError || location.state.notice}</span>
         </div>
       )}
 
@@ -188,16 +204,18 @@ export const LoginPage = () => {
           )}
         </button>
 
-        {/* Register Link */}
-        <div className="text-center pt-3">
-          <span className="text-xs text-[#2A2A28]/70">Don't have an account? </span>
-          <Link
-            to="/register"
-            className="text-xs font-semibold text-[#2B3A2A] hover:underline transition-colors ml-1"
-          >
-            Register
-          </Link>
-        </div>
+        {/* Register Link (web only; staff accounts are created by an admin) */}
+        {!isDesktop && (
+          <div className="text-center pt-3">
+            <span className="text-xs text-[#2A2A28]/70">Don't have an account? </span>
+            <Link
+              to="/register"
+              className="text-xs font-semibold text-[#2B3A2A] hover:underline transition-colors ml-1"
+            >
+              Register
+            </Link>
+          </div>
+        )}
       </form>
     </AuthSplitLayout>
   );

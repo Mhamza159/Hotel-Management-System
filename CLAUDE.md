@@ -4,10 +4,13 @@ Full analysis (modules, every endpoint, data model, known bugs): see `PROJECT_OV
 
 ## What this is
 
-Single-hotel reservation + operations app. Two independent npm packages, no workspace tooling:
+Single-hotel reservation + operations app. Three independent npm packages, no workspace tooling:
 
 - `backend/` — Express 5 + Mongoose 8 REST API (CommonJS). Entry `src/server.js` (local; starts cron) or `api/index.js` (Vercel serverless; **no cron**).
 - `frontend/` — React 18 + Vite SPA (ESM), MUI 5 + Tailwind + Zustand + axios. Entry `src/main.jsx` → `src/App.jsx` (all routes).
+- `desktop/` — Electron staff-only client (see `desktop/README.md`). Loads the built frontend from `desktop/web` on origin `app://hotel` and points the API at the hotel Hub (LAN backend). Frontend detects it via `window.hotelDesktop` (`frontend/src/config/runtime.js`).
+
+Roadmap: staff desktop app + hotel Hub PC + cloud sync (Step 2 desktop client done; Step 3 Hub installer, Step 4 sync engine pending). **Pushing `main` auto-deploys both Vercel projects to production — work on feature branches and never push/merge without the user's approval.**
 
 Personas: guest (`user`), `receptionist`, `housekeeping`, `super-admin`.
 
@@ -17,7 +20,7 @@ Personas: guest (`user`), `receptionist`, `housekeeping`, `super-admin`.
 # backend (needs backend/.env with MONGO_URI, JWT_SECRET, JWT_REFRESH_SECRET ≥16 chars)
 cd backend && npm install
 npm run dev        # nodemon src/server.js on :5000, Swagger at /api-docs
-npm test           # jest --runInBand, in-memory MongoDB (~2 min). Baseline: 163/165 pass (2 known stale tests: auth register perms, room description)
+npm test           # jest --runInBand, in-memory MongoDB (~2 min). Baseline: 166/168 pass (2 known stale tests: auth register perms, room description)
 npx jest tests/integration/desk.test.js   # single file
 npm run seed       # destructive for seed users/rooms/coupons
 
@@ -25,6 +28,12 @@ npm run seed       # destructive for seed users/rooms/coupons
 cd frontend && npm install
 npm run dev        # :5173
 npm run build
+
+# desktop (Electron 44; unset ELECTRON_RUN_AS_NODE if Electron acts like plain Node)
+cd desktop && npm install
+npm run build:web  # frontend -> desktop/web
+npm start          # first run asks for the Hub address
+npm run smoke -- --hub-url=http://<hub>:5000   # headless check, prints SMOKE_RESULT
 ```
 
 Run backend scripts/tests with `backend/` as the working directory (env and the mongodb-memory-server binary cache resolve from cwd). No linter, formatter, TypeScript, or frontend tests exist.

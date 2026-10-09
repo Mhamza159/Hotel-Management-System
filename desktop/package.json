@@ -1,0 +1,38 @@
+{
+  "name": "grand-horizon-staff-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Grand Horizon staff desktop client. Connects to the hotel Hub backend over the LAN.",
+  "author": "M Hamza Hakim",
+  "main": "src/main.js",
+  "scripts": {
+    "build:web": "npm --prefix ../frontend run build -- --outDir ../desktop/web --emptyOutDir",
+    "start": "electron .",
+    "dev": "electron . --dev-url=http://localhost:5173",
+    "smoke": "electron . --smoke-test",
+    "dist": "npm run build:web && electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "44.4.5",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "com.grandhorizon.staffdesktop",
+    "productName": "Grand Horizon Staff",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "web/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

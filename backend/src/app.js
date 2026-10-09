@@ -38,6 +38,7 @@ const clientUrls = (process.env.CLIENT_URL || "")
 
 const allowedOrigins = [
   ...clientUrls,
+  "app://hotel", // Grand Horizon Staff desktop app (Electron custom scheme)
   "http://localhost:5173",
   "http://localhost:5000",
   "http://localhost:3000",
