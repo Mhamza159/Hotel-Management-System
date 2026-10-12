@@ -6,6 +6,7 @@ const Coupon = require('../models/Coupon');
 const { BOOKING_STATUS, PAYMENT_STATUS, ROLES, PERMISSIONS } = require('../config/constants');
 const ApiError = require('../utils/apiError');
 const { hasPermission } = require('../utils/permissions');
+const { startOfHotelToday } = require('../utils/hotelDate');
 
 // Payment methods jin me guest counter par pay karta hai (online gateway nahi)
 const PAY_AT_DESK_METHODS = ['pay_at_desk', 'cash', 'card', 'offline-card'];
@@ -140,9 +141,8 @@ class BookingService {
       throw ApiError.badRequest('checkOutDate must be strictly after checkInDate');
     }
 
-    // Aaj ki midnight se check karein taake maazi (past) ki date me booking na ho
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Hotel ke aaj se check karein taake maazi (past) ki date me booking na ho
+    const today = startOfHotelToday();
     if (checkIn < today) {
       throw ApiError.badRequest('checkInDate cannot be in the past');
     }

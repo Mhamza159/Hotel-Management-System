@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const crypto = require("crypto");
-const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const Booking = require("../models/Booking");
 const Room = require("../models/Room");
@@ -17,6 +16,7 @@ const LoyaltyService = require("./loyalty.service");
 const AuditService = require("./audit.service");
 const { reconcileBookingRanges, ROOM_HOLDING_STATUSES } = require("../sync/bookingRanges");
 const { CONFLICT_REASON } = require("../sync/syncStore");
+const { DAY_MS, toUtcDay, startOfHotelToday, dateOnlyDayWindow } = require("../utils/hotelDate");
 
 /**
  * Kya koi aur active booking (pending / confirmed / checked-in / cancellation-requested)
@@ -385,10 +385,8 @@ class DeskService {
         });
 
         if (currentOccupant) {
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const checkIn = new Date(booking.checkInDate);
-          checkIn.setHours(0, 0, 0, 0);
+          const today = startOfHotelToday();
+          const checkIn = toUtcDay(booking.checkInDate);
           if (checkIn <= today || checkIn < new Date(currentOccupant.checkOutDate)) {
             throw ApiError.conflict(
               `Room ${targetRoom.roomNumber} is currently occupied by an in-house guest (Ref: ${currentOccupant.bookingReference}). It cannot be allotted until checkout.`
@@ -816,16 +814,9 @@ class DeskService {
     // ------------------------------------------------------------------------
     // STEP 1: DATE WINDOW NORMALIZATION (Tareekh ki Hadoon Ka Ta'ayyun)
     // ------------------------------------------------------------------------
-    // Agar client ne specific date pass ki ho toh wo use karein, warna aaj ki date:
-    const targetDate = date ? new Date(date) : new Date();
-
-    // Din ki shuruat (Midnight 00:00:00.000)
-    const startOfDay = new Date(targetDate);
-    startOfDay.setHours(0, 0, 0, 0);
-
-    // Din ka aakhri lamha (Night 23:59:59.999)
-    const endOfDay = new Date(targetDate);
-    endOfDay.setHours(23, 59, 59, 999);
+    // Client ki di hui tareekh, warna hotel ka aaj. Booking tareekhein date-only
+    // (UTC midnight) hain, is liye din ki window bhi UTC din par (server timezone se azad)
+    const { start: startOfDay, end: endOfDay } = dateOnlyDayWindow(date || undefined);
 
     // ------------------------------------------------------------------------
     // STEP 2: OPERATIONAL TYPE FILTERING (Arrivals, Departures, In-House)
@@ -921,12 +912,10 @@ class DeskService {
     }
 
     if (!effectiveCheckIn) {
-      effectiveCheckIn = new Date();
-      effectiveCheckIn.setHours(0, 0, 0, 0);
+      effectiveCheckIn = startOfHotelToday();
     }
     if (!effectiveCheckOut) {
-      effectiveCheckOut = new Date(effectiveCheckIn);
-      effectiveCheckOut.setDate(effectiveCheckOut.getDate() + 1);
+      effectiveCheckOut = new Date(effectiveCheckIn.getTime() + DAY_MS);
     }
 
     // 1. Fetch all active catalog rooms
@@ -1093,6 +1082,15 @@ class DeskService {
       throw ApiError.badRequest('Check-out date must be strictly after check-in date.');
     }
 
+    // Guzri hui tareekh par walk-in nahi; "abhi check-in" sirf aaj ki stay ke liye
+    const hotelToday = startOfHotelToday();
+    if (toUtcDay(checkIn) < hotelToday) {
+      throw ApiError.badRequest('Check-in date cannot be in the past.');
+    }
+    if (instantCheckIn && toUtcDay(checkIn) > hotelToday) {
+      throw ApiError.badRequest('Instant check-in is only possible for a stay that starts today.');
+    }
+
     const diffTime = checkOut.getTime() - checkIn.getTime();
     const totalNights = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
 
@@ -1116,13 +1114,14 @@ class DeskService {
         ? guestEmail.trim().toLowerCase()
         : `walkin_${Date.now()}_${Math.random().toString(36).substring(2, 7)}@guest.grandhorizon.com`;
 
+      // Random password (guest "forgot password" se apna set kar sakta hai). User model
+      // ka pre-save hook hash karta hai — pehle yahan bhi hash hota tha (double hash).
       const rawPassword = crypto.randomBytes(16).toString('hex');
-      const hashedPassword = await bcrypt.hash(rawPassword, 10);
 
       guest = await User.create({
         name: guestName.trim(),
         email: finalEmail,
-        password: hashedPassword,
+        password: rawPassword,
         phone: guestPhone.trim(),
         role: ROLES.GUEST,
         isActive: true,
@@ -1138,6 +1137,14 @@ class DeskService {
 
     if (rooms.length !== roomIds.length) {
       throw ApiError.badRequest('One or more selected rooms were not found or are deactivated.');
+    }
+
+    // Mehmaanon ki tadaad rooms ki capacity se zyada na ho (online booking jaisa qaida)
+    const totalCapacity = rooms.reduce((sum, r) => sum + (r.capacity || 0), 0);
+    if (Number(numberOfGuests) > totalCapacity) {
+      throw ApiError.badRequest(
+        `Selected rooms fit ${totalCapacity} guest(s), but ${numberOfGuests} were entered.`
+      );
     }
 
     // 4. PREVENT OVERLAPPING COLLISION ON SELECTED ROOMS

@@ -8,6 +8,7 @@ const {
 } = require('../config/cloudinary');
 const MediaQueue = require('../sync/mediaQueue');
 const escapeRegex = require('../utils/escapeRegex');
+const { startOfHotelToday } = require('../utils/hotelDate');
 
 /**
  * ============================================================================
@@ -64,8 +65,7 @@ class RoomService {
     }
 
     // Maazi (past) ki dates me booking allow nahi hai. Aaj ki tareekh ki midnight se compare karein:
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = startOfHotelToday();
     if (checkIn < today) {
       throw ApiError.badRequest('checkInDate cannot be in the past');
     }

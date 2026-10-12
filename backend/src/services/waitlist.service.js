@@ -1,6 +1,7 @@
 const Waitlist = require('../models/Waitlist');
 const NotificationService = require('./notification.service');
 const ApiError = require('../utils/apiError');
+const { startOfHotelToday } = require('../utils/hotelDate');
 
 /**
  * ============================================================================
@@ -48,8 +49,7 @@ class WaitlistService {
       throw ApiError.badRequest('checkOut must be strictly after checkIn');
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = startOfHotelToday();
     if (checkInDate < today) {
       throw ApiError.badRequest('checkIn date cannot be in the past');
     }

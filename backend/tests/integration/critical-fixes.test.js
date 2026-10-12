@@ -1,6 +1,7 @@
 const request = require('supertest');
 const app = require('../../src/app');
 const dbHelper = require('../fixtures/db-helper');
+const { startOfHotelToday } = require('../../src/utils/hotelDate');
 const Room = require('../../src/models/Room');
 const Booking = require('../../src/models/Booking');
 const User = require('../../src/models/User');
@@ -29,11 +30,9 @@ describe('Critical Fixes Regression Tests', () => {
   let receptionistUser, receptionistToken;
   let superAdminUser, superAdminToken;
 
-  const futureDate = (days) => {
-    const d = new Date();
-    d.setDate(d.getDate() + days);
-    return d.toISOString().split('T')[0];
-  };
+  // Hotel ki tareekh (HOTEL_TIMEZONE) se — server/UTC ki tareekh raat ko ek din peeche hoti hai
+  const futureDate = (days) =>
+    new Date(startOfHotelToday().getTime() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
   beforeAll(async () => {
     await dbHelper.connect();

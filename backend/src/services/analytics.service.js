@@ -6,6 +6,7 @@ const AuditLog = require('../models/AuditLog');
 const { BOOKING_STATUS, PAYMENT_STATUS } = require('../config/constants');
 const ApiError = require('../utils/apiError');
 const escapeRegex = require('../utils/escapeRegex');
+const { DAY_MS, toUtcDay, startOfHotelToday, dateOnlyDayWindow, hotelMidnightInstant } = require('../utils/hotelDate');
 
 /**
  * ============================================================================
@@ -34,11 +35,13 @@ class AnalyticsService {
    * @returns {Promise<Object>}
    */
   static async getRevenueMetrics({ from, to } = {}) {
-    const toDate = to ? new Date(to) : new Date();
-    const fromDate = from ? new Date(from) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // 30 days default
-
-    toDate.setHours(23, 59, 59, 999);
-    fromDate.setHours(0, 0, 0, 0);
+    // Payments asal waqt (createdAt) par hain: hotel ki local midnight se din ginein
+    const toDay = to ? toUtcDay(to) : startOfHotelToday();
+    const fromDay = from ? toUtcDay(from) : new Date(toDay.getTime() - 30 * DAY_MS); // 30 days default
+    const fromDate = hotelMidnightInstant(fromDay.toISOString().slice(0, 10));
+    const toDate = new Date(
+      hotelMidnightInstant(new Date(toDay.getTime() + DAY_MS).toISOString().slice(0, 10)).getTime() - 1
+    );
 
     if (fromDate > toDate) {
       throw ApiError.badRequest("'from' date cannot be after 'to' date");
@@ -170,10 +173,8 @@ class AnalyticsService {
     // Find all active rooms
     const totalRooms = await Room.countDocuments({ isDeleted: false, isActive: true });
 
-    const startOfDay = new Date(targetDate);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(targetDate);
-    endOfDay.setHours(23, 59, 59, 999);
+    // Booking tareekhein date-only (UTC midnight) hain
+    const { start: startOfDay, end: endOfDay } = dateOnlyDayWindow(date || undefined);
 
     // Find bookings that encompass this date and are occupied or confirmed
     const activeBookings = await Booking.find({
@@ -192,7 +193,7 @@ class AnalyticsService {
     const occupancyRate = totalRooms > 0 ? Number(((occupiedRooms / totalRooms) * 100).toFixed(1)) : 0;
 
     return {
-      date: targetDate.toISOString().split('T')[0],
+      date: startOfDay.toISOString().slice(0, 10),
       totalRooms,
       occupiedRooms,
       availableRooms,

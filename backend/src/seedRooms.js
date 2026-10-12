@@ -7,6 +7,7 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 const mongoose = require('mongoose');
 const { connectDB } = require('./config/db');
 const Room = require('./models/Room');
+const { assertSafeToSeed } = require('./utils/seedGuard');
 
 const LUXURY_ROOMS = [
   // 1. Single Rooms
@@ -204,6 +205,7 @@ const LUXURY_ROOMS = [
 ];
 
 const seedRooms = async () => {
+  assertSafeToSeed('seedRooms');
   try {
     console.log('Connecting to MongoDB Atlas...');
     await connectDB();
@@ -211,9 +213,11 @@ const seedRooms = async () => {
     console.log(`Upserting ${LUXURY_ROOMS.length} luxury hotel suites and rooms...`);
 
     for (const roomData of LUXURY_ROOMS) {
+      // reservedRanges sirf naye room par khaali; mojooda room ke booking locks na mitayein
+      const { reservedRanges, ...roomFields } = roomData;
       await Room.findOneAndUpdate(
         { roomNumber: roomData.roomNumber },
-        { $set: roomData },
+        { $set: roomFields, $setOnInsert: { reservedRanges } },
         { upsert: true, new: true, runValidators: true }
       );
       console.log(`✓ Room ${roomData.roomNumber} [${roomData.type.toUpperCase()}] ($${roomData.pricePerNight}/night) - Clean & Ready`);

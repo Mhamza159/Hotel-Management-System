@@ -10,8 +10,10 @@ const Room = require("./models/Room");
 const User = require("./models/User");
 const Coupon = require("./models/Coupon");
 const { ROLES } = require("./config/constants");
+const { assertSafeToSeed } = require("./utils/seedGuard");
 
 const seedData = async () => {
+  assertSafeToSeed("seed");
   try {
     console.log("Connecting to MongoDB...");
     await connectDB();

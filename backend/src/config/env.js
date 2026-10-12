@@ -40,6 +40,18 @@ const envSchema = joi
     HUB_OFFLINE_AFTER_MS: joi.number().integer().min(10000).default(120000),
     // Itni purani tabdeeliyan hi bheji jati hain (abhi commit ho rahi writes peechhe na rahein)
     SYNC_SETTLE_MS: joi.number().integer().min(0).default(5000),
+    // Hotel ka timezone: "aaj", arrivals/departures aur din ki revenue isi se (IANA naam)
+    HOTEL_TIMEZONE: joi
+      .string()
+      .default('Asia/Karachi')
+      .custom((value, helpers) => {
+        try {
+          new Intl.DateTimeFormat('en-US', { timeZone: value });
+          return value;
+        } catch (e) {
+          return helpers.error('any.invalid');
+        }
+      }),
   })
   .unknown(); // Allow other standard system variables without failing
 
@@ -52,6 +64,7 @@ if (error) {
 
 module.exports = {
   port: validatedEnv.PORT,
+  hotelTimeZone: validatedEnv.HOTEL_TIMEZONE,
   env: validatedEnv.NODE_ENV,
   mongoUri: validatedEnv.MONGO_URI,
   jwt: {
