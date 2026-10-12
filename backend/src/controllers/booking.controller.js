@@ -21,6 +21,19 @@ class BookingController {
    * Nayi reservation create karne ka endpoint.
    * Protected: Sirf authenticated user (Guest) hi request bhej sakta hai.
    */
+  /**
+   * POST /api/v1/bookings/quote
+   * Booking banaye baghair server ki asal price (room page coupon / loyalty preview).
+   */
+  static async quoteBooking(req, res, next) {
+    try {
+      const quote = await BookingService.quoteBooking({ userId: req.user._id, ...req.body });
+      return ApiResponse.success(res, 200, quote, 'Price quote calculated');
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async createBooking(req, res, next) {
     try {
       // 1. Authenticated user ki ID auth.middleware ke zariye req.user me mojood hoti hai

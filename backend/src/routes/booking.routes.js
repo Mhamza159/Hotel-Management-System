@@ -6,6 +6,7 @@ const idempotency = require('../middlewares/idempotency.middleware');
 const validate = require('../middlewares/validate.middleware');
 const {
   createBookingSchema,
+  quoteBookingSchema,
   cancelBookingSchema,
   bookingIdParamSchema,
 } = require('../validations/booking.validation');
@@ -32,6 +33,9 @@ router.post('/', SyncController.requireHubOnline, idempotency({ required: false 
 
 // 2. Guest ki apni personal booking history dekhna
 // GET /api/v1/bookings/my?page=1&limit=10
+// POST /api/v1/bookings/quote — room page ki asal price (coupon + loyalty), bina booking
+router.post('/quote', validate(quoteBookingSchema), BookingController.quoteBooking);
+
 router.get('/my', BookingController.getMyBookings);
 
 // 3. Kisi aik specific booking ki details dekhna

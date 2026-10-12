@@ -15,6 +15,15 @@ export const bookingService = {
   },
 
   /**
+   * Server ki asal price bina booking banaye (coupon tasdeeq + loyalty discount)
+   * @param {{ roomIds: string[], checkInDate, checkOutDate, couponCode?, redeemLoyaltyPoints? }} payload
+   * @returns {Promise<{ nights, subtotal, coupon: { code, valid, discount, reason? }|null, loyalty: { points, discount }, discountTotal, total }>}
+   */
+  async quoteBooking(payload) {
+    return api.post('/bookings/quote', payload);
+  },
+
+  /**
    * Retrieve logged-in guest's personal booking history
    * @param {{ page, limit }} params
    * @returns {Promise<{ bookings: Array, pagination: Object }>}

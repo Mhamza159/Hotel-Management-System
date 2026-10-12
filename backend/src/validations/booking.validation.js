@@ -37,6 +37,17 @@ const createBookingSchema = {
   }).or('roomIds', 'rooms'),
 };
 
+// Room page ki price: server ka asal hisaab (booking nahi banti)
+const quoteBookingSchema = {
+  body: Joi.object({
+    roomIds: Joi.array().items(Joi.string().pattern(objectIdPattern)).min(1).max(10).required(),
+    checkInDate: Joi.date().iso().required(),
+    checkOutDate: Joi.date().iso().greater(Joi.ref('checkInDate')).required(),
+    couponCode: Joi.string().trim().uppercase().max(40).allow('', null).optional(),
+    redeemLoyaltyPoints: Joi.boolean().optional(),
+  }),
+};
+
 const cancelBookingSchema = {
   params: Joi.object({
     id: Joi.string().pattern(objectIdPattern).required().messages({
@@ -58,6 +69,7 @@ const bookingIdParamSchema = {
 
 module.exports = {
   createBookingSchema,
+  quoteBookingSchema,
   cancelBookingSchema,
   bookingIdParamSchema,
 };

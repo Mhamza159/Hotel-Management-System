@@ -3,7 +3,7 @@ import React from 'react';
 export const PriceBreakdown = ({
   rooms = [],
   nights = 1,
-  taxRate = 0.1, // 10% hospitality tax
+  taxRate = 0, // Backend koi alag tax charge nahi karta (room rate me shamil)
   discount = 0,
 }) => {
   const roomSubtotal = rooms.reduce((acc, room) => acc + (room.pricePerNight || 0) * nights, 0);
@@ -26,10 +26,12 @@ export const PriceBreakdown = ({
           </div>
         ))}
 
-        <div className="flex justify-between text-[#2A2A28]/70 pt-1">
-          <span>Hospitality & Resort Tax (10%)</span>
-          <span>${taxes}</span>
-        </div>
+        {taxes > 0 && (
+          <div className="flex justify-between text-[#2A2A28]/70 pt-1">
+            <span>Taxes ({Math.round(taxRate * 100)}%)</span>
+            <span>${taxes}</span>
+          </div>
+        )}
 
         {discount > 0 && (
           <div className="flex justify-between text-[#B5533C] font-medium">

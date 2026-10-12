@@ -13,6 +13,29 @@ const PAY_AT_DESK_METHODS = ['pay_at_desk', 'cash', 'card', 'offline-card'];
 const MAX_TRANSACTION_ATTEMPTS = 5;
 const WRITE_CONFLICT_CODE = 112;
 
+/**
+ * Coupon ki discount (booking aur price quote dono yahi use karte hain, taake
+ * guest ko dikhai gayi aur charge ki gayi raqam hamesha ek ho).
+ */
+const couponDiscountFor = (coupon, totalPrice) => {
+  if (!coupon || !coupon.isValid(totalPrice)) return 0;
+  if (coupon.discountType === 'percentage') {
+    const amount = (totalPrice * coupon.discountValue) / 100;
+    return coupon.maxDiscountAmount && amount > coupon.maxDiscountAmount ? coupon.maxDiscountAmount : amount;
+  }
+  if (coupon.discountType === 'fixed') return Math.min(coupon.discountValue, totalPrice);
+  return 0;
+};
+
+/** Loyalty: 100 points = $10, kam az kam 100 points, zyada se zyada baqi raqam ka 50% */
+const loyaltyRedemptionFor = (availablePoints, remainingPrice) => {
+  if (!availablePoints || availablePoints < 100) return { points: 0, discount: 0 };
+  const maxDollarsFromPoints = Math.max(0, remainingPrice) * 0.5;
+  const pointsNeeded = Math.floor((maxDollarsFromPoints / 10) * 100);
+  const points = Math.min(availablePoints, pointsNeeded);
+  return { points, discount: (points / 100) * 10 };
+};
+
 const isTransientTransactionError = (error) =>
   Boolean(
     error &&
@@ -314,14 +337,7 @@ class BookingService {
 
         if (coupon && coupon.isValid(totalPrice)) {
           couponApplied = coupon._id;
-          if (coupon.discountType === 'percentage') {
-            discountAmount = (totalPrice * coupon.discountValue) / 100;
-            if (coupon.maxDiscountAmount && discountAmount > coupon.maxDiscountAmount) {
-              discountAmount = coupon.maxDiscountAmount;
-            }
-          } else if (coupon.discountType === 'fixed') {
-            discountAmount = Math.min(coupon.discountValue, totalPrice);
-          }
+          discountAmount = couponDiscountFor(coupon, totalPrice);
           coupon.usedCount = (coupon.usedCount || 0) + 1;
           await coupon.save(session ? { session } : {});
           incrementedCouponId = coupon._id;
@@ -332,14 +348,9 @@ class BookingService {
       if (redeemLoyaltyPoints) {
         const user = await User.findById(userId);
         if (user && user.loyaltyPoints >= 100) {
-          const maxPointsUsable = user.loyaltyPoints;
-          const remainingPrice = Math.max(0, totalPrice - discountAmount);
-          const maxDollarsFromPoints = remainingPrice * 0.5; // Max 50% discount from loyalty
-          const pointsNeeded = Math.floor((maxDollarsFromPoints / 10) * 100);
-          loyaltyPointsUsed = Math.min(maxPointsUsable, pointsNeeded);
-          const pointsDiscount = (loyaltyPointsUsed / 100) * 10;
-
-          discountAmount += pointsDiscount;
+          const redemption = loyaltyRedemptionFor(user.loyaltyPoints, totalPrice - discountAmount);
+          loyaltyPointsUsed = redemption.points;
+          discountAmount += redemption.discount;
           user.loyaltyPoints -= loyaltyPointsUsed;
           await user.save(session ? { session } : {});
           deductedPoints = loyaltyPointsUsed;
@@ -404,6 +415,55 @@ class BookingService {
         session.endSession();
       }
     }
+  }
+
+  /**
+   * Booking banaye baghair server ki asal price (room page par dikhane ke liye).
+   * Wahi rates, coupon aur loyalty hisaab jo createBooking lagata hai — koi likhai
+   * nahi (coupon count / points nahi badalte).
+   *
+   * @returns {Promise<{ nights, subtotal, coupon, loyalty, discountTotal, total }>}
+   */
+  static async quoteBooking({ userId, roomIds, checkInDate, checkOutDate, couponCode, redeemLoyaltyPoints = false }) {
+    const checkIn = new Date(checkInDate);
+    const checkOut = new Date(checkOutDate);
+    if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime()) || checkIn >= checkOut) {
+      throw ApiError.badRequest('checkOutDate must be strictly after checkInDate');
+    }
+    const uniqueRoomIds = [...new Set((roomIds || []).map((id) => id.toString()))];
+    const rooms = await Room.find({ _id: { $in: uniqueRoomIds }, isDeleted: false, isActive: true });
+    if (uniqueRoomIds.length === 0 || rooms.length !== uniqueRoomIds.length) {
+      throw ApiError.badRequest('One or more selected rooms do not exist or are inactive');
+    }
+
+    const nights = Math.ceil(Math.abs(checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+    const subtotal = nights * rooms.reduce((sum, r) => sum + r.pricePerNight, 0);
+
+    let couponResult = null;
+    if (couponCode && couponCode.trim()) {
+      const code = couponCode.trim().toUpperCase();
+      const coupon = await Coupon.findOne({ code, isActive: true });
+      const discount = couponDiscountFor(coupon, subtotal);
+      couponResult = coupon && coupon.isValid(subtotal)
+        ? { code, valid: true, discount }
+        : { code, valid: false, discount: 0, reason: 'Invalid, expired or not applicable to this stay' };
+    }
+
+    let loyalty = { points: 0, discount: 0 };
+    if (redeemLoyaltyPoints && userId) {
+      const user = await User.findById(userId).select('loyaltyPoints').lean();
+      loyalty = loyaltyRedemptionFor(user?.loyaltyPoints || 0, subtotal - (couponResult?.discount || 0));
+    }
+
+    const discountTotal = (couponResult?.discount || 0) + loyalty.discount;
+    return {
+      nights,
+      subtotal,
+      coupon: couponResult,
+      loyalty,
+      discountTotal,
+      total: Math.max(0, subtotal - discountTotal),
+    };
   }
 
   /**

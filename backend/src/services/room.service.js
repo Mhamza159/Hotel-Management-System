@@ -250,7 +250,8 @@ class RoomService {
     }
 
     if (updateData.type !== undefined) room.type = updateData.type;
-    if (updateData.description !== undefined) room.description = updateData.description.trim();
+    // Joi null bhi allow karta hai — null par .trim() 500 deta tha
+    if (updateData.description !== undefined) room.description = String(updateData.description ?? '').trim();
     if (updateData.capacity !== undefined) {
       if (Number(updateData.capacity) < 1) {
         throw ApiError.badRequest("Capacity must be at least 1 guest");

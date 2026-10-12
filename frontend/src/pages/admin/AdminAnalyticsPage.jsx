@@ -614,9 +614,9 @@ export const AdminAnalyticsPage = () => {
                                 Stay: {searchResult.payment.bookingId.checkInDate} &rarr; {searchResult.payment.bookingId.checkOutDate}
                               </p>
                             )}
-                            {searchResult.payment.bookingId?.roomIds?.length > 0 && (
+                            {searchResult.payment.bookingId?.rooms?.length > 0 && (
                               <p className="text-text-muted text-xs mt-0.5">
-                                Suites: {searchResult.payment.bookingId.roomIds.map((r) => r.roomNumber ? `#${r.roomNumber}` : String(r)).join(', ')}
+                                Suites: {searchResult.payment.bookingId.rooms.map((r) => (r.roomId?.roomNumber ? `#${r.roomId.roomNumber}` : String(r.roomId))).join(', ')}
                               </p>
                             )}
                           </div>
@@ -638,15 +638,15 @@ export const AdminAnalyticsPage = () => {
                         <div className="flex items-center gap-2">
                           <Clock className="w-4 h-4 text-aqua" />
                           <span className="text-xs font-bold text-white uppercase tracking-wider">
-                            Immutable Security Audit Trail ({searchResult.timeline?.length || 0} Events)
+                            Audit Trail ({searchResult.auditLogs?.length || 0} Events)
                           </span>
                         </div>
-                        <span className="text-[11px] text-text-muted font-mono">Tamper-Proof Audit Provenance</span>
+                        <span className="text-[11px] text-text-muted font-mono">Edits and deletes are blocked by the app</span>
                       </div>
 
-                      {searchResult.timeline?.length > 0 ? (
+                      {searchResult.auditLogs?.length > 0 ? (
                         <div className="space-y-2">
-                          {searchResult.timeline.map((item) => (
+                          {searchResult.auditLogs.map((item) => (
                             <div
                               key={item._id}
                               className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-aqua/40 transition-colors"

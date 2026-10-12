@@ -76,6 +76,21 @@ export const CheckoutPage = () => {
 
   const selectedPaymentMethod = watch('paymentMethod');
 
+  // Saare hooks "No Suites Selected" wale early return se pehle (Rules of Hooks)
+  const [couponCode, setCouponCode] = useState('');
+  const [redeemPoints, setRedeemPoints] = useState(false);
+  const [loyaltyBalance, setLoyaltyBalance] = useState({ loyaltyPoints: 0, discountValue: 0 });
+
+  useEffect(() => {
+    if (user) {
+      engagementService.getLoyaltyBalance()
+        .then((res) => {
+          setLoyaltyBalance(res || { loyaltyPoints: 0, discountValue: 0 });
+        })
+        .catch(() => {});
+    }
+  }, [user]);
+
   // Guard against direct navigation with zero selected rooms
   if (!confirmedBooking && (!selectedRooms || selectedRooms.length === 0)) {
     return (
@@ -96,19 +111,6 @@ export const CheckoutPage = () => {
     );
   }
 
-  const [couponCode, setCouponCode] = useState('');
-  const [redeemPoints, setRedeemPoints] = useState(false);
-  const [loyaltyBalance, setLoyaltyBalance] = useState({ loyaltyPoints: 0, discountValue: 0 });
-
-  useEffect(() => {
-    if (user) {
-      engagementService.getLoyaltyBalance()
-        .then((res) => {
-          setLoyaltyBalance(res || { loyaltyPoints: 0, discountValue: 0 });
-        })
-        .catch(() => {});
-    }
-  }, [user]);
 
   const onSubmit = async (data) => {
     try {

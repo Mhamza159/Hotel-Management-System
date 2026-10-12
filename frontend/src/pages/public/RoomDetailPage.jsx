@@ -44,6 +44,7 @@ import { KeycardLoader } from '../../components/common/KeycardLoader';
 import { roomService } from '../../services/room.service';
 import { bookingService } from '../../services/booking.service';
 import { engagementService } from '../../services/engagement.service';
+import { syncService } from '../../services/sync.service';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { useBookingDraftStore } from '../../stores/useBookingDraftStore';
 import { PAYMENT_PROVIDERS } from '../../config/constants';
@@ -102,13 +103,16 @@ export const RoomDetailPage = () => {
 
   const [adults, setAdults] = useState(draft.adults || 1);
   const [children, setChildren] = useState(draft.children || 0);
-  const [numberOfRooms, setNumberOfRooms] = useState(1);
   const [specialRequests, setSpecialRequests] = useState(draft.specialRequests || '');
   const [paymentMethod, setPaymentMethod] = useState(PAYMENT_PROVIDERS.CASH);
 
   // Discounts & Loyalty State
   const [couponCode, setCouponCode] = useState('');
+  // Server ki tasdeeq shuda coupon (code) — sirf quote API ke jawab par set hota hai
   const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [quote, setQuote] = useState(null);
+  // Hotel ka hub offline ho to website par nayi booking band hoti hai (server 503 deta hai)
+  const [onlineBookingOpen, setOnlineBookingOpen] = useState(true);
   const [couponError, setCouponError] = useState('');
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [redeemPoints, setRedeemPoints] = useState(false);
@@ -141,25 +145,43 @@ export const RoomDetailPage = () => {
     )
   );
 
-  // Financial Calculations
+  // Financial Calculations — server jo charge karega wahi dikhao: koi alag tax nahi,
+  // aur coupon / loyalty discount sirf server quote (POST /bookings/quote) se
   const baseRate = room?.pricePerNight || 0;
-  const roomSubtotal = baseRate * nights * numberOfRooms;
-  const hospitalityTax = Math.round(roomSubtotal * 0.1); // 10% hospitality & resort tax
+  const roomSubtotal = baseRate * nights;
+  const couponDiscount = appliedCoupon && quote?.coupon?.valid ? quote.coupon.discount : 0;
+  const loyaltyDiscount = redeemPoints ? quote?.loyalty?.discount || 0 : 0;
+  const totalDiscount = Math.round((couponDiscount + loyaltyDiscount) * 100) / 100;
+  const grandTotal = Math.max(0, Math.round((roomSubtotal - totalDiscount) * 100) / 100);
 
-  // Promo Discount Calculation
-  let couponDiscount = 0;
-  if (appliedCoupon) {
-    if (appliedCoupon.discountPercentage) {
-      couponDiscount = Math.round((roomSubtotal * appliedCoupon.discountPercentage) / 100);
-    } else if (appliedCoupon.discountAmount) {
-      couponDiscount = Math.min(roomSubtotal, appliedCoupon.discountAmount);
+  // Dates / coupon / points badlein to server se dobara asal price lo
+  useEffect(() => {
+    if (!user || !room || (!appliedCoupon && !redeemPoints) || new Date(checkOutDate) <= new Date(checkInDate)) {
+      setQuote(null);
+      return undefined;
     }
-  }
+    let active = true;
+    bookingService
+      .quoteBooking({
+        roomIds: [room._id],
+        checkInDate,
+        checkOutDate,
+        couponCode: appliedCoupon?.code,
+        redeemLoyaltyPoints: redeemPoints,
+      })
+      .then((res) => active && setQuote(res))
+      .catch(() => active && setQuote(null));
+    return () => {
+      active = false;
+    };
+  }, [user, room, appliedCoupon, redeemPoints, checkInDate, checkOutDate]);
 
-  // Loyalty Discount Calculation ($10 for every 100 pts)
-  const loyaltyDiscount = redeemPoints ? Math.min(roomSubtotal - couponDiscount, loyaltyBalance.discountValue || 0) : 0;
-  const totalDiscount = couponDiscount + loyaltyDiscount;
-  const grandTotal = Math.max(0, roomSubtotal + hospitalityTax - totalDiscount);
+  useEffect(() => {
+    syncService
+      .getAvailability()
+      .then((res) => setOnlineBookingOpen(res?.available !== false))
+      .catch(() => {});
+  }, []);
 
   // Fetch Room & Engagement Details
   useEffect(() => {
@@ -213,17 +235,32 @@ export const RoomDetailPage = () => {
   const handleApplyCoupon = async (e) => {
     e.preventDefault();
     if (!couponCode.trim()) return;
+    if (!user) {
+      setCouponError('Please log in to apply a promo code.');
+      return;
+    }
     setIsApplyingCoupon(true);
     setCouponError('');
     try {
+      // Server coupon ki asal tasdeeq karta hai (pehle koi bhi code 10% off dikhata tha)
       const code = couponCode.trim().toUpperCase();
-      if (code === 'WELCOME10') {
-        setAppliedCoupon({ code: 'WELCOME10', discountPercentage: 10 });
+      const result = await bookingService.quoteBooking({
+        roomIds: [room._id],
+        checkInDate,
+        checkOutDate,
+        couponCode: code,
+        redeemLoyaltyPoints: redeemPoints,
+      });
+      if (result?.coupon?.valid) {
+        setAppliedCoupon({ code });
+        setQuote(result);
       } else {
-        setAppliedCoupon({ code, discountPercentage: 10 });
+        setAppliedCoupon(null);
+        setCouponError(result?.coupon?.reason || 'Invalid or expired coupon code.');
       }
     } catch (err) {
-      setCouponError('Invalid or expired coupon code.');
+      setAppliedCoupon(null);
+      setCouponError(err?.message || 'Invalid or expired coupon code.');
     } finally {
       setIsApplyingCoupon(false);
     }
@@ -242,8 +279,8 @@ export const RoomDetailPage = () => {
 
     // Capacity validation
     const totalGuests = Number(adults) + Number(children);
-    if (totalGuests > room.capacity * numberOfRooms) {
-      setBookingError(`Maximum occupancy for this selection is ${room.capacity * numberOfRooms} guests.`);
+    if (totalGuests > room.capacity) {
+      setBookingError(`Maximum occupancy for this room is ${room.capacity} guests.`);
       return;
     }
 
@@ -440,12 +477,16 @@ export const RoomDetailPage = () => {
                   </span>
                 </div>
 
-                {/* Rating Badge */}
-                <div className="flex items-center space-x-1.5 bg-[#F5F1E8] px-3 py-1 rounded-full border border-[#E4DFD0]">
-                  <Star className="w-4 h-4 fill-[#C9A15A] text-[#C9A15A]" />
-                  <span className="text-xs font-bold text-[#2A2A28]">4.9</span>
-                  <span className="text-xs text-[#2A2A28]/70">(245 Verified Reviews)</span>
-                </div>
+                {/* Rating Badge — room ki asli average rating (pehle har room par "4.9 (245)" likha tha) */}
+                {room.totalReviews > 0 && (
+                  <div className="flex items-center space-x-1.5 bg-[#F5F1E8] px-3 py-1 rounded-full border border-[#E4DFD0]">
+                    <Star className="w-4 h-4 fill-[#C9A15A] text-[#C9A15A]" />
+                    <span className="text-xs font-bold text-[#2A2A28]">{Number(room.averageRating || 0).toFixed(1)}</span>
+                    <span className="text-xs text-[#2A2A28]/70">
+                      ({room.totalReviews} review{room.totalReviews > 1 ? 's' : ''})
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Row 2: Location Address with Pin */}
@@ -634,7 +675,7 @@ export const RoomDetailPage = () => {
                     <div key={rev._id} className="p-4 rounded-xl bg-[#FAF8F2] border border-[#E4DFD0] space-y-1.5 shadow-sm">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold text-[#2A2A28]">
-                          {rev.user?.name || 'Verified Resident'}
+                          {rev.guestId?.name || 'Hotel guest'}
                         </span>
                         <div className="flex items-center text-[#C9A15A]">
                           {[...Array(rev.rating || 5)].map((_, i) => (
@@ -785,8 +826,8 @@ export const RoomDetailPage = () => {
                   </div>
                 </div>
 
-                {/* 5. Room Type & Number of Rooms */}
-                <div className="grid grid-cols-2 gap-3">
+                {/* 5. Room Type (har booking ek room ki; mazeed rooms ke liye alag booking) */}
+                <div>
                   <div>
                     <label className="text-xs font-semibold text-[#2A2A28] block mb-1">
                       Room Type <span className="text-[#2B3A2A]">*</span>
@@ -802,19 +843,6 @@ export const RoomDetailPage = () => {
                     </span>
                   </div>
 
-                  <div>
-                    <label className="text-xs font-semibold text-[#2A2A28] block mb-1">
-                      Number of Rooms <span className="text-[#2B3A2A]">*</span>
-                    </label>
-                    <select
-                      value={numberOfRooms}
-                      onChange={(e) => setNumberOfRooms(Number(e.target.value))}
-                      className="w-full bg-[#F5F1E8] border border-[#E4DFD0] rounded-xl px-3 py-2.5 text-xs text-[#2A2A28] focus:outline-none focus:border-[#2B3A2A] cursor-pointer"
-                    >
-                      <option value={1}>1 Room</option>
-                      <option value={2}>2 Rooms</option>
-                    </select>
-                  </div>
                 </div>
 
                 {/* 6. Special Requests */}
@@ -874,7 +902,7 @@ export const RoomDetailPage = () => {
                     </span>
                     {appliedCoupon && (
                       <span className="text-[10px] text-emerald-700 font-mono font-bold">
-                        {appliedCoupon.code} (-10%)
+                        {appliedCoupon.code} (-${couponDiscount})
                       </span>
                     )}
                   </div>
@@ -884,7 +912,10 @@ export const RoomDetailPage = () => {
                       type="text"
                       placeholder="e.g. WELCOME10"
                       value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      onChange={(e) => {
+                        setCouponCode(e.target.value.toUpperCase());
+                        setAppliedCoupon(null);
+                      }}
                       className="flex-1 bg-[#FAF8F2] border border-[#E4DFD0] rounded-lg px-2.5 py-1.5 text-xs text-[#2A2A28] placeholder-[#2A2A28]/50 uppercase focus:outline-none focus:border-[#2B3A2A]"
                     />
                     <button
@@ -910,7 +941,10 @@ export const RoomDetailPage = () => {
                       <div className="flex items-center space-x-1.5">
                         <Award className="w-3.5 h-3.5 text-[#2B3A2A]" />
                         <span className="text-[#2A2A28]/80">
-                          Redeem {loyaltyBalance.loyaltyPoints} Pts (-${loyaltyBalance.discountValue})
+                          Redeem {loyaltyBalance.loyaltyPoints} Pts
+                          {redeemPoints && quote?.loyalty
+                            ? ` (-${quote.loyalty.discount}, ${quote.loyalty.points} pts)`
+                            : ' (up to 50% of the stay)'}
                         </span>
                       </div>
                       <input
@@ -927,14 +961,9 @@ export const RoomDetailPage = () => {
                 <div className="p-4 bg-[#F5F1E8] border border-[#E4DFD0] rounded-xl space-y-2 text-xs">
                   <div className="flex justify-between text-[#2A2A28]/70">
                     <span>
-                      ${baseRate} &times; {nights} night{nights > 1 ? 's' : ''} ({numberOfRooms} room)
+                      ${baseRate} &times; {nights} night{nights > 1 ? 's' : ''}
                     </span>
                     <span className="text-[#2A2A28] font-mono font-medium">${roomSubtotal}</span>
-                  </div>
-
-                  <div className="flex justify-between text-[#2A2A28]/70">
-                    <span>Hospitality & Resort Tax (10%)</span>
-                    <span className="text-[#2A2A28] font-mono font-medium">${hospitalityTax}</span>
                   </div>
 
                   {totalDiscount > 0 && (
@@ -955,10 +984,17 @@ export const RoomDetailPage = () => {
                   </div>
                 </div>
 
+                {!onlineBookingOpen && (
+                  <p className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 text-xs">
+                    Online booking is paused for a few minutes while the hotel system reconnects. Please try
+                    again shortly or call the hotel to reserve.
+                  </p>
+                )}
+
                 {/* 10. Reserve Button */}
                 <button
                   type="submit"
-                  disabled={submitting}
+                  disabled={submitting || !onlineBookingOpen}
                   className="w-full py-3.5 bg-[#2B3A2A] hover:bg-[#1F2B20] disabled:opacity-75 disabled:cursor-not-allowed text-[#F5F1E8] font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all duration-200 active:scale-98 flex items-center justify-center space-x-2 cursor-pointer"
                 >
                   {submitting ? (

@@ -204,44 +204,20 @@ export const LandingPage = () => {
     featuredRooms.find((r) => r.images?.[0]?.url)?.images?.[0]?.url ||
     'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=2000&q=85';
 
-  // Curated boutique fallback reviews
-  const fallbackReviews = [
-    {
-      rating: 5,
-      comment:
-        'A sanctuary in every sense. The acoustic calm, bespoke organic linens, and discreet keyless arrival set an entirely new standard for boutique hospitality.',
-      guestName: 'Sophia Montgomery',
-      location: 'New York, USA',
-      avatar: 'SM',
-    },
-    {
-      rating: 5,
-      comment:
-        'The architectural harmony and ocean vistas are remarkable. The digital concierge anticipated every dining reservation with flawless attention to detail.',
-      guestName: 'Julian Vance',
-      location: 'London, UK',
-      avatar: 'JV',
-    },
-    {
-      rating: 5,
-      comment:
-        'Deep, restorative quiet. The natural light, morning coastal breeze, and warm materials make it impossible not to exhale the moment you step through the doors.',
-      guestName: 'Elena Rostova',
-      location: 'Geneva, Switzerland',
-      avatar: 'ER',
-    },
-  ];
-
-  const displayReviews =
-    dbReviews.length >= 3
-      ? dbReviews.map((r, i) => ({
-          rating: r.rating || 5,
-          comment: r.comment || fallbackReviews[i % 3].comment,
-          guestName: r.guest?.name || r.guestName || fallbackReviews[i % 3].guestName,
-          location: fallbackReviews[i % 3].location,
-          avatar: (r.guest?.name || fallbackReviews[i % 3].guestName).charAt(0),
-        }))
-      : fallbackReviews;
+  // Sirf asli guest reviews (pehle kam reviews par banaye hue naam/shehar dikhte the).
+  // Koi review na ho to section chhup jata hai.
+  const displayReviews = dbReviews
+    .filter((r) => r.comment)
+    .map((r) => {
+      const guestName = r.guestId?.name || 'Hotel guest';
+      return {
+        rating: Math.min(5, Math.max(1, Math.round(r.rating || 0))),
+        comment: r.comment,
+        guestName,
+        location: 'Stayed with us',
+        avatar: guestName.charAt(0).toUpperCase(),
+      };
+    });
 
   return (
     <div className="min-h-screen bg-[#F5F1E8] text-[#2A2A28] antialiased selection:bg-[#2B3A2A] selection:text-[#F5F1E8]">
@@ -556,6 +532,8 @@ export const LandingPage = () => {
         </div>
       </section>
 
+      {displayReviews.length > 0 && (
+      <>
       {/* =====================================================================
           4. GUEST REVIEWS SECTION (Three-column card row)
          ===================================================================== */}
@@ -605,6 +583,8 @@ export const LandingPage = () => {
           </div>
         </div>
       </section>
+      </>
+      )}
 
       {/* =====================================================================
           5. FEATURE STRIP (Four-Column Value Pillars)

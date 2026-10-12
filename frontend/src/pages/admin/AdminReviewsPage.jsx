@@ -199,7 +199,7 @@ export const AdminReviewsPage = () => {
                     </div>
                     <div>
                       <Typography variant="subtitle2" className="text-[#ECEFF3] font-semibold">
-                        {review.user?.name || review.guestName || 'Verified Guest'}
+                        {review.guestId?.name || 'Hotel guest'}
                       </Typography>
                       <Typography variant="caption" className="text-[#8791A3]">
                         {new Date(review.createdAt).toLocaleDateString()}
