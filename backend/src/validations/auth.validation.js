@@ -7,7 +7,7 @@ const registerSchema = {
   body: Joi.object({
     name: Joi.string().trim().min(2).max(100).required(),
     email: Joi.string().trim().email().required(),
-    password: Joi.string().min(6).max(128).required(),
+    password: Joi.string().min(8).max(128).required(),
     phone: Joi.string().trim().allow('', null).optional(),
     role: Joi.string().valid(...Object.values(ROLES)).optional(),
   }),
@@ -30,7 +30,7 @@ const createStaffSchema = {
   body: Joi.object({
     name: Joi.string().trim().min(2).max(100).required(),
     email: Joi.string().trim().email().required(),
-    password: Joi.string().min(6).max(128).required(),
+    password: Joi.string().min(8).max(128).required(),
     role: Joi.string().valid(...Object.values(ROLES)).required(),
     phone: Joi.string().trim().allow('', null).optional(),
     permissions: Joi.array().items(Joi.string().valid(...Object.values(PERMISSIONS))).optional(),

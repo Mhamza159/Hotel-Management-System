@@ -102,6 +102,41 @@ describe('Walk-in rules and hotel dates (medium batch 3)', () => {
     });
   });
 
+  describe('rooms allotment status', () => {
+    it('marks occupied, overlapping and free rooms using only relevant bookings', async () => {
+      const guest = await User.create({ name: 'Allot', email: 'allot@example.com', password: 'Password123!' });
+      const make = (roomNumber) =>
+        Room.create({ roomNumber, type: 'deluxe', description: 'x', capacity: 2, pricePerNight: 100, housekeepingStatus: 'clean' });
+      const [occupied, booked, later] = await Promise.all([make('A-OCC'), make('A-BKD'), make('A-LTR')]);
+      const at = (d) => new Date(`${hotelDay(d)}T00:00:00.000Z`);
+      const bookingFor = (ref, roomDoc, from, to, status) =>
+        Booking.create({
+          bookingReference: ref,
+          userId: guest._id,
+          rooms: [{ roomId: roomDoc._id, pricePerNight: 100 }],
+          checkInDate: at(from),
+          checkOutDate: at(to),
+          numberOfGuests: 1,
+          totalPrice: 100,
+          status,
+        });
+      await bookingFor('BK-OCC', occupied, -2, 5, 'checked-in');
+      await bookingFor('BK-BKD', booked, 0, 2, 'confirmed');
+      await bookingFor('BK-LTR', later, 10, 12, 'confirmed');
+
+      const res = await request(app)
+        .get('/api/v1/desk/rooms-allotment-status')
+        .query({ checkInDate: hotelDay(0), checkOutDate: hotelDay(1) })
+        .set('Authorization', `Bearer ${deskToken}`);
+      expect(res.status).toBe(200);
+      const byNumber = Object.fromEntries(res.body.data.map((r) => [r.roomNumber, r]));
+      expect(byNumber['A-OCC']).toMatchObject({ statusBadge: 'occupied', conflictRef: 'BK-OCC', canAllot: false });
+      expect(byNumber['A-BKD']).toMatchObject({ statusBadge: 'booked', conflictRef: 'BK-BKD', canAllot: false });
+      expect(byNumber['A-LTR']).toMatchObject({ statusBadge: 'available', canAllot: true });
+      expect(byNumber['W-1']).toMatchObject({ statusBadge: 'available', canAllot: true });
+    });
+  });
+
   describe('hotel date helpers', () => {
     it('uses the hotel timezone (Asia/Karachi, UTC+5) for "today"', () => {
       // 20:30 UTC = agle din 01:30 Karachi

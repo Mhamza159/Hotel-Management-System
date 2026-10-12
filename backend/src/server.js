@@ -26,7 +26,7 @@ const startServer = async () => {
         `Hotel Management System API listening on port ${config.port} [ENV: ${config.env}]`
       );
 
-      // 3. Initialize background watchdog cron jobs (e.g. 15-minute unpaid release)
+      // 3. Initialize background watchdog cron jobs (5-minute unpaid online bookings release)
       CronService.initScheduledJobs();
 
       // 4. Hotel hub par cloud sync agent (SYNC_NODE=hub + CLOUD_SYNC_URL + SYNC_SHARED_KEY)

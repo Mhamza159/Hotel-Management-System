@@ -22,9 +22,9 @@ export default defineConfig({
         // Split vendor libraries into separate chunks for better caching
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-mui': ['@mui/material', '@mui/x-data-grid', '@mui/x-charts', '@emotion/react', '@emotion/styled'],
+          'vendor-mui': ['@mui/material', '@mui/x-charts', '@emotion/react', '@emotion/styled'],
           'vendor-framer': ['framer-motion'],
-          'vendor-query': ['@tanstack/react-query', 'axios', 'zustand'],
+          'vendor-data': ['axios', 'zustand'],
         },
       },
     },

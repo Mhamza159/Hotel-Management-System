@@ -1,5 +1,6 @@
 const app = require("../src/app");
 const { connectDB } = require("../src/config/db");
+const logger = require("../src/utils/logger");
 
 let isConnecting = null;
 
@@ -10,7 +11,7 @@ module.exports = async (req, res) => {
     }
     await isConnecting;
   } catch (error) {
-    console.error("Database connection error in Vercel function:", error);
+    logger.error(`Database connection error in Vercel function: ${error.message}`);
     isConnecting = null;
   }
   return app(req, res);

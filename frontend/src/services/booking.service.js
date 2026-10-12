@@ -72,13 +72,6 @@ export const bookingService = {
     link.remove();
     window.URL.revokeObjectURL(downloadUrl);
   },
-
-  /**
-   * Alias for downloadInvoice for backward compatibility
-   */
-  async downloadReceiptPdf(id, bookingReference = 'invoice') {
-    return this.downloadInvoice(id, bookingReference);
-  },
 };
 
 export default bookingService;

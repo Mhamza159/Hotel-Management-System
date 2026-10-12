@@ -9,7 +9,7 @@ const syncPlugin = require('../sync/syncPlugin');
  * Yeh model un guests ki requests ko store karta hai jo kisi specific room type
  * aur date range ke liye sold-out honay par intizar (waitlist) me shamil hotay hain.
  * 
- * Jab bhi koi booking cancel ho ya 15-minute unpaid reservation release ho,
+ * Jab bhi koi booking cancel ho ya 5-minute unpaid reservation release ho,
  * CancellationService / CronService is collection ko query kar ke
  * matching guests ko automatic notification trigger karega.
  */

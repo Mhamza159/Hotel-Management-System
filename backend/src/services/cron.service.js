@@ -15,7 +15,7 @@ const BookingService = require("./booking.service");
  * jo kisi user ke button dabane ke mohtaaj nahi hote:
  *
  * 1. 15-Minute Unpaid Booking Auto-Release:
- *    Agar kisi guest ne online checkout shuru kiya magar 15 minute ke andar payment
+ *    Agar kisi guest ne online checkout shuru kiya magar 5 minute ke andar payment
  *    mukammal nahi ki, toh yeh service database se expired bookings ko dhoond kar:
  *    - Unhe automatically cancel kar deti hai.
  *    - Kamron ke reserved date locks (`reservedRanges`) foran release kar deti hai.
@@ -37,7 +37,7 @@ class CronService {
    * cancel karta hai aur inventory unlock karta hai.
    *
    * Note: `now` parameter pass karne ki sahulat is liye rakhi gayi hai taake
-   * unit tests me hum kisi bhi waqt ko mock karke 15 minute intezar kiye baghair
+   * unit tests me hum kisi bhi waqt ko mock karke 5 minute intezar kiye baghair
    * is function ko 1 second me test kar sakein!
    *
    * @param {Date|string} [now=new Date()] - Mojooda waqt (default: current system time)
@@ -133,8 +133,8 @@ class CronService {
   static initScheduledJobs() {
     logger.info("[CRON] Initializing automated background cron jobs...");
 
-    // Job 1: Har 2 minute baad expired bookings check karein
-    // Cron expression: '*/2 * * * *' (Every 2 minutes)
+    // Job 1: Har minute expired bookings check karein
+    // Cron expression: '* * * * *' (Every minute)
     const expiredBookingsJob = cron.schedule("* * * * *", async () => {
       try {
         const result = await CronService.releaseExpiredBookings();
@@ -152,7 +152,7 @@ class CronService {
 
     this.activeJobs.push(expiredBookingsJob);
     logger.info(
-      "[CRON] Expired bookings auto-release job scheduled (Every 2 minutes).",
+      "[CRON] Expired bookings auto-release job scheduled (every minute).",
     );
   }
 

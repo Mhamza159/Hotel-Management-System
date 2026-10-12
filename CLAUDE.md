@@ -22,7 +22,7 @@ Personas: guest (`user`), `receptionist`, `housekeeping`, `super-admin`.
 # backend (needs backend/.env with MONGO_URI, JWT_SECRET, JWT_REFRESH_SECRET ≥16 chars)
 cd backend && npm install
 npm run dev        # nodemon src/server.js on :5000, Swagger at /api-docs
-npm test           # jest --runInBand, in-memory MongoDB (~2 min). All 237 tests pass
+npm test           # jest --runInBand, in-memory MongoDB (~2 min). All 238 tests pass
 npx jest tests/integration/desk.test.js   # single file
 npm run seed       # destructive for seed users/rooms/coupons
 
@@ -69,7 +69,7 @@ Single source of truth for roles, permissions, statuses: `backend/src/config/con
 ## Frontend architecture
 
 - `services/api.js`: axios instance; attaches Bearer token; adds `Idempotency-Key` on `POST /bookings`; **returns `response.data.data` (unwrapped)**; on 401 refreshes once then redirects to `/login`; **rejects with `{ statusCode, message, errors }` plus an axios-style `response: { status, data: { message } }` for older components — prefer `err.message`**.
-- One service file per backend domain in `services/`. Data fetching is `useEffect` + `useState` (React Query is provided but unused).
+- One service file per backend domain in `services/`. Data fetching is `useEffect` + `useState` (no React Query).
 - Auth state: `stores/useAuthStore.js` (localStorage `grand_horizon_auth`). Guards: `ProtectedRoute` (`requiredPermission(s)` or `allowedRoles`), `<Can>`, `can(user, perm)`; super-admin bypasses.
 - Two staff shells: `StaffLayout` (`/desk`, `/admin/*`, dark/light) and `HousekeepingLayout` (`/housekeeping/*`, warm theme) with partly duplicated dialogs/pages.
 
@@ -81,7 +81,7 @@ Single source of truth for roles, permissions, statuses: `backend/src/config/con
 - Express 5 leaves `req.body` **undefined** on bodyless requests; use `req.body || {}` when a route has no body schema.
 - Audit sensitive mutations with `AuditService.logAction({ actorId, action, targetType, targetId, beforeState, afterState, ipAddress })`.
 - Comments are long and bilingual (Roman Urdu + English); match surrounding style when editing.
-- Money is USD numbers on documents; prices are always recomputed server-side from `Room.pricePerNight`.
+- Money is USD numbers on documents; prices are always recomputed server-side from `Room.pricePerNight`. The room page shows prices from `POST /bookings/quote` (same coupon/loyalty maths as `createBooking`). Invoice hotel details come from `HOTEL_*` env (defaults in `config/env.js`).
 
 ## Sync engine (src/sync, hub/README.md)
 

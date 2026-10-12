@@ -924,43 +924,42 @@ class DeskService {
       isActive: true,
     }).sort({ roomNumber: 1 });
 
-    // 2. Fetch all active bookings in hotel (confirmed, pending, checked-in)
+    // 2. Sirf kaam ki bookings: in tareekhon se takrane wali, ya jin ke mehmaan abhi hotel
+    // me hain (pehle hotel ki HAR active booking aati thi aur har room par poori list chhanti jati)
     const excludeQuery = targetBooking ? { _id: { $ne: targetBooking._id } } : {};
 
-    const activeBookings = await Booking.find({
+    const relevantBookings = await Booking.find({
       ...excludeQuery,
-      status: { $in: [BOOKING_STATUS.CONFIRMED, BOOKING_STATUS.CHECKED_IN, BOOKING_STATUS.PENDING] },
+      status: { $in: ROOM_HOLDING_STATUSES },
+      syncConflict: null,
+      $or: [
+        { status: BOOKING_STATUS.CHECKED_IN },
+        { checkInDate: { $lt: effectiveCheckOut }, checkOutDate: { $gt: effectiveCheckIn } },
+      ],
     })
       .populate('userId', 'name')
       .select('bookingReference status checkInDate checkOutDate rooms guestInfo userId');
+
+    // roomId -> { inHouse, overlapping } ek hi guzar me
+    const byRoom = new Map();
+    for (const b of relevantBookings) {
+      const overlaps = new Date(b.checkInDate) < effectiveCheckOut && new Date(b.checkOutDate) > effectiveCheckIn;
+      for (const r of b.rooms || []) {
+        const rId = r.roomId?._id ? r.roomId._id.toString() : r.roomId?.toString();
+        if (!rId) continue;
+        const entry = byRoom.get(rId) || { inHouse: null, overlapping: null };
+        if (b.status === BOOKING_STATUS.CHECKED_IN && !entry.inHouse) entry.inHouse = b;
+        if (overlaps && !entry.overlapping) entry.overlapping = b;
+        byRoom.set(rId, entry);
+      }
+    }
 
     // 3. Map status for each room
     const roomStatuses = allRooms.map((room) => {
       const roomIdStr = room._id.toString();
       const isAssignedToCurrentBooking = currentBookingRoomIds.includes(roomIdStr);
-
-      // Check if room is currently occupied by an in-house guest (status === 'checked-in')
-      const inHouseBooking = activeBookings.find(
-        (b) =>
-          b.status === BOOKING_STATUS.CHECKED_IN &&
-          (b.rooms || []).some((r) => {
-            const rId = r.roomId?._id ? r.roomId._id.toString() : r.roomId?.toString();
-            return rId === roomIdStr;
-          })
-      );
-
-      // Check if room is booked by another booking with overlapping dates
-      const overlappingBooking = activeBookings.find((b) => {
-        const matchesRoom = (b.rooms || []).some((r) => {
-          const rId = r.roomId?._id ? r.roomId._id.toString() : r.roomId?.toString();
-          return rId === roomIdStr;
-        });
-        if (!matchesRoom) return false;
-
-        const bIn = new Date(b.checkInDate);
-        const bOut = new Date(b.checkOutDate);
-        return bIn < effectiveCheckOut && bOut > effectiveCheckIn;
-      });
+      const { inHouse: inHouseBooking, overlapping: overlappingBooking } =
+        byRoom.get(roomIdStr) || { inHouse: null, overlapping: null };
 
       const isOccupied = Boolean(inHouseBooking);
       const isBooked = Boolean(overlappingBooking);

@@ -21,7 +21,6 @@ const envSchema = joi
     JWT_REFRESH_SECRET: joi.string().min(16).required().description('JWT refresh token secret'),
     JWT_EXPIRES_IN: joi.string().default('15m'),
     JWT_REFRESH_EXPIRES_IN: joi.string().default('7d'),
-    STRIPE_SECRET_KEY: joi.string().allow('').default('sk_test_placeholder'),
     CLOUDINARY_CLOUD_NAME: joi.string().allow('').default('placeholder'),
     CLOUDINARY_API_KEY: joi.string().allow('').default('placeholder'),
     CLOUDINARY_API_SECRET: joi.string().allow('').default('placeholder'),
@@ -40,6 +39,13 @@ const envSchema = joi
     HUB_OFFLINE_AFTER_MS: joi.number().integer().min(10000).default(120000),
     // Itni purani tabdeeliyan hi bheji jati hain (abhi commit ho rahi writes peechhe na rahein)
     SYNC_SETTLE_MS: joi.number().integer().min(0).default(5000),
+    // Invoice par hotel ki maloomat (pehle code me likhi thin). HOTEL_TAX_ID khaali = line nahi chhapti
+    HOTEL_NAME: joi.string().default('Grand Horizon Luxury Hotel & Suites'),
+    HOTEL_ADDRESS: joi.string().allow('').default('104 Boulevard Avenue, Luxury District, Suite 500'),
+    HOTEL_PHONE: joi.string().allow('').default('+92 51 111-468-357'),
+    HOTEL_EMAIL: joi.string().allow('').default('reservations@grandhorizon.com'),
+    HOTEL_TAX_ID: joi.string().allow('').default('9284715-4'),
+    HOTEL_WEBSITE: joi.string().allow('').default('www.grandhorizon.com'),
     // Hotel ka timezone: "aaj", arrivals/departures aur din ki revenue isi se (IANA naam)
     HOTEL_TIMEZONE: joi
       .string()
@@ -65,6 +71,14 @@ if (error) {
 module.exports = {
   port: validatedEnv.PORT,
   hotelTimeZone: validatedEnv.HOTEL_TIMEZONE,
+  hotel: {
+    name: validatedEnv.HOTEL_NAME,
+    address: validatedEnv.HOTEL_ADDRESS,
+    phone: validatedEnv.HOTEL_PHONE,
+    email: validatedEnv.HOTEL_EMAIL,
+    taxId: validatedEnv.HOTEL_TAX_ID,
+    website: validatedEnv.HOTEL_WEBSITE,
+  },
   env: validatedEnv.NODE_ENV,
   mongoUri: validatedEnv.MONGO_URI,
   jwt: {
@@ -72,9 +86,6 @@ module.exports = {
     refreshSecret: validatedEnv.JWT_REFRESH_SECRET,
     expiresIn: validatedEnv.JWT_EXPIRES_IN,
     refreshExpiresIn: validatedEnv.JWT_REFRESH_EXPIRES_IN,
-  },
-  stripe: {
-    secretKey: validatedEnv.STRIPE_SECRET_KEY,
   },
   rateLimit: {
     max: validatedEnv.RATE_LIMIT_MAX,

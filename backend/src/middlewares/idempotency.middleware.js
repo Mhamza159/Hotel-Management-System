@@ -1,5 +1,6 @@
 const IdempotencyKey = require("../models/IdempotencyKey");
 const ApiError = require("../utils/apiError");
+const logger = require("../utils/logger");
 
 /**
  * =========================================================================
@@ -96,7 +97,7 @@ const idempotency = (options = { required: false }) => {
           status: "completed",
         }).catch((updateErr) => {
           // Silent catch taake client ka response block na ho
-          console.error("Failed to cache idempotency response:", updateErr);
+          logger.error(`Failed to cache idempotency response: ${updateErr.message}`);
         });
 
         // Asal client ko response bhej dein

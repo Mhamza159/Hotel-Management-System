@@ -9,6 +9,8 @@ const config = require('../config/env');
 const { ROLES, BOOKING_STATUS, PERMISSIONS } = require('../config/constants');
 const { hasPermission } = require('../utils/permissions');
 const { startOfHotelToday, DAY_MS } = require('../utils/hotelDate');
+
+const MAX_CHAT_MESSAGES = 100;
 const ApiError = require('../utils/apiError');
 const logger = require('../utils/logger');
 
@@ -241,6 +243,11 @@ class AiService {
       toolResults,
       timestamp: new Date(),
     });
+
+    // Har user ka ek hi session hai — sirf aakhri MAX_CHAT_MESSAGES rakho (pehle hamesha barhta tha)
+    if (session.messages.length > MAX_CHAT_MESSAGES) {
+      session.messages = session.messages.slice(-MAX_CHAT_MESSAGES);
+    }
 
     await session.save();
 

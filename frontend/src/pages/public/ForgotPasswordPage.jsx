@@ -67,7 +67,7 @@ export const ForgotPasswordPage = () => {
           </h2>
           <p className="text-xs text-[#8791A3] leading-relaxed max-w-xs mx-auto">
             If an account is associated with <span className="text-[#ECEFF3] font-medium">{sentEmail}</span>,
-            a secure 10-minute reset token has been dispatched.
+            a secure reset link (valid for 1 hour) has been dispatched.
           </p>
           <div className="pt-4 border-t border-[#2A3547]">
             <Link

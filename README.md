@@ -4,7 +4,7 @@
 [![Backend API](https://img.shields.io/badge/API-Live%20Serverless-blue?style=for-the-badge&logo=node.js)](https://hotel-backend-api-zeta.vercel.app/)
 [![Database](https://img.shields.io/badge/Database-MongoDB%20Atlas-forestgreen?style=for-the-badge&logo=mongodb)](https://cloud.mongodb.com/)
 [![React 18](https://img.shields.io/badge/Frontend-React%2018%20%2B%20Vite-61DAFB?style=for-the-badge&logo=react)](https://react.dev/)
-[![Tests](https://img.shields.io/badge/Tests-146%20Passed%20%E2%9C%94-brightgreen?style=for-the-badge&logo=jest)](https://jestjs.io/)
+[![Tests](https://img.shields.io/badge/Tests-237%20Passed%20%E2%9C%94-brightgreen?style=for-the-badge&logo=jest)](https://jestjs.io/)
 [![Playwright](https://img.shields.io/badge/E2E-Playwright%20Verified-darkgreen?style=for-the-badge&logo=playwright)](https://playwright.dev/)
 
 > An enterprise-grade, end-to-end Hotel Management & Hospitality Operations platform built on the modern MERN stack. Designed to eliminate operational friction by unifying luxury guest booking journeys, real-time front desk flight operations, housekeeping turnover boards, and managerial governance into a single cohesive operating system.
@@ -29,7 +29,7 @@ The system architecture implements strict PBAC boundaries across four distinct e
 | Persona | Role Scope & Primary Panels |
 | :--- | :--- |
 | **👑 Super Admin** | Full PBAC Matrix, Revenue Analytics, Immutable Audit Logs, Staff Administration |
-| **🛎️ Front Desk Staff** | Flight-Ops Cockpit, Walk-in Booking, Arrivals/Departures, Keycards, Cash Settlement |
+| **🛎️ Front Desk Staff** | Flight-Ops Cockpit, Walk-in Booking, Arrivals/Departures, Room Allotment, Cash Settlement |
 | **🧹 Housekeeping Lead** | Cleanliness Board, Dirty ➔ Clean transitions, VIP Room Flagging |
 | **👤 Guest** | Public Suite Discovery, Reservation Flow, Guest Portal, Stay History, PDF Invoices |
 
@@ -52,7 +52,6 @@ flowchart TD
         CP["Spotlight Command Palette (Ctrl+K)"]
         Can["Dynamic PBAC <Can> Guards"]
         Stores["Zustand Stores (Auth, Draft, UI)"]
-        Query["TanStack React Query Cache"]
         MUI["MUI v5 + Tailwind CSS + Framer Motion"]
     end
 
@@ -60,20 +59,20 @@ flowchart TD
         SEC["Helmet + RateLimiter + JWT Guard"]
         CTRL["Modular Controllers (Auth, Room, Booking, Desk, Admin)"]
         VAL["Joi 18 Schema Validation"]
-        SERV["Services Layer (Stripe, PDFKit, Watchdog Cron)"]
+        SERV["Services Layer (PDFKit, Watchdog Cron, Hub Sync)"]
     end
 
     subgraph Data["Data & Infrastructure"]
         MDB[("MongoDB Atlas Cloud<br/>(ACID Transactions)")]
         CDN["Cloudinary Media CDN"]
-        STR["Stripe Payments Engine"]
+        HUB["Hotel Hub PC<br/>(LAN backend + MongoDB, offline)"]
     end
 
     Clients --> Frontend
     Frontend -->|HTTPS REST / Idempotency-Key| Backend
     Backend -->|Mongoose Pool| MDB
     Backend -->|Direct Upload| CDN
-    Backend -->|Webhooks & PaymentIntents| STR
+    HUB <-->|Two-way sync| Backend
 ```
 
 ---
@@ -91,16 +90,16 @@ flowchart TD
      - **Backend:** Express middleware (`requirePermission`) intercepts unauthorized requests and issues HTTP 403 Forbidden.
 
 3. **Zero Optimistic UI:**
-   - All critical staff operations (check-in, walk-in creation, keycard reissuance, housekeeping transitions, cash recordings) require server-authoritative receipts before updating local state, preventing desynchronized workflows.
+   - All critical staff operations (check-in, walk-in creation, room allotment, housekeeping transitions, cash recordings) require server-authoritative receipts before updating local state, preventing desynchronized workflows.
 
-4. **15-Minute Watchdog Cron Service:**
-   - An automated background worker monitors unpaid draft reservations and automatically releases locked room inventory after 15 minutes.
+4. **Watchdog Cron Service:**
+   - A background worker (every minute, on long-running servers such as the hotel Hub) releases unpaid online reservations after 5 minutes. Pay-at-desk bookings are confirmed immediately.
 
 5. **Spotlight Command Palette (`Ctrl+K` / `Cmd+K`):**
    - Global keyboard launcher providing instant jump navigation across rooms, bookings, staff directories, and administrative modals in under 2 keystrokes.
 
-6. **Cryptographically Verifiable Audit Logs:**
-   - Append-only log recording actor ID, action type, target ID, payload delta diff, client IP, and UTC timestamp for forensic compliance.
+6. **Append-Only Audit Logs:**
+   - Audit entries (actor ID, action type, target ID, before/after state, client IP, UTC timestamp) cannot be edited or deleted through the application.
 
 ---
 
@@ -109,18 +108,18 @@ flowchart TD
 ### 1. Public Discovery & Guest Experience Portal
 - **Suite Showcase:** 9+ bespoke luxury suites and presidential estates with high-definition photography and curated amenity badges.
 - **Real-Time Availability Engine:** Dynamic date range picker with capacity and tier filtering.
-- **Checkout & Multi-Discount Coupons:** Atomic multi-room reservation supporting promo codes (`WELCOME10`, `SUMMER20`, `VIP50`) and Stripe card processing.
-- **Idempotency Protection:** Prevents duplicate charges via `Idempotency-Key` headers.
+- **Reservations & Discounts:** Atomic room locking, server-validated promo codes (`WELCOME10`, `SUMMER20`, `VIP50`) and loyalty points; payment is collected at the front desk (cash or card).
+- **Idempotency Protection:** Prevents duplicate bookings via `Idempotency-Key` headers.
 - **Guest Dashboard (`/dashboard`):** View stay history, download instant official PDF invoices, request tiered policy cancellations, and manage favorites.
 
 ### 2. Front Desk Flight-Ops Cockpit (`/desk`)
 - **30-Second Walk-In Reservation:** Rapid reservation dialog for on-site arrivals with immediate suite assignment.
 - **Arrivals & Departures Roster:** Real-time checklist of daily guest arrivals and scheduled departures.
-- **Keycard Management:** Digital NFC keycard issuance and re-issue counter.
+- **Room Allotment:** Live room board (occupied / booked / clean) with atomic room re-assignment.
 - **Settlement Enforcement:** Prevents guest check-out if outstanding balance exceeds $0.00.
 
-### 3. Housekeeping Cleanliness Kanban Board (`/housekeeping`)
-- **4-State Interactive Kanban:** Real-time drag-and-drop or click transitions (`Dirty` ➔ `Cleaning` ➔ `Clean` ➔ `Maintenance`).
+### 3. Housekeeping Cleanliness Board (`/housekeeping`)
+- **4-State Status Board:** Click transitions (`Dirty` ➔ `Cleaning` ➔ `Clean` ➔ `Maintenance`).
 - **Automated Workflow Linkage:** Front desk check-outs automatically flip suites to `Dirty`.
 - **VIP Room Highlighting:** Visual priority indicators for suites with imminent high-tier arrivals.
 
@@ -128,7 +127,12 @@ flowchart TD
 - **PBAC Matrix Page:** Interactive role-permission matrix allowing instant permission toggles per employee.
 - **Executive Performance Analytics:** Real-time KPI cards for Gross Revenue, Occupancy Rate (%), ADR (Average Daily Rate), and RevPAR powered by MUI X-Charts.
 - **Audit Observability (`/admin/audit-logs`):** Searchable, paginated trail of every administrative mutation.
-- **Review Moderation (`/admin/reviews`):** Quarantine and approve guest reviews before public display.
+- **Review Moderation (`/admin/reviews`):** Browse guest reviews per room; super-admins can remove inappropriate ones.
+
+### 5. Staff Desktop App + Hotel Hub (offline)
+- **Electron staff app** (`desktop/`) for front desk, housekeeping and admins; works on the hotel LAN without internet.
+- **Hotel Hub PC** (`hub/`): one-click PowerShell installer for the LAN backend + MongoDB as Windows services, daily backups.
+- **Cloud sync:** the Hub and the website exchange changes automatically when internet is available; online booking pauses while the Hub is offline so rooms are never double-sold.
 
 ---
 
@@ -138,21 +142,21 @@ flowchart TD
 - **Core:** React 18.3, Vite (Custom ESM Bundler & Chunk Splitting)
 - **UI Frameworks:** Material UI (MUI v5) custom theme + Tailwind CSS + Framer Motion
 - **State Management:** Zustand (Auth, Booking Draft, UI state stores)
-- **Data Fetching:** TanStack React Query v5 (Optimistic caching, background refetching)
+- **Data Fetching:** Axios services with token refresh and idempotency keys
 - **Routing & Guards:** React Router DOM v6 + Dynamic `<Can>` authorization wrappers
 - **Forms & Validation:** React Hook Form + Zod & Joi validation schemas
-- **Icons & Visualization:** Lucide React, MUI X-Charts, MUI X-Data-Grid
+- **Icons & Visualization:** Lucide React, MUI X-Charts
 
 ### Backend
 - **Runtime & Framework:** Node.js LTS v20, Express.js 5 (RESTful Controller-Service pattern)
 - **Serverless Hosting:** Vercel Serverless Functions with Mongoose connection pool caching
-- **Database:** MongoDB Atlas (Cloud M0 Replica Set with ACID transaction sessions)
+- **Database:** MongoDB Atlas (replica set; booking creation uses ACID transactions where available)
 - **ORM & Data Layer:** Mongoose v8 (Static helpers, compound indices, soft-deletes)
 - **Validation:** Joi v18 (Strict query, param, and body validation)
 - **Security:** Helmet, Sliding-window rate limiters, CORS whitelisting, Bcrypt password hashing
-- **Authentication:** JWT (15-min Access Tokens + 7-day Refresh Tokens + Rotation)
+- **Authentication:** JWT (15-min Access Tokens + 7-day Refresh Tokens with rotation and server-side logout)
 - **Logging:** Winston structured multi-transport logging + Morgan HTTP stream
-- **Payments & Media:** Stripe PaymentIntents API, Cloudinary Asset CDN
+- **Media:** Cloudinary Asset CDN (online card payments are not implemented)
 - **Invoicing:** PDFKit server-side invoice generation
 
 ---
@@ -169,9 +173,9 @@ Hotel-Management-System/
 │   │   ├── middlewares/             # PBAC, JWT auth, Joi validation, RateLimiter, ErrorHandler
 │   │   ├── models/                  # User, Room, Booking, Payment, AuditLog, Review, Coupon
 │   │   ├── routes/                  # Express route definitions
-│   │   ├── services/                # Business logic, Stripe integration, PDF generation, Cron
-│   │   └── utils/                   # ApiError, ApiResponse, Logger, Email helper
-│   ├── tests/                       # Jest unit & integration test suites (146 tests)
+│   │   ├── services/                # Business logic, PDF generation, Cron, Sync
+│   │   └── utils/                   # ApiError, ApiResponse, Logger, permissions, hotel dates
+│   ├── tests/                       # Jest unit & integration test suites (237 tests)
 │   └── vercel.json                  # Serverless route rewrites
 ├── frontend/
 │   ├── src/
@@ -182,10 +186,10 @@ Hotel-Management-System/
 │   │   ├── stores/                  # Zustand auth, draft, and UI state stores
 │   │   └── config/                  # Custom Obsidian Dark & Verde Cream themes
 │   └── vercel.json                  # SPA routing and backend proxy rewrites
+├── desktop/                         # Electron staff desktop app (connects to the hotel Hub)
+├── hub/                             # Hotel Hub PC installer, backups and cloud-sync setup
 ├── diagrams/                        # Standalone interactive architecture & sequence diagrams
 ├── postman/                         # Complete Postman API collection & environment
-├── PROJECT_PORTFOLIO_EXECUTIVE_SUMMARY.docx  # Formatted Word presentation document
-├── PROJECT_PORTFOLIO_EXECUTIVE_SUMMARY.txt   # Plaintext portfolio summary
 └── package.json                     # Root workspace configuration
 ```
 
@@ -195,7 +199,7 @@ Hotel-Management-System/
 
 The codebase was validated through rigorous multi-persona testing:
 
-- **146 Automated Tests Passing:** Complete Jest test suite covering authentication, concurrency isolation, PBAC boundaries, and rate limiting.
+- **237 Automated Tests Passing:** Jest suites covering authentication and sessions, booking concurrency (including a MongoDB replica set), PBAC boundaries, rate limiting and end-to-end Hub ↔ cloud sync.
 - **Playwright E2E Browser Suite:** Verified all 4 personas on live rendered DOM elements.
 - **Production Build:** Vite frontend bundles cleanly in ~21 seconds with zero TypeScript or runtime bundle errors.
 
@@ -225,9 +229,9 @@ cd Hotel-Management-System
 ```bash
 cd backend
 cp .env.example .env
-# Fill in your MONGO_URI, JWT_SECRET, STRIPE_SECRET_KEY, etc.
+# Fill in your MONGO_URI, JWT_SECRET, JWT_REFRESH_SECRET, etc.
 npm install
-npm run seed     # Seeds demo rooms, users, coupons
+npm run seed     # Seeds demo rooms, users, coupons (refuses Atlas/production without --allow-production)
 npm run dev      # Starts server on http://localhost:5000
 ```
 

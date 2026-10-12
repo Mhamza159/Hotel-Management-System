@@ -293,7 +293,7 @@ const bookingSchema = new mongoose.Schema(
       default: null,
     },
 
-    // Unpaid pending booking expiration deadline (e.g. Creation + 15 minutes)
+    // Unpaid pending (online) booking expiration deadline (creation + 5 minutes)
     expiresAt: {
       type: Date,
     },

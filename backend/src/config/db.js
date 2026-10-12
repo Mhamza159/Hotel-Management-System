@@ -75,29 +75,6 @@ const connectDB = async () => {
 };
 
 /**
- * Executes a callback within a MongoDB ACID transaction session.
- * Automatically commits on success and aborts on error.
- *
- * @param {Function} callback - Async function receiving (session)
- * @returns {Promise<any>} Result of the callback
- */
-const withTransaction = async (callback) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    const result = await callback(session);
-    await session.commitTransaction();
-    return result;
-  } catch (error) {
-    await session.abortTransaction();
-    throw error;
-  } finally {
-    session.endSession();
-  }
-};
-
-/**
  * Graceful shutdown handler to safely close database connections.
  */
 const closeDB = async () => {
@@ -120,6 +97,5 @@ process.on("SIGTERM", async () => {
 
 module.exports = {
   connectDB,
-  withTransaction,
   closeDB,
 };

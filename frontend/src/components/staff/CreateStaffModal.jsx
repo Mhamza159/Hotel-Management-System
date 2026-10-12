@@ -42,6 +42,10 @@ export const CreateStaffModal = ({ open, onClose, onSuccess }) => {
       setError('Name, email, and password are required.');
       return;
     }
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
 
     try {
       setLoading(true);

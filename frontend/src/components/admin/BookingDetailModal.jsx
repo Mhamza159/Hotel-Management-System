@@ -25,9 +25,11 @@ import { bookingService } from '../../services/booking.service';
 
 const STATUS_CHIP_COLORS = {
   confirmed: { bg: 'rgba(62, 207, 142, 0.1)', text: '#3ECF8E', border: 'rgba(62, 207, 142, 0.3)' },
-  checked_in: { bg: 'rgba(63, 208, 201, 0.1)', text: '#3FD0C9', border: 'rgba(63, 208, 201, 0.3)' },
-  checked_out: { bg: 'rgba(135, 145, 163, 0.1)', text: '#8791A3', border: 'rgba(135, 145, 163, 0.3)' },
+  pending: { bg: 'rgba(201, 161, 90, 0.1)', text: '#C9A15A', border: 'rgba(201, 161, 90, 0.3)' },
+  'checked-in': { bg: 'rgba(63, 208, 201, 0.1)', text: '#3FD0C9', border: 'rgba(63, 208, 201, 0.3)' },
+  'checked-out': { bg: 'rgba(135, 145, 163, 0.1)', text: '#8791A3', border: 'rgba(135, 145, 163, 0.3)' },
   completed: { bg: 'rgba(135, 145, 163, 0.1)', text: '#8791A3', border: 'rgba(135, 145, 163, 0.3)' },
+  'cancellation-requested': { bg: 'rgba(201, 161, 90, 0.1)', text: '#C9A15A', border: 'rgba(201, 161, 90, 0.3)' },
   cancelled: { bg: 'rgba(239, 68, 68, 0.1)', text: '#F87171', border: 'rgba(239, 68, 68, 0.3)' },
 };
 
@@ -35,6 +37,9 @@ const PAYMENT_CHIP_COLORS = {
   completed: { bg: 'rgba(62, 207, 142, 0.1)', text: '#3ECF8E' },
   pending: { bg: 'rgba(201, 161, 90, 0.1)', text: '#C9A15A' },
   refunded: { bg: 'rgba(239, 68, 68, 0.1)', text: '#F87171' },
+  'partially-refunded': { bg: 'rgba(239, 68, 68, 0.1)', text: '#F87171' },
+  'partially-paid': { bg: 'rgba(201, 161, 90, 0.1)', text: '#C9A15A' },
+  unpaid: { bg: 'rgba(201, 161, 90, 0.1)', text: '#C9A15A' },
 };
 
 export const BookingDetailModal = ({ open, onClose, booking }) => {
@@ -237,7 +242,9 @@ export const BookingDetailModal = ({ open, onClose, booking }) => {
             <div>
               <span className="text-[11px] text-[#8791A3] block">Refund Status</span>
               <p className="text-xs text-[#ECEFF3] font-medium">
-                {booking.cancellation ? `${booking.cancellation.refundPercentage}% Refunded` : 'No Refund'}
+                {booking.cancellation
+                  ? `${booking.cancellation.appliedTier || 'Policy'} tier · ${Number(booking.cancellation.refundAmount || 0).toFixed(2)} refunded`
+                  : 'No Refund'}
               </p>
             </div>
           </div>

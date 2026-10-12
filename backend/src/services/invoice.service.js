@@ -4,6 +4,7 @@ const Booking = require("../models/Booking");
 const Payment = require("../models/Payment");
 const ApiError = require("../utils/apiError");
 const { PAYMENT_STATUS } = require("../config/constants");
+const { hotel } = require("../config/env");
 
 /**
  * ============================================================================
@@ -74,15 +75,19 @@ class InvoiceService {
       .fillColor("#1A365D") // Deep Navy Blue
       .fontSize(20)
       .font("Helvetica-Bold")
-      .text("GRAND HORIZON LUXURY HOTEL & SUITES", 50, 50);
+      .text(hotel.name.toUpperCase(), 50, 50);
 
-    doc
-      .fillColor("#718096") // Slate Gray
-      .fontSize(9)
-      .font("Helvetica")
-      .text("104 Boulevard Avenue, Luxury District, Suite 500", 50, 75)
-      .text("Phone: +92 51 111-468-357 | Email: reservations@grandhorizon.com", 50, 88)
-      .text("Tax / NTN Registration: 9284715-4 | Web: www.grandhorizon.com", 50, 101);
+    // Hotel ki maloomat env se (HOTEL_*), pehle code me likhi thin
+    const contactLine = [hotel.phone && `Phone: ${hotel.phone}`, hotel.email && `Email: ${hotel.email}`]
+      .filter(Boolean)
+      .join(" | ");
+    const registrationLine = [hotel.taxId && `Tax / NTN Registration: ${hotel.taxId}`, hotel.website && `Web: ${hotel.website}`]
+      .filter(Boolean)
+      .join(" | ");
+    doc.fillColor("#718096").fontSize(9).font("Helvetica");
+    if (hotel.address) doc.text(hotel.address, 50, 75);
+    if (contactLine) doc.text(contactLine, 50, 88);
+    if (registrationLine) doc.text(registrationLine, 50, 101);
 
     // Decorative horizontal dividing line
     doc
@@ -267,9 +272,10 @@ class InvoiceService {
 
     doc.font("Helvetica").fontSize(9).fillColor("#4A5568");
 
-    // Subtotal
+    // Subtotal = discount se pehle (totalPrice discount ke baad save hota hai)
+    const discount = booking.discountAmount || 0;
     doc.text("Subtotal:", sumLabelX, sumY);
-    doc.text(`$${booking.totalPrice.toFixed(2)}`, sumValueX, sumY);
+    doc.text(`${(booking.totalPrice + discount).toFixed(2)}`, sumValueX, sumY);
     sumY += 15;
 
     // Discount if applied
@@ -370,7 +376,7 @@ class InvoiceService {
         { align: "center", width: 495 }
       )
       .text(
-        "Official Grand Horizon Hotel Registration Folio & Tax Invoice. Thank you for your stay!",
+        `Official ${hotel.name} Registration Folio & Tax Invoice. Thank you for your stay!`,
         50,
         footerTop + 24,
         { align: "center", width: 495 }
