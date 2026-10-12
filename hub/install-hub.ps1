@@ -401,7 +401,8 @@ else {
 # Done
 # ---------------------------------------------------------------------------
 Write-HubStep 'Grand Horizon Hub is installed'
-$addresses = Get-HubLanAddresses
+# @() keeps a single IP as an array (PowerShell unrolls one-item results into a string)
+$addresses = @(Get-HubLanAddresses)
 if ($addresses.Count -gt 0) {
     Write-HubInfo 'In the staff desktop app (File > Hub Connection...) use one of:'
     foreach ($address in $addresses) { Write-HubInfo "  http://${address}:$ApiPort" }
