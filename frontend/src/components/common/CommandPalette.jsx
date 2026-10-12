@@ -63,7 +63,7 @@ const ALL_COMMANDS = [
   // Analytics & Security
   { id: 'analytics', label: 'Manager Analytics & KPIs', description: 'Revenue, ADR, RevPAR, and occupancy', path: '/admin/analytics', icon: BarChart3, color: '#3ECF8E', permission: PERMISSIONS.ANALYTICS_VIEW },
   { id: 'audit', label: 'Security Audit Trail', description: 'Immutable security logs inspector', path: '/admin/audit-log', icon: ShieldAlert, color: '#F87171', permission: PERMISSIONS.AUDIT_VIEW },
-  { id: 'copilot', label: 'AI Ops Copilot', description: 'AI administrative command terminal', path: '/admin/copilot', icon: Terminal, color: '#3FD0C9', permission: PERMISSIONS.STAFF_MANAGE },
+  { id: 'copilot', label: 'AI Ops Copilot', description: 'AI administrative command terminal', path: '/admin/copilot', icon: Terminal, color: '#3FD0C9', permission: PERMISSIONS.STAFF_MANAGE, superAdminOnly: true },
 ];
 
 export const CommandPalette = ({ isOpen: externalIsOpen, onClose: externalOnClose } = {}) => {
@@ -98,6 +98,7 @@ export const CommandPalette = ({ isOpen: externalIsOpen, onClose: externalOnClos
   const filteredCommands = ALL_COMMANDS.filter((cmd) => {
     if (!cmd.permission && cmd.roles?.includes(ROLES.GUEST)) return true;
     if (!user) return false;
+    if (cmd.superAdminOnly && !isSuperAdmin) return false;
     if (!isSuperAdmin && cmd.permission && !userPerms.includes(cmd.permission)) {
       return false;
     }

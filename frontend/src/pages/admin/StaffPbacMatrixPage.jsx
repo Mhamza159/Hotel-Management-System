@@ -85,7 +85,7 @@ export const StaffPbacMatrixPage = () => {
         permissions: [
           { key: 'bookings:view', label: 'View All Bookings', desc: 'Browse guest bookings and stay details' },
           { key: 'bookings:create', label: 'Create Reservations', desc: 'Create own online reservations (walk-ins use Guest Check-In)' },
-          { key: 'bookings:confirm', label: 'Confirm Reservations', desc: 'Finalize and approve pending bookings' },
+          { key: 'bookings:confirm', label: 'Confirm Reservations', desc: 'Not used yet: no feature checks this permission' },
           { key: 'bookings:cancel', label: 'Audit & Process Cancellations', desc: 'Approve or reject guest cancellation requests' },
         ],
       },
@@ -106,7 +106,7 @@ export const StaffPbacMatrixPage = () => {
         permissions: [
           { key: 'payments:recordCash', label: 'Record Cash Payments', desc: 'Attributed intake of physical cash at front desk drawer' },
           { key: 'payments:recordCard', label: 'Record POS Card Slips', desc: 'Attributed intake of offline credit/debit card slips' },
-          { key: 'payments:refund', label: 'Authoritative Refunds', desc: 'Execute authoritative refund reversals' },
+          { key: 'payments:refund', label: 'Authoritative Refunds', desc: 'Not enforced yet: refunds follow "Audit & Process Cancellations"' },
         ],
       },
       {
@@ -116,7 +116,7 @@ export const StaffPbacMatrixPage = () => {
         permissions: [
           { key: 'rooms:view', label: 'View Room Inventory', desc: 'Browse room catalogue and specifications' },
           { key: 'rooms:create', label: 'Define New Rooms', desc: 'Create physical room numbers and suites' },
-          { key: 'rooms:update', label: 'Edit Room Specs', desc: 'Modify room descriptions and amenities' },
+          { key: 'rooms:update', label: 'Edit Room Specs', desc: 'Modify room descriptions and amenities (not the price)' },
           { key: 'rooms:delete', label: 'Deactivate / Soft-Delete Rooms', desc: 'Archive rooms from active hotel inventory' },
           { key: 'rooms:priceUpdate', label: 'Adjust Room Pricing', desc: 'Change nightly rates on rooms' },
         ],
@@ -129,8 +129,8 @@ export const StaffPbacMatrixPage = () => {
           { key: 'analytics:view', label: 'View Revenue & Occupancy Charts', desc: 'Access high-level management financial metrics' },
           { key: 'audit:view', label: 'Security Audit Trail', desc: 'Inspect immutable system event audit logs' },
           { key: 'staff:manage', label: 'Manage Staff & Roles', desc: 'Create accounts and modify PBAC matrix' },
-          { key: 'coupons:manage', label: 'Manage Promotion Codes', desc: 'Configure discounts and promo campaigns' },
-          { key: 'waitlist:manage', label: 'Manage Room Waitlists', desc: 'Inspect waitlist requests for sold-out dates' },
+          { key: 'coupons:manage', label: 'Manage Promotion Codes', desc: 'Not used yet: there is no coupon management screen' },
+          { key: 'waitlist:manage', label: 'Manage Room Waitlists', desc: 'Not used yet: there is no staff waitlist screen' },
         ],
       },
     ],

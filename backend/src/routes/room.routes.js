@@ -75,7 +75,8 @@ router.patch(
 router.patch(
   "/:id",
   authenticate,
-  requirePermission(PERMISSIONS.ROOMS_UPDATE),
+  // Price sirf rooms:priceUpdate se, baqi fields rooms:update se (controller check karta hai)
+  requireAnyPermission([PERMISSIONS.ROOMS_UPDATE, PERMISSIONS.ROOMS_PRICE_UPDATE]),
   validate(updateRoomSchema),
   RoomController.updateRoom
 );

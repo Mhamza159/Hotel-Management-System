@@ -9,9 +9,14 @@ const {
   BOOKING_STATUS,
   PAYMENT_STATUS,
   ROLES,
+  PERMISSIONS,
 } = require("../config/constants");
 const WaitlistService = require("./waitlist.service");
 const BookingService = require("./booking.service");
+const { hasPermission } = require("../utils/permissions");
+
+// Aadha refund hua (booking ka kuch paisa hotel ne rakha)
+const PARTIALLY_REFUNDED = "partially-refunded";
 
 /**
  * ============================================================================
@@ -115,7 +120,7 @@ class CancellationService {
    * @param {string} params.reason - Cancel karne ki waja
    * @returns {Promise<Object>} Updated booking request receipt
    */
-  static async requestCancellation({ bookingId, userId, userRole, reason }) {
+  static async requestCancellation({ bookingId, userId, userRole, reason, actor = null }) {
     if (!mongoose.Types.ObjectId.isValid(bookingId)) {
       throw ApiError.badRequest("Invalid booking ID format");
     }
@@ -134,8 +139,7 @@ class CancellationService {
 
     // 1. Ownership Guard: Sirf booking ka maalik ya staff hi darkhwast bhej sakta hai
     const isOwner = booking.userId._id.toString() === userId.toString();
-    const isStaff =
-      userRole === ROLES.RECEPTIONIST || userRole === ROLES.SUPER_ADMIN;
+    const isStaff = hasPermission(actor || { role: userRole }, PERMISSIONS.BOOKINGS_CANCEL);
 
     if (!isOwner && !isStaff) {
       throw ApiError.forbidden(
@@ -335,14 +339,14 @@ class CancellationService {
     staffId,
     staffRole,
     notes,
+    staffUser = null,
   }) {
     if (!mongoose.Types.ObjectId.isValid(bookingId)) {
       throw ApiError.badRequest("Invalid booking ID format");
     }
 
-    // 1. Staff RBAC Guard: Sirf receptionist ya super-admin approve kar sakte hain
-    const isAuthorizedStaff =
-      staffRole === ROLES.RECEPTIONIST || staffRole === ROLES.SUPER_ADMIN;
+    // 1. Staff guard: bookings:cancel permission (sirf receptionist role nahi)
+    const isAuthorizedStaff = hasPermission(staffUser || { role: staffRole }, PERMISSIONS.BOOKINGS_CANCEL);
     if (!isAuthorizedStaff) {
       throw ApiError.forbidden(
         "Only front-desk staff or super-admins are authorized to approve cancellations."
@@ -357,7 +361,8 @@ class CancellationService {
       throw ApiError.notFound(`Booking with ID '${bookingId}' not found`);
     }
 
-    // 2. Lifecycle Status Guard:
+    // 2. Lifecycle Status Guard: sirf wo bookings jo abhi stay se pehle hain.
+    // (Pehle checked-out / completed bookings bhi "cancel" ho kar refund de deti thin.)
     if (booking.status === BOOKING_STATUS.CANCELLED) {
       throw ApiError.badRequest("This booking is already cancelled.");
     }
@@ -365,6 +370,17 @@ class CancellationService {
     if (booking.status === BOOKING_STATUS.CHECKED_IN) {
       throw ApiError.badRequest(
         "Cannot cancel a booking after guest has already checked in."
+      );
+    }
+
+    const CANCELLABLE_STATUSES = [
+      BOOKING_STATUS.CANCELLATION_REQUESTED,
+      BOOKING_STATUS.CONFIRMED,
+      BOOKING_STATUS.PENDING,
+    ];
+    if (!CANCELLABLE_STATUSES.includes(booking.status)) {
+      throw ApiError.badRequest(
+        `Cannot cancel a booking with status '${booking.status}'.`
       );
     }
 
@@ -420,7 +436,7 @@ class CancellationService {
     if (refundData.refundAmount > 0 && refundData.refundAmount >= totalPaid) {
       booking.paymentStatus = PAYMENT_STATUS.REFUNDED;
     } else if (refundData.refundAmount > 0) {
-      booking.paymentStatus = "partially-paid";
+      booking.paymentStatus = PARTIALLY_REFUNDED;
     }
 
     await booking.save();
@@ -429,21 +445,33 @@ class CancellationService {
     await BookingService.releaseBookingDiscounts(booking);
 
     // 7. Payment ledger me refund record create karein (Audit trail)
-    let refundPaymentRecord = null;
-    if (refundData.refundAmount > 0) {
-      refundPaymentRecord = await Payment.create({
-        bookingId: booking._id,
-        userId: booking.userId._id || booking.userId,
-        amount: refundData.refundAmount,
-        currency: "USD",
-        paymentMethod: completedPayments[0]?.paymentMethod || "cash",
-        status: PAYMENT_STATUS.REFUNDED,
-        receivedByStaffId: staffId,
-        notes: `Refund approved under ${refundData.appliedTier} tier. Staff note: ${
-          notes || "Approved"
-        }`,
-      });
+    // Cash aur card dono se diya ho to har payment ke apne tareeqe se wapis (sab se
+    // nayi payment pehle). Pehle poora refund pehli payment ke method par likha jata tha.
+    const refundPaymentRecords = [];
+    let remainingRefund = Math.round(refundData.refundAmount * 100) / 100;
+    const newestFirst = [...completedPayments].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+    for (const original of newestFirst) {
+      if (remainingRefund <= 0) break;
+      const portion = Math.min(remainingRefund, original.amount);
+      refundPaymentRecords.push(
+        await Payment.create({
+          bookingId: booking._id,
+          userId: booking.userId._id || booking.userId,
+          amount: portion,
+          currency: original.currency || "USD",
+          paymentMethod: original.paymentMethod,
+          status: PAYMENT_STATUS.REFUNDED,
+          receivedByStaffId: staffId,
+          notes: `Refund of payment ${original._id} under ${refundData.appliedTier} tier. Staff note: ${
+            notes || "Approved"
+          }`,
+        })
+      );
+      remainingRefund = Math.round((remainingRefund - portion) * 100) / 100;
     }
+    const refundPaymentRecord = refundPaymentRecords[0] || null;
 
     // 8. Guest ko notification dispatch karein (Main Requirement)
     NotificationService.notifyCancellationApproved({
@@ -478,6 +506,7 @@ class CancellationService {
         refundAmount: refundData.refundAmount,
         message: refundData.message,
         refundPaymentId: refundPaymentRecord ? refundPaymentRecord._id : null,
+        refundPaymentIds: refundPaymentRecords.map((record) => record._id),
       },
     };
   }
@@ -500,13 +529,13 @@ class CancellationService {
     staffId,
     staffRole,
     rejectionReason,
+    staffUser = null,
   }) {
     if (!mongoose.Types.ObjectId.isValid(bookingId)) {
       throw ApiError.badRequest("Invalid booking ID format");
     }
 
-    const isAuthorizedStaff =
-      staffRole === ROLES.RECEPTIONIST || staffRole === ROLES.SUPER_ADMIN;
+    const isAuthorizedStaff = hasPermission(staffUser || { role: staffRole }, PERMISSIONS.BOOKINGS_CANCEL);
     if (!isAuthorizedStaff) {
       throw ApiError.forbidden(
         "Only front-desk staff or super-admins can reject cancellation requests."

@@ -1,6 +1,9 @@
 const RoomService = require("../services/room.service");
 const AuditService = require("../services/audit.service");
 const ApiResponse = require("../utils/apiResponse");
+const ApiError = require("../utils/apiError");
+const { hasPermission } = require("../utils/permissions");
+const { PERMISSIONS } = require("../config/constants");
 
 /**
  * ============================================================================
@@ -103,7 +106,22 @@ class RoomController {
   static async updateRoom(req, res, next) {
     try {
       const { id } = req.params;
-      const updatedRoom = await RoomService.updateRoom(id, req.body);
+      // rooms:priceUpdate ab asal me lagu hai (pehle UI me toggle tha par API check nahi karti thi)
+      // Edit forms poora room bhejte hain, is liye sirf wahi fields gine jo asal me badle
+      const body = req.body || {};
+      const current = (await RoomService.getRoomById(id)).toObject();
+      const changedKeys = Object.keys(body).filter(
+        (key) => JSON.stringify(body[key]) !== JSON.stringify(current[key])
+      );
+      const changesPrice = changedKeys.includes("pricePerNight");
+      const changesOther = changedKeys.some((key) => key !== "pricePerNight");
+      if (changesPrice && !hasPermission(req.user, PERMISSIONS.ROOMS_PRICE_UPDATE)) {
+        throw ApiError.forbidden("You do not have permission to change room prices (rooms:priceUpdate)");
+      }
+      if (changesOther && !hasPermission(req.user, PERMISSIONS.ROOMS_UPDATE)) {
+        throw ApiError.forbidden("You do not have permission to edit room details (rooms:update)");
+      }
+      const updatedRoom = await RoomService.updateRoom(id, body);
       return ApiResponse.success(
         res,
         200,

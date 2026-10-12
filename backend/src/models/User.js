@@ -135,6 +135,12 @@ userSchema.methods.hasPermission = function (permission) {
   if (this.role === ROLES.SUPER_ADMIN) {
     return true; // Super-admin bypass
   }
+  // Guest kabhi staff nahi: purane guest accounts me "bookings:view" save hai (pehle
+  // default tha) jis se wo /admin/bookings jaise staff routes khol sakte the. Guest ke
+  // liye sirf guest ki default permissions maani jati hain, saved list nahi.
+  if (this.role === ROLES.GUEST) {
+    return (ROLE_DEFAULT_PERMISSIONS[ROLES.GUEST] || []).includes(permission);
+  }
   return Array.isArray(this.permissions) && this.permissions.includes(permission);
 };
 

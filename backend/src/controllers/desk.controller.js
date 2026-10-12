@@ -298,6 +298,7 @@ class DeskController {
         bookingId,
         staffId,
         staffRole,
+        staffUser: req.user,
         notes,
       });
 
@@ -331,6 +332,7 @@ class DeskController {
         bookingId,
         staffId,
         staffRole,
+        staffUser: req.user,
         rejectionReason,
       });
 

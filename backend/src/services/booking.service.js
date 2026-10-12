@@ -3,8 +3,9 @@ const Booking = require('../models/Booking');
 const Room = require('../models/Room');
 const User = require('../models/User');
 const Coupon = require('../models/Coupon');
-const { BOOKING_STATUS, PAYMENT_STATUS, ROLES } = require('../config/constants');
+const { BOOKING_STATUS, PAYMENT_STATUS, ROLES, PERMISSIONS } = require('../config/constants');
 const ApiError = require('../utils/apiError');
+const { hasPermission } = require('../utils/permissions');
 
 // Payment methods jin me guest counter par pay karta hai (online gateway nahi)
 const PAY_AT_DESK_METHODS = ['pay_at_desk', 'cash', 'card', 'offline-card'];
@@ -540,7 +541,7 @@ class BookingService {
    * @param {string} userRole - User ka role (user, receptionist, super-admin)
    * @returns {Promise<Object>} Booking document
    */
-  static async getBookingById(bookingId, userId, userRole) {
+  static async getBookingById(bookingId, userId, userRole, viewer = null) {
     const booking = await Booking.findById(bookingId)
       .populate('rooms.roomId', 'roomNumber type pricePerNight capacity amenities images')
       .populate('userId', 'name email');
@@ -552,7 +553,8 @@ class BookingService {
     // Security Authorization Check:
     // Sirf booking ka asal maalik (Guest) ya Hotel Staff (Receptionist, Super-Admin) hi booking dekh sakta hai
     const isOwner = booking.userId._id.toString() === userId.toString();
-    const isStaff = userRole === ROLES.SUPER_ADMIN || userRole === ROLES.RECEPTIONIST;
+    // Staff = jis ke paas bookings:view ho (sirf receptionist role nahi)
+    const isStaff = hasPermission(viewer || { role: userRole }, PERMISSIONS.BOOKINGS_VIEW);
 
     if (!isOwner && !isStaff) {
       throw ApiError.forbidden('You do not have permission to view this booking');

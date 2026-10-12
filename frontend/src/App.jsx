@@ -441,7 +441,8 @@ export function App() {
         <Route
           path="/admin/copilot"
           element={
-            <ProtectedRoute requiredPermission={PERMISSIONS.STAFF_MANAGE}>
+            // API (/chat/admin) sirf super-admin ko jawab deti hai
+            <ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}>
               <StaffLayout
                 title="Administrative AI Copilot"
                 subtitle="Autonomous flight-ops commands with two-phase signed mutation safeguards"

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuthStore } from '../../stores/useAuthStore';
-import { ROLES } from '../../config/constants';
+import { ROLES, PERMISSIONS } from '../../config/constants';
 
 /**
  * Pure PBAC authorization function
@@ -8,7 +8,10 @@ import { ROLES } from '../../config/constants';
  */
 export function can(user, permission) {
   if (!user) return false;
-  return user.role === ROLES.SUPER_ADMIN || (Array.isArray(user.permissions) && user.permissions.includes(permission));
+  if (user.role === ROLES.SUPER_ADMIN) return true;
+  // Guest kabhi staff nahi (backend bhi purane accounts ki saved staff permissions nahi maanta)
+  if (user.role === ROLES.GUEST) return permission === PERMISSIONS.BOOKINGS_CREATE;
+  return Array.isArray(user.permissions) && user.permissions.includes(permission);
 }
 
 /**

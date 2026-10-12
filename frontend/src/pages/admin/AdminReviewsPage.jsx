@@ -30,6 +30,8 @@ import {
 import { adminService } from '../../services/admin.service';
 import { roomService } from '../../services/room.service';
 import { engagementService } from '../../services/engagement.service';
+import { useAuthStore } from '../../stores/useAuthStore';
+import { ROLES } from '../../config/constants';
 
 /**
  * ============================================================================
@@ -38,6 +40,7 @@ import { engagementService } from '../../services/engagement.service';
  * Allows staff to inspect verified guest reviews per room and soft-delete/moderate.
  */
 export const AdminReviewsPage = () => {
+  const isSuperAdmin = useAuthStore((state) => state.user?.role === ROLES.SUPER_ADMIN);
   const [rooms, setRooms] = useState([]);
   const [selectedRoomId, setSelectedRoomId] = useState('');
   const [reviews, setReviews] = useState([]);
@@ -235,6 +238,8 @@ export const AdminReviewsPage = () => {
                   }}
                 />
 
+                {/* Review delete API sirf super-admin ko ijazat deti hai */}
+                {isSuperAdmin && (
                 <Button
                   size="small"
                   variant="outlined"
@@ -260,6 +265,7 @@ export const AdminReviewsPage = () => {
                 >
                   Moderate / Remove
                 </Button>
+                )}
               </div>
             </Paper>
           ))}

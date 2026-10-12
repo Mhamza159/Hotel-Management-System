@@ -122,6 +122,7 @@ const NAVIGATION_SECTIONS = [
         label: 'AI Ops Copilot',
         icon: Sparkles,
         permission: PERMISSIONS.STAFF_MANAGE,
+        superAdminOnly: true, // API sirf super-admin ko jawab deti hai
       },
     ],
   },
@@ -156,6 +157,7 @@ export const StaffSidebar = () => {
     const visibleItems = section.items.filter((item) => {
       // Super Admin bypasses all checks
       if (isSuperAdmin) return true;
+      if (item.superAdminOnly) return false;
       // PBAC: Check if user holds the permission
       return userPerms.includes(item.permission);
     });

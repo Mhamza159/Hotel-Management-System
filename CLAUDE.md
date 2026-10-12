@@ -22,7 +22,7 @@ Personas: guest (`user`), `receptionist`, `housekeeping`, `super-admin`.
 # backend (needs backend/.env with MONGO_URI, JWT_SECRET, JWT_REFRESH_SECRET ≥16 chars)
 cd backend && npm install
 npm run dev        # nodemon src/server.js on :5000, Swagger at /api-docs
-npm test           # jest --runInBand, in-memory MongoDB (~2 min). All 218 tests pass
+npm test           # jest --runInBand, in-memory MongoDB (~2 min). All 224 tests pass
 npx jest tests/integration/desk.test.js   # single file
 npm run seed       # destructive for seed users/rooms/coupons
 
@@ -104,6 +104,6 @@ Single source of truth for roles, permissions, statuses: `backend/src/config/con
 - `engagementService.getWishlist()` / `getWaitlists()` resolve to plain arrays (the API returns bare arrays).
 - Transactions only run when MongoDB is a replica set (Atlas, Hub); most tests use a standalone in-memory server (non-transactional path). `tests/integration/hub-replset-booking.test.js` covers the replica-set path; `createBooking` retries TransientTransactionError/WriteConflict (else concurrent bookings got 500). `MongoMemoryReplSet` fails inside Jest (its mongodb@7 driver handshake) — start mongod with `args: ['--replSet','rs0']` and use `src/hub/replicaSet.js`.
 - Backend env: `HOTEL_ENV_FILE` overrides the `.env` path (Hub); sync: `SYNC_NODE`, `SYNC_SHARED_KEY`, `CLOUD_SYNC_URL`, `SYNC_INTERVAL_MS`, `HUB_OFFLINE_AFTER_MS`, `SYNC_SETTLE_MS`; `RATE_LIMIT_MAX` / `AUTH_RATE_LIMIT_MAX` (default 300/20); in production `connectDB` never falls back to localhost.
-- Some checks are hard-coded by role on top of PBAC (booking view/invoice, cancellation approve/reject, chat staff/admin, review delete).
+- Service-level checks use `utils/permissions.hasPermission(user, perm)` (booking view/invoice, cancellation request/approve/reject, staff chat). Guests are never staff: `User.hasPermission` and `hasPermission` give role `user` only the guest defaults, ignoring stored permissions (old guest accounts still carry `bookings:view`). Admin AI copilot, AI confirm and review delete stay super-admin only (UI uses `superAdminOnly`). Room PATCH: price changes need `rooms:priceUpdate`, other changed fields `rooms:update`. `bookings:confirm`, `coupons:manage`, `waitlist:manage` have no feature; `payments:refund` is not enforced (refunds follow `bookings:cancel`).
 - Several tests use fixed late-2026 dates and will fail once those dates are in the past.
 - `.planning/`, `.specify/`, `backend/specs/`, `.agents/` are AI planning/tooling docs, not runtime code.

@@ -4,7 +4,8 @@ const InvoiceService = require('../services/invoice.service');
 const Booking = require('../models/Booking');
 const ApiResponse = require('../utils/apiResponse');
 const ApiError = require('../utils/apiError');
-const { ROLES } = require('../config/constants');
+const { PERMISSIONS } = require('../config/constants');
+const { hasPermission } = require('../utils/permissions');
 
 /**
  * ============================================================================
@@ -111,7 +112,7 @@ class BookingController {
       const userId = req.user._id;
       const userRole = req.user.role;
 
-      const booking = await BookingService.getBookingById(id, userId, userRole);
+      const booking = await BookingService.getBookingById(id, userId, userRole, req.user);
 
       return ApiResponse.success(res, 200, booking, 'Booking details retrieved successfully');
     } catch (error) {
@@ -141,6 +142,7 @@ class BookingController {
         bookingId,
         userId,
         userRole,
+        actor: req.user,
         reason,
       });
 
@@ -171,7 +173,7 @@ class BookingController {
       }
 
       const isOwner = booking.userId.toString() === userId.toString();
-      const isStaff = userRole === ROLES.RECEPTIONIST || userRole === ROLES.SUPER_ADMIN;
+      const isStaff = hasPermission(req.user, PERMISSIONS.BOOKINGS_VIEW);
 
       if (!isOwner && !isStaff) {
         throw ApiError.forbidden('You do not have permission to view or download this invoice');

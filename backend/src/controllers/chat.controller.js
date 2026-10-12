@@ -1,7 +1,8 @@
 const AiService = require('../services/ai.service');
 const ApiResponse = require('../utils/apiResponse');
 const ApiError = require('../utils/apiError');
-const { ROLES } = require('../config/constants');
+const { ROLES, PERMISSIONS } = require('../config/constants');
+const { hasPermission } = require('../utils/permissions');
 
 /**
  * ============================================================================
@@ -35,7 +36,8 @@ class ChatController {
    */
   static async staffChat(req, res, next) {
     try {
-      if (req.user.role !== ROLES.RECEPTIONIST && req.user.role !== ROLES.SUPER_ADMIN) {
+      // Operational lookups: bookings:view wala har staff (sirf receptionist role nahi)
+      if (!hasPermission(req.user, PERMISSIONS.BOOKINGS_VIEW)) {
         throw ApiError.forbidden('Only staff or administrators can access the staff AI assistant');
       }
 

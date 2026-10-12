@@ -6,7 +6,8 @@ const RoomService = require('./room.service');
 const AnalyticsService = require('./analytics.service');
 const CancellationService = require('./cancellation.service');
 const config = require('../config/env');
-const { ROLES, BOOKING_STATUS } = require('../config/constants');
+const { ROLES, BOOKING_STATUS, PERMISSIONS } = require('../config/constants');
+const { hasPermission } = require('../utils/permissions');
 const ApiError = require('../utils/apiError');
 const logger = require('../utils/logger');
 
@@ -90,7 +91,8 @@ class AiService {
     // ------------------------------------------------------------------------
     // STAFF & ADMIN OPERATIONAL TOOLS
     // ------------------------------------------------------------------------
-    const isStaffOrAdmin = userRole === ROLES.RECEPTIONIST || userRole === ROLES.SUPER_ADMIN;
+    // Staff tools: jis ke paas bookings:view ho (sirf receptionist role nahi)
+    const isStaffOrAdmin = hasPermission(user, PERMISSIONS.BOOKINGS_VIEW);
 
     if (toolName === 'getBookingStatus') {
       if (!isStaffOrAdmin) {
