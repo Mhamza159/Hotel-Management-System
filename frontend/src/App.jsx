@@ -455,7 +455,8 @@ export function App() {
       </Routes>
 
       {/* Global Overlays (desktop: assistant needs a staff session) */}
-      {(!isDesktop || isAuthenticated) && <ChatDrawer />}
+      {/* Chat API login maangti hai — bahar ke visitor ko drawer dikhane se 401 aur zabardasti login hota tha */}
+      {isAuthenticated && <ChatDrawer />}
       <CommandPalette />
     </>
   );

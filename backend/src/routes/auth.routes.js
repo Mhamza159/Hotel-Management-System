@@ -3,6 +3,8 @@ const {
   register,
   login,
   refreshToken,
+  logout,
+  logoutAll,
   getMe,
   getAllPermissionsAndRoles,
   getStaffList,
@@ -37,11 +39,15 @@ const router = express.Router();
 router.post("/register", validate(registerSchema), register);
 router.post("/login", validate(loginSchema), login);
 router.post("/refresh-token", validate(refreshTokenSchema), refreshToken);
+// Is device ka session band (refresh token revoke)
+router.post("/logout", validate(refreshTokenSchema), logout);
 router.post("/forgot-password", validate(forgotPasswordSchema), forgotPassword);
 router.post("/reset-password", validate(resetPasswordSchema), resetPassword);
 
 // 2. Protected route: Sirf valid logged in user hi apna profile dekh sakta hai
 router.get("/me", authenticate, getMe);
+// Har device se logout (saare tokens khatam)
+router.post("/logout-all", authenticate, logoutAll);
 
 // 3. Staff & Permissions Administration (PBAC Protected: staff:manage or Super-Admin bypass)
 // Frontend Permissions Tab ke liye metadata (roles, permissions, default templates)

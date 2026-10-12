@@ -46,6 +46,12 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    // Har token me likha hota hai; barhane se user ke saare purane tokens khatam
+    // (password reset, "sab devices se logout")
+    tokenVersion: {
+      type: Number,
+      default: 0,
+    },
     // Guest loyalty reward points accrued on stays (100 points = $10 discount)
     loyaltyPoints: {
       type: Number,

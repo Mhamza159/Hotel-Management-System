@@ -8,6 +8,7 @@ const CancellationService = require('./cancellation.service');
 const config = require('../config/env');
 const { ROLES, BOOKING_STATUS, PERMISSIONS } = require('../config/constants');
 const { hasPermission } = require('../utils/permissions');
+const { startOfHotelToday, DAY_MS } = require('../utils/hotelDate');
 const ApiError = require('../utils/apiError');
 const logger = require('../utils/logger');
 
@@ -63,9 +64,12 @@ class AiService {
     // ------------------------------------------------------------------------
     if (toolName === 'checkAvailability') {
       const { checkIn, checkOut, roomType } = args;
+      // Quick prompt tareekhein nahi bhejta — tab aaj raat ki availability (pehle error aata tha)
+      const fromDate = checkIn || startOfHotelToday().toISOString().slice(0, 10);
+      const toDate = checkOut || new Date(new Date(`${fromDate}T00:00:00.000Z`).getTime() + DAY_MS).toISOString().slice(0, 10);
       const rooms = await RoomService.findAvailableRooms({
-        checkInDate: checkIn,
-        checkOutDate: checkOut,
+        checkInDate: fromDate,
+        checkOutDate: toDate,
         type: roomType,
       });
       return { availableCount: rooms.length, rooms: rooms.slice(0, 5) };

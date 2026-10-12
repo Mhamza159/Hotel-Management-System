@@ -49,15 +49,19 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
+      // Koi bhi *.vercel.app site (kisi aur ki bhi) pehle allowed thi. CORS_ALLOW_VERCEL_PREVIEWS=false
+      // karne par sirf CLIENT_URL wale domains (default true taake live site na toote).
+      const allowVercelPreviews = process.env.CORS_ALLOW_VERCEL_PREVIEWS !== "false";
       if (
         !origin ||
         allowedOrigins.includes(origin) ||
         process.env.NODE_ENV !== "production" ||
-        origin.endsWith(".vercel.app")
+        (allowVercelPreviews && origin.endsWith(".vercel.app"))
       ) {
         return callback(null, true);
       }
-      return callback(new Error(`CORS blocked for origin: ${origin}`));
+      // CORS headers na bhejo (browser khud rok deta hai) — pehle ye 500 error banta tha
+      return callback(null, false);
     },
     credentials: true,
   })

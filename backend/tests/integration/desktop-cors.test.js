@@ -44,5 +44,22 @@ describe('CORS for the staff desktop app', () => {
     const res = await request(app).get('/health').set('Origin', 'https://evil.example.com');
 
     expect(res.headers['access-control-allow-origin']).toBeUndefined();
+    // Bina CORS headers ke jawab (pehle server 500 error banata tha)
+    expect(res.status).toBe(200);
+  });
+
+  it('can stop trusting every *.vercel.app site with CORS_ALLOW_VERCEL_PREVIEWS=false', async () => {
+    const previous = process.env.CORS_ALLOW_VERCEL_PREVIEWS;
+    try {
+      const open = await request(app).get('/health').set('Origin', 'https://someone-else.vercel.app');
+      expect(open.headers['access-control-allow-origin']).toBe('https://someone-else.vercel.app');
+
+      process.env.CORS_ALLOW_VERCEL_PREVIEWS = 'false';
+      const closed = await request(app).get('/health').set('Origin', 'https://someone-else.vercel.app');
+      expect(closed.headers['access-control-allow-origin']).toBeUndefined();
+    } finally {
+      if (previous === undefined) delete process.env.CORS_ALLOW_VERCEL_PREVIEWS;
+      else process.env.CORS_ALLOW_VERCEL_PREVIEWS = previous;
+    }
   });
 });

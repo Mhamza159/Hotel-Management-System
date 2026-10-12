@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const config = require("../config/env");
 const ApiError = require("../utils/apiError");
@@ -8,8 +9,9 @@ const User = require("../models/User");
  * @param {string} userId
  * @returns {string} Signed JWT access token
  */
-const generateAccessToken = (userId) => {
-  return jwt.sign({ id: userId }, config.jwt.secret, {
+// tv = user.tokenVersion: badalne par (password reset / logout-all) purane tokens bekaar
+const generateAccessToken = (userId, tokenVersion = 0) => {
+  return jwt.sign({ id: userId, tv: tokenVersion }, config.jwt.secret, {
     expiresIn: config.jwt.expiresIn || "15m",
   });
 };
@@ -19,8 +21,9 @@ const generateAccessToken = (userId) => {
  * @param {string} userId
  * @returns {string} Signed JWT refresh token
  */
-const generateRefreshToken = (userId) => {
-  return jwt.sign({ id: userId }, config.jwt.refreshSecret, {
+// jti: har refresh token ki apni ID — logout / rotation par RevokedToken me jati hai
+const generateRefreshToken = (userId, tokenVersion = 0) => {
+  return jwt.sign({ id: userId, tv: tokenVersion, jti: crypto.randomUUID() }, config.jwt.refreshSecret, {
     expiresIn: config.jwt.refreshExpiresIn || "7d",
   });
 };
@@ -75,6 +78,11 @@ const authenticate = async (req, res, next) => {
         401,
         "User account has been deactivated. Please contact support."
       );
+    }
+
+    // Password reset / "sab devices se logout" ke baad purane tokens nahi chalte
+    if ((decoded.tv || 0) !== (user.tokenVersion || 0)) {
+      throw new ApiError(401, "Your session has ended. Please log in again.");
     }
 
     // Attach authenticated user to request context

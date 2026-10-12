@@ -66,6 +66,22 @@ export const ConciergePage = () => {
 
     setMessages((prev) => [...prev, userMsg]);
     if (!messageText) setInput('');
+
+    // Chat API login maangti hai; bahar ke visitor ko 401 ke baad zabardasti login
+    // page par bhejne ke bajaye yahin saaf batao
+    if (!user) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `assistant_${Date.now()}`,
+          role: 'assistant',
+          content: 'Please log in or create an account to chat with the concierge about rooms and your bookings.',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        },
+      ]);
+      return;
+    }
+
     setLoading(true);
 
     try {

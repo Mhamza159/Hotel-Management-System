@@ -1,4 +1,8 @@
 const User = require("../models/User");
+const RevokedToken = require("../models/RevokedToken");
+
+// Ek hi refresh token do tabs se ek saath aaye to dono ko naye tokens (logout nahi)
+const ROTATION_GRACE_MS = 20 * 1000;
 const ApiError = require("../utils/apiError");
 const ApiResponse = require("../utils/apiResponse");
 const config = require("../config/env");
@@ -55,8 +59,8 @@ const register = async (req, res, next) => {
     });
 
     // 4. JWT Tokens Generation
-    const accessToken = generateAccessToken(user._id.toString());
-    const refreshToken = generateRefreshToken(user._id.toString());
+    const accessToken = generateAccessToken(user._id.toString(), user.tokenVersion);
+    const refreshToken = generateRefreshToken(user._id.toString(), user.tokenVersion);
 
     // 5. Response sanitize karna (password field response me kabhi nahi jani chahiye)
     const userResponse = user.toObject();
@@ -120,8 +124,8 @@ const login = async (req, res, next) => {
     }
 
     // 6. Generate fresh Access and Refresh tokens
-    const accessToken = generateAccessToken(user._id.toString());
-    const refreshToken = generateRefreshToken(user._id.toString());
+    const accessToken = generateAccessToken(user._id.toString(), user.tokenVersion);
+    const refreshToken = generateRefreshToken(user._id.toString(), user.tokenVersion);
 
     // 7. Sanitize password before sending
     const userResponse = user.toObject();
@@ -178,9 +182,37 @@ const refreshToken = async (req, res, next) => {
       );
     }
 
-    // 4. Token Rotation: Naya Access Token aur naya Refresh Token issue karein
-    const newAccessToken = generateAccessToken(user._id.toString());
-    const newRefreshToken = generateRefreshToken(user._id.toString());
+    // 3b. Logout / pehle hi istemal ho chuka token, ya password reset ke baad ka purana token
+    if ((decoded.tv || 0) !== (user.tokenVersion || 0)) {
+      throw new ApiError(401, "Your session has ended. Please log in again.");
+    }
+    // 4. Token Rotation: purana refresh token bekaar ho jata hai. Sirf ek chhoti
+    // gunjaish: abhi abhi rotate hua token ROTATION_GRACE_MS ke andar dobara aaye (do
+    // browser tabs ek saath refresh) to bhi naye tokens. Logout wala token kabhi nahi.
+    if (decoded.jti) {
+      const revoked = await RevokedToken.findOneAndUpdate(
+        { jti: decoded.jti },
+        {
+          $setOnInsert: {
+            jti: decoded.jti,
+            userId: user._id,
+            reason: "rotated",
+            revokedAt: new Date(),
+            expiresAt: new Date(decoded.exp * 1000),
+          },
+        },
+        { upsert: true, new: false }
+      );
+      if (revoked) {
+        const withinGrace =
+          revoked.reason === "rotated" && Date.now() - new Date(revoked.revokedAt).getTime() < ROTATION_GRACE_MS;
+        if (!withinGrace) {
+          throw new ApiError(401, "This session was logged out. Please log in again.");
+        }
+      }
+    }
+    const newAccessToken = generateAccessToken(user._id.toString(), user.tokenVersion);
+    const newRefreshToken = generateRefreshToken(user._id.toString(), user.tokenVersion);
 
     return res.status(200).json(
       new ApiResponse(
@@ -585,6 +617,8 @@ const resetPassword = async (req, res, next) => {
     user.password = newPassword;
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
+    // Naya password: purane saare sessions (shayad chori hua token bhi) khatam
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
     await user.save();
 
     return res.status(200).json(
@@ -599,9 +633,58 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/v1/auth/logout
+ * Is device ka refresh token bekaar karo (pehle logout sirf browser se token mitata tha
+ * aur chori hua refresh token 7 din chalta rehta). Ghalat / expired token par bhi 200.
+ */
+const logout = async (req, res, next) => {
+  try {
+    const { refreshToken: token } = req.body || {};
+    let decoded = null;
+    try {
+      decoded = token ? verifyToken(token, config.jwt.refreshSecret) : null;
+    } catch (err) {
+      decoded = null;
+    }
+    if (decoded && decoded.jti) {
+      await RevokedToken.updateOne(
+        { jti: decoded.jti },
+        {
+          $setOnInsert: {
+            jti: decoded.jti,
+            userId: decoded.id,
+            reason: "logout",
+            expiresAt: new Date(decoded.exp * 1000),
+          },
+        },
+        { upsert: true }
+      );
+    }
+    return res.status(200).json(new ApiResponse(200, null, "Logged out."));
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/v1/auth/logout-all
+ * Is account ke har device / browser ka session khatam (tokenVersion barhta hai).
+ */
+const logoutAll = async (req, res, next) => {
+  try {
+    await User.updateOne({ _id: req.user._id }, { $inc: { tokenVersion: 1 } });
+    return res.status(200).json(new ApiResponse(200, null, "Logged out from all devices."));
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   register,
   login,
+  logout,
+  logoutAll,
   refreshToken,
   getMe,
   getAllPermissionsAndRoles,

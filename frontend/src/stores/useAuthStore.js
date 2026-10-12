@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { API_BASE_URL } from '../config/runtime';
 
 const STORAGE_KEY = 'grand_horizon_auth';
 
@@ -81,6 +82,17 @@ export const useAuthStore = create((set, get) => ({
   },
 
   logout: () => {
+    // Server par bhi is device ka refresh token band karo (pehle logout sirf local tha).
+    // api.js yahan import nahi ho sakta (circular), is liye seedha fetch; jawab ka intezar nahi.
+    const { refreshToken } = get();
+    if (refreshToken) {
+      fetch(`${API_BASE_URL}/auth/logout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+        keepalive: true,
+      }).catch(() => {});
+    }
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch (e) {
