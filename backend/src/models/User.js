@@ -17,7 +17,9 @@ const userSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
       match: [
-        /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
+        // Purana regex sirf 2-3 harf ke TLD (.com) aur bina "+" wale address maanta tha,
+        // jab ke Joi/frontend .info, .travel, name+tag@ waghera qubool karte hain
+        /^[^\s@]+@[^\s@]+\.[^\s@.]{2,}$/,
         "Please provide a valid email address",
       ],
     },

@@ -20,7 +20,8 @@
     "appId": "com.grandhorizon.staffdesktop",
     "productName": "Grand Horizon Staff",
     "directories": {
-      "output": "dist"
+      "output": "dist",
+      "buildResources": "build"
     },
     "files": [
       "src/**/*",
@@ -28,11 +29,16 @@
       "package.json"
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Grand Horizon Staff",
+      "artifactName": "GrandHorizonStaff-Setup-${version}.${ext}"
     }
   }
 }

@@ -53,6 +53,7 @@ describe('Hub <-> cloud sync (end to end)', () => {
   let User;
   let Booking;
   let BookingService;
+  let hubApp;
 
   let rooms = [];
   let guestToken;
@@ -129,6 +130,7 @@ describe('Hub <-> cloud sync (end to end)', () => {
     User = require('../../src/models/User');
     Booking = require('../../src/models/Booking');
     BookingService = require('../../src/services/booking.service');
+    hubApp = require('../../src/app');
     await mongoose.connect(hubMongo.getUri('hub_e2e'));
     await Promise.all([Room.init(), User.init(), Booking.init()]);
   });
@@ -288,6 +290,52 @@ describe('Hub <-> cloud sync (end to end)', () => {
     expect(cloudCopy.status).toBe('cancelled');
     const cloudRoomDoc = await cloudRoom(hotelBooking.rooms[0].roomId);
     expect(cloudRoomDoc.reservedRanges.map((r) => r.bookingReference)).not.toContain(hotelBooking.bookingReference);
+  });
+
+  it('keeps room photos uploaded on the hub locally until it can send them to Cloudinary', async () => {
+    const { generateAccessToken } = require('../../src/middlewares/auth.middleware');
+    const MediaJob = require('../../src/models/MediaJob');
+    const admin = await User.create({ name: 'Hub Admin', email: 'hub.admin@example.com', password: 'Password123!', role: 'super-admin' });
+    const token = generateAccessToken(String(admin._id));
+    const photo = Buffer.from('fake-jpeg-bytes-for-test');
+
+    const upload = await request(hubApp)
+      .post(`/api/v1/rooms/${rooms[0]._id}/images`)
+      .set('Authorization', `Bearer ${token}`)
+      .attach('images', photo, { filename: 'room.jpg', contentType: 'image/jpeg' });
+    expect(upload.status).toBe(200);
+    const pending = upload.body.data.images.find((image) => image.publicId.startsWith('pending:'));
+    expect(pending.url).toMatch(/\/api\/v1\/media\/pending\/[0-9a-f]{24}$/);
+
+    // Hub khud photo serve karta hai (desktop app <img>, internet ke baghair)
+    const served = await request(hubApp).get(new URL(pending.url).pathname);
+    expect(served.status).toBe(200);
+    expect(served.headers['content-type']).toMatch(/image\/jpeg/);
+    expect(served.headers['cross-origin-resource-policy']).toBe('cross-origin');
+    expect(Buffer.from(served.body).equals(photo)).toBe(true);
+
+    // Sync: photo Cloudinary (test me mock) par jati hai aur pending entry badal jati hai
+    const result = await syncOnce();
+    expect(result.media.uploaded).toBe(1);
+    expect(await MediaJob.countDocuments()).toBe(0);
+    const hubRoom = await Room.findById(rooms[0]._id).lean();
+    expect(hubRoom.images).toHaveLength(1);
+    expect(hubRoom.images[0].url).toMatch(/^https:\/\/res\.cloudinary\.com\//);
+
+    await syncOnce();
+    const cloudRoomDoc = await cloudRoom(rooms[0]._id);
+    expect(cloudRoomDoc.images.map((image) => image.url)).toEqual([hubRoom.images[0].url]);
+
+    // Hub par delete: Cloudinary se hatana bhi queue hota hai
+    const removed = await request(hubApp)
+      .delete(`/api/v1/rooms/${rooms[0]._id}/images`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ publicId: hubRoom.images[0].publicId });
+    expect(removed.status).toBe(200);
+    expect(await MediaJob.countDocuments({ type: 'destroy' })).toBe(1);
+    const afterDelete = await syncOnce();
+    expect(afterDelete.media.destroyed).toBe(1);
+    expect((await cloudRoom(rooms[0]._id)).images).toHaveLength(0);
   });
 
   it('closes online booking again when the hub stops syncing (option 1)', async () => {

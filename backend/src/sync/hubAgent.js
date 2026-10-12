@@ -3,6 +3,7 @@ const logger = require('../utils/logger');
 const SyncState = require('../models/SyncState');
 const { collectChanges, applyChanges, SYNCED, TOMBSTONES } = require('./syncStore');
 const { encode, decode } = require('./wire');
+const { processMediaJobs } = require('./mediaQueue');
 
 /**
  * ============================================================================
@@ -132,6 +133,9 @@ class HubSyncAgent {
         if (!batch.hasMore) break;
       }
 
+      // 3. Offline me upload hui room photos Cloudinary par (cloud ke signed params se)
+      const media = await processMediaJobs((path, payload) => HubSyncAgent.request(path, payload));
+
       const update = { $set: { lastSuccessAt: new Date(), lastAttemptAt: startedAt, lastError: null } };
       if (conflicts.length > 0) {
         update.$push = {
@@ -139,10 +143,12 @@ class HubSyncAgent {
         };
       }
       await SyncState.updateOne({ _id: STATE_ID }, update);
-      if (pushed || pulled || conflicts.length) {
-        logger.info(`[SYNC] pushed ${pushed}, pulled ${pulled}, conflicts ${conflicts.length}`);
+      if (pushed || pulled || conflicts.length || media.uploaded || media.destroyed) {
+        logger.info(
+          `[SYNC] pushed ${pushed}, pulled ${pulled}, conflicts ${conflicts.length}, photos uploaded ${media.uploaded}`
+        );
       }
-      return { pushed, pulled, conflicts };
+      return { pushed, pulled, conflicts, media };
     } catch (error) {
       await SyncState.updateOne(
         { _id: STATE_ID },

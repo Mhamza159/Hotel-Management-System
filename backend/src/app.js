@@ -16,6 +16,7 @@ const {
 const adminRoutes = require("./routes/admin.routes");
 const chatRoutes = require("./routes/chat.routes");
 const syncRoutes = require("./routes/sync.routes");
+const mediaRoutes = require("./routes/media.routes");
 const { authLimiter, generalLimiter } = require("./middlewares/rateLimiter.middleware");
 const { notFoundHandler, errorHandler } = require("./middlewares/error.middleware");
 const { setupSwagger } = require("./config/swagger");
@@ -110,6 +111,7 @@ app.use("/api/v1/wishlist", wishlistRouter);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/chat", chatRoutes);
 app.use("/api/v1/sync", syncRoutes);
+app.use("/api/v1/media", mediaRoutes);
 
 /**
  * =========================================================================

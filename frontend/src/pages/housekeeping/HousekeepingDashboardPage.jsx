@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+// App ke saath bundle — desktop app offline bhi dikhaye
+import corridorPhoto from '../../assets/images/housekeeping-hero.jpg';
 import {
   Sparkles,
   Eye,
@@ -232,7 +234,7 @@ export const HousekeepingDashboardPage = () => {
           {/* Arched-top decorative photo frame (Soft rounded arch with interior hallway photo) */}
           <div className="w-32 h-44 sm:w-40 sm:h-52 rounded-t-[60px] sm:rounded-t-[75px] rounded-b-2xl overflow-hidden border-2 border-[#E4DFD0] shadow-sm relative shrink-0 bg-white group">
             <img
-              src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=600&q=80"
+              src={corridorPhoto}
               alt="Grand Horizon Suite Corridor"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />

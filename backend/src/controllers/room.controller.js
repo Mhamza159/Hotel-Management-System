@@ -199,7 +199,9 @@ class RoomController {
   static async uploadImages(req, res, next) {
     try {
       const { id } = req.params;
-      const updatedRoom = await RoomService.uploadRoomImages(id, req.files);
+      // Hub par pending photo isi address se serve hoti hai (desktop app wahi hub URL use karti hai)
+      const hubOrigin = `${req.protocol}://${req.get("host")}`;
+      const updatedRoom = await RoomService.uploadRoomImages(id, req.files, { hubOrigin });
       return ApiResponse.success(
         res,
         200,

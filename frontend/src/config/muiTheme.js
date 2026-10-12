@@ -55,7 +55,7 @@ export const darkTheme = createTheme({
     },
   },
   typography: {
-    fontFamily: "'Inter', sans-serif",
+    fontFamily: "'Inter Variable', 'Inter', sans-serif",
     h5: {
       fontWeight: 600,
       color: '#ECEFF3',
@@ -188,7 +188,7 @@ export const lightTheme = createTheme({
     },
   },
   typography: {
-    fontFamily: "'Inter', sans-serif",
+    fontFamily: "'Inter Variable', 'Inter', sans-serif",
     h5: {
       fontWeight: 600,
       color: '#0F172A',

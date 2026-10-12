@@ -35,3 +35,5 @@ PROJECT_OVERVIEW.md
 # Staff desktop app build artifacts
 desktop/web/
 desktop/dist/
+# Desktop installer resources (icon) are source files, not build output
+!desktop/build/

@@ -54,7 +54,7 @@ The Hub's sync agent (inside the API service) pushes Hub changes to the cloud an
 - Each record is "last writer wins" by its change time. Room locks (`reservedRanges`) are rebuilt on each side from bookings, never copied.
 - If a website booking arrives for a room the hotel already sold for those dates, it is flagged as a **booking conflict** on both sides and holds no room. The desktop header shows a red "booking conflict" badge; allotting a free room at the front desk clears it.
 - Duplicate unique values (same email, room number or coupon code created separately on both sides) are skipped and listed under recent conflicts.
-- Images uploaded on the Hub go straight to Cloudinary and need internet at that moment.
+- Room photos uploaded on the Hub are stored on the Hub and shown from there at once (no internet needed). When online, the agent gets a signed upload from the cloud and sends them to Cloudinary (no Cloudinary secret on the Hub); the website only ever sees the final Cloudinary link.
 
 **One-time setup** (needs the sync version of the backend deployed to the cloud):
 

@@ -6,6 +6,12 @@ import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { getMuiTheme } from './config/muiTheme';
 import { useThemeStore } from './stores/useThemeStore';
+// Fonts app ke saath bundle hain (Google Fonts nahi) — desktop app internet ke baghair bhi sahi dikhe
+import '@fontsource-variable/inter';
+import '@fontsource-variable/fraunces/standard.css';
+import '@fontsource-variable/fraunces/standard-italic.css';
+import '@fontsource-variable/playfair-display';
+import '@fontsource-variable/playfair-display/wght-italic.css';
 import App from './App';
 import './index.css';
 

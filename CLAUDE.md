@@ -22,7 +22,7 @@ Personas: guest (`user`), `receptionist`, `housekeeping`, `super-admin`.
 # backend (needs backend/.env with MONGO_URI, JWT_SECRET, JWT_REFRESH_SECRET ≥16 chars)
 cd backend && npm install
 npm run dev        # nodemon src/server.js on :5000, Swagger at /api-docs
-npm test           # jest --runInBand, in-memory MongoDB (~2 min). Baseline: 199/201 pass (2 known stale tests: auth register perms, room description)
+npm test           # jest --runInBand, in-memory MongoDB (~2 min). All 203 tests pass
 npx jest tests/integration/desk.test.js   # single file
 npm run seed       # destructive for seed users/rooms/coupons
 
@@ -35,7 +35,8 @@ npm run build
 cd desktop && npm install
 npm run build:web  # frontend -> desktop/web
 npm start          # first run asks for the Hub address
-npm run smoke -- --hub-url=http://<hub>:5000   # headless check, prints SMOKE_RESULT
+npm run smoke -- --hub-url=http://<hub>:5000   # headless check, prints SMOKE_RESULT (fontsLoaded, externalRequests)
+npm run dist       # dist/GrandHorizonStaff-Setup-<version>.exe (unsigned)
 
 # hub (Windows PowerShell 5.1, elevated; -StageOnly needs no admin and touches no services)
 powershell -ExecutionPolicy Bypass -File hubinstall-hub.ps1 [-StageOnly -InstallDir X -DataDir Y]
@@ -87,6 +88,7 @@ Single source of truth for roles, permissions, statuses: `backend/src/config/con
 - `syncPlugin` on User, Room, Booking, Payment, Coupon, Review, Waitlist, AuditLog stamps `syncUpdatedAt` + `syncOrigin` (`SYNC_NODE`: cloud|hub) on every Mongoose write and writes `SyncTombstone` rows on deletes. Writes that bypass Mongoose (raw `collection.*`, `bulkWrite`) are NOT synced — keep all writes on models.
 - `syncStore.collectChanges` pages by (syncUpdatedAt, _id) per collection (only settled writes, `SYNC_SETTLE_MS`); `applyChanges` is last-writer-wins via the raw driver (keeps remote stamps, no echo). Remote rooms never overwrite `reservedRanges`; `bookingRanges.reconcileBookingRanges` rebuilds locks from bookings.
 - A cloud booking that overlaps a hub booking gets `Booking.syncConflict` (hub is authority) and holds no lock; `DeskService.allotRooms` clears it. Option 1 gate: `SyncController.requireHubOnline` on `POST /bookings` and `POST /desk/walk-in` returns 503 when `SYNC_SHARED_KEY` is set on the cloud and the hub has not called for `HUB_OFFLINE_AFTER_MS`. Without the key the cloud behaves as before.
+- Hub room photos: `MediaQueue` stores uploads as `MediaJob` (served at `GET /media/pending/:id`, publicId `pending:<id>`, stripped when rooms apply on the cloud); the agent uploads them via `POST /sync/media/sign` (signed Cloudinary params) and queues Cloudinary deletes via `/sync/media/destroy`.
 - Sync push/pull bypass the 16kb JSON parser and the general rate limiter (`isSyncTransfer` in app.js). Payloads are EJSON (`sync/wire.js`).
 - Tests: `sync-store.test.js` (plugin/collect/apply) and `sync-e2e.test.js` (spawns a real cloud server.js; ~20 s).
 
@@ -101,7 +103,6 @@ Single source of truth for roles, permissions, statuses: `backend/src/config/con
 - `engagementService.getWishlist()` / `getWaitlists()` resolve to plain arrays (the API returns bare arrays).
 - Transactions only run when MongoDB is a replica set (Atlas, Hub); most tests use a standalone in-memory server (non-transactional path). `tests/integration/hub-replset-booking.test.js` covers the replica-set path; `createBooking` retries TransientTransactionError/WriteConflict (else concurrent bookings got 500). `MongoMemoryReplSet` fails inside Jest (its mongodb@7 driver handshake) — start mongod with `args: ['--replSet','rs0']` and use `src/hub/replicaSet.js`.
 - Backend env: `HOTEL_ENV_FILE` overrides the `.env` path (Hub); sync: `SYNC_NODE`, `SYNC_SHARED_KEY`, `CLOUD_SYNC_URL`, `SYNC_INTERVAL_MS`, `HUB_OFFLINE_AFTER_MS`, `SYNC_SETTLE_MS`; `RATE_LIMIT_MAX` / `AUTH_RATE_LIMIT_MAX` (default 300/20); in production `connectDB` never falls back to localhost.
-- `User.email` regex only accepts 2–3 letter TLDs (`.info`, `.hotel` are rejected).
 - Some checks are hard-coded by role on top of PBAC (booking view/invoice, cancellation approve/reject, chat staff/admin, review delete).
 - Several tests use fixed late-2026 dates and will fail once those dates are in the past.
 - `.planning/`, `.specify/`, `backend/specs/`, `.agents/` are AI planning/tooling docs, not runtime code.

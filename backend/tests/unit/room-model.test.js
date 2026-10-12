@@ -62,7 +62,7 @@ describe('Room Model Unit Verification', () => {
   it('validates required fields and positive capacity/price', async () => {
     const invalidRoom = new Room({
       roomNumber: '301',
-      // Missing type and description
+      // Missing type (description optional hai, default '')
       capacity: 0, // Must be >= 1
       pricePerNight: -10, // Must be >= 0
     });
@@ -76,7 +76,7 @@ describe('Room Model Unit Verification', () => {
 
     expect(err).toBeDefined();
     expect(err.errors.type).toBeDefined();
-    expect(err.errors.description).toBeDefined();
+    expect(err.errors.description).toBeUndefined();
     expect(err.errors.capacity).toBeDefined();
     expect(err.errors.pricePerNight).toBeDefined();
   });

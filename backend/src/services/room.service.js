@@ -6,6 +6,7 @@ const {
   uploadStreamToCloudinary,
   deleteFromCloudinary,
 } = require('../config/cloudinary');
+const MediaQueue = require('../sync/mediaQueue');
 
 /**
  * ============================================================================
@@ -406,20 +407,25 @@ class RoomService {
    *
    * @param {string} roomId
    * @param {Array<Object>} files - Array of Multer file objects with in-memory buffer
+   * @param {Object} [options]
+   * @param {string} [options.hubOrigin] - hub par: photo serve karne wala base URL (http://<hub>:port)
    * @returns {Promise<Object>} Updated Room document
    */
-  static async uploadRoomImages(roomId, files) {
+  static async uploadRoomImages(roomId, files, { hubOrigin } = {}) {
     if (!files || !Array.isArray(files) || files.length === 0) {
       throw ApiError.badRequest("Please select at least one image file to upload.");
     }
 
     const room = await this.getRoomById(roomId);
 
-    // Parallel stream upload to Cloudinary
+    const folder = `hotel-management/rooms/${room.roomNumber}`;
+
+    // Hotel hub: photo pehle hub par save, internet milte hi sync agent Cloudinary par daalta hai
+    // Cloud: parallel stream upload to Cloudinary
     const uploadPromises = files.map((file) =>
-      uploadStreamToCloudinary(file.buffer, {
-        folder: `hotel-management/rooms/${room.roomNumber}`,
-      })
+      MediaQueue.isHub()
+        ? MediaQueue.enqueueUpload({ roomId: room._id, folder, file, hubOrigin })
+        : uploadStreamToCloudinary(file.buffer, { folder })
     );
 
     const uploadedAssets = await Promise.all(uploadPromises);
@@ -450,8 +456,12 @@ class RoomService {
       throw ApiError.notFound(`Image with publicId '${publicId}' not found on this room.`);
     }
 
-    // Remote Cloudinary destruction
-    await deleteFromCloudinary(publicId);
+    // Remote Cloudinary destruction (hub par: internet milne par queue se)
+    if (MediaQueue.isHub()) {
+      await MediaQueue.enqueueDestroy(publicId);
+    } else {
+      await deleteFromCloudinary(publicId);
+    }
 
     // Remove from MongoDB
     room.images = room.images.filter((img) => img.publicId !== publicId);

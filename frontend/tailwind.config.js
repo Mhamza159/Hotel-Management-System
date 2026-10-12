@@ -61,11 +61,11 @@ export default {
         warning: "var(--warning)",
       },
       fontFamily: {
-        display: ["Fraunces", "serif"],
-        serif: ["Fraunces", "serif"],
-        playfair: ["'Playfair Display'", "serif"],
-        sans: ["Inter", "sans-serif"],
-        body: ["Inter", "sans-serif"],
+        display: ["'Fraunces Variable'", "Fraunces", "serif"],
+        serif: ["'Fraunces Variable'", "Fraunces", "serif"],
+        playfair: ["'Playfair Display Variable'", "'Playfair Display'", "serif"],
+        sans: ["'Inter Variable'", "Inter", "sans-serif"],
+        body: ["'Inter Variable'", "Inter", "sans-serif"],
       },
       borderRadius: {
         card: "12px",

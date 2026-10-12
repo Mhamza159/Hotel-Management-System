@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { roomService } from '../services/room.service';
 
-const FALLBACK_SUITE_PHOTO =
-  'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=1400&q=85';
+// App ke saath bundle (Unsplash) — desktop app internet ke baghair bhi photo dikhaye
+import FALLBACK_SUITE_PHOTO from '../assets/images/auth-hero.jpg';
 
 /**
  * ============================================================================
@@ -64,6 +64,8 @@ export const AuthSplitLayout = ({
           <img
             src={photoUrl}
             alt="Grand Horizon Luxury Suite"
+            // Room photo Cloudinary par hai; offline ho to bundled photo dikhao
+            onError={() => photoUrl !== FALLBACK_SUITE_PHOTO && setPhotoUrl(FALLBACK_SUITE_PHOTO)}
             className="w-full h-full object-cover object-center transform scale-105 transition-transform duration-700 hover:scale-100"
           />
 

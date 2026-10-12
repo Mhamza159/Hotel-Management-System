@@ -2,6 +2,8 @@ const SyncService = require('../services/sync.service');
 const ApiResponse = require('../utils/apiResponse');
 const ApiError = require('../utils/apiError');
 const { encode, decode } = require('../sync/wire');
+const mongoose = require('mongoose');
+const MediaQueue = require('../sync/mediaQueue');
 
 /**
  * ============================================================================
@@ -38,6 +40,38 @@ class SyncController {
       const { cursors, limit } = decode(req.body || {});
       const batch = await SyncService.servePull(cursors, limit);
       return ApiResponse.success(res, 200, encode(batch), 'Changes collected');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async signMedia(req, res, next) {
+    try {
+      const result = await SyncService.signMediaUpload((req.body || {}).folder);
+      return ApiResponse.success(res, 200, result, 'Upload signed');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async destroyMedia(req, res, next) {
+    try {
+      const result = await SyncService.destroyMedia((req.body || {}).publicId);
+      return ApiResponse.success(res, 200, result, 'Image deleted');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /** Hub: abhi Cloudinary na gayi photo khud serve karo (desktop app <img> ke liye) */
+  static async pendingMedia(req, res, next) {
+    try {
+      const job = mongoose.isValidObjectId(req.params.id) ? await MediaQueue.getPendingImage(req.params.id) : null;
+      if (!job) throw ApiError.notFound('Image not found');
+      // helmet ka default same-origin CORP desktop app (app://hotel) ko <img> load karne se rokta
+      res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+      res.set('Cache-Control', 'private, max-age=300');
+      res.type(job.contentType).send(job.data.buffer ? Buffer.from(job.data.buffer) : job.data);
     } catch (error) {
       next(error);
     }

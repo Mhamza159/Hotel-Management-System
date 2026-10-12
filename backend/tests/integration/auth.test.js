@@ -33,7 +33,8 @@ describe('Auth API Integration Tests', () => {
       expect(res.body.data.user.email).toBe('hamza@example.com');
       expect(res.body.data.user.role).toBe('user');
       expect(res.body.data.user.permissions).toEqual(
-        expect.arrayContaining(['bookings:create', 'bookings:view'])
+        // Guest sirf book kar sakta hai; apni bookings ownership check se dekhta hai (bookings:view staff ki hai)
+        ['bookings:create']
       );
       expect(res.body.data.user.password).toBeUndefined(); // Security: never leaked
       expect(res.body.data.tokens.accessToken).toBeDefined();

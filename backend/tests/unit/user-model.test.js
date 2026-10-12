@@ -89,4 +89,13 @@ describe('User Model Unit Verification', () => {
       })
     ).rejects.toThrow();
   });
+
+  it('accepts real-world addresses with long TLDs and plus tags, rejects malformed ones', async () => {
+    for (const email of ['guest@hotel.travel', 'owner@grandhorizon.info', 'sara+booking@gmail.com', 'a.b-c@mail.co.uk']) {
+      await expect(User.create({ name: 'Valid Email', email, password: 'Password123!' })).resolves.toBeTruthy();
+    }
+    for (const email of ['no-at-sign.com', 'two@@example.com', 'space in@example.com', 'user@nodot', 'user@example.c']) {
+      await expect(User.create({ name: 'Bad Email', email, password: 'Password123!' })).rejects.toThrow(/valid email/);
+    }
+  });
 });

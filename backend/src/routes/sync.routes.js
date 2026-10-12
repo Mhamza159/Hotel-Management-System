@@ -20,6 +20,10 @@ const SYNC_BODY_LIMIT = '4mb'; // Vercel request body limit 4.5MB se kam
 router.post('/push', SyncController.authenticateHub, express.json({ limit: SYNC_BODY_LIMIT }), SyncController.push);
 router.post('/pull', SyncController.authenticateHub, express.json({ limit: '1mb' }), SyncController.pull);
 
+// Hub ki offline photos: signed Cloudinary upload, purani photo hatana
+router.post('/media/sign', SyncController.authenticateHub, SyncController.signMedia);
+router.post('/media/destroy', SyncController.authenticateHub, SyncController.destroyMedia);
+
 // Public: website booking page "hotel offline" message dikhane ke liye
 router.get('/availability', SyncController.availability);
 

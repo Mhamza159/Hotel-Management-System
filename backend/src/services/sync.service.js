@@ -6,6 +6,10 @@ const ApiError = require('../utils/apiError');
 const { collectChanges, applyChanges } = require('../sync/syncStore');
 const HubSyncAgent = require('../sync/hubAgent');
 const { ROOM_HOLDING_STATUSES } = require('../sync/bookingRanges');
+const { cloudinary, deleteFromCloudinary } = require('../config/cloudinary');
+
+// Hub sirf apne hotel ke folder me photo daal / hata sake
+const MEDIA_FOLDER = /^hotel-management\/[\w/-]{1,200}$/;
 
 /**
  * ============================================================================
@@ -72,6 +76,35 @@ class SyncService {
         'Online booking is temporarily unavailable because the hotel system is offline. Please try again shortly or contact the hotel.'
       );
     }
+  }
+
+  /**
+   * Hub ki pending photo ke liye signed Cloudinary upload params. Hub in se seedha
+   * Cloudinary par upload karta hai — API secret kabhi hub tak nahi jata.
+   */
+  static async signMediaUpload(folder) {
+    await SyncService.recordHubContact();
+    const { cloudName, apiKey, apiSecret } = config.cloudinary;
+    if (config.env === 'test' || !apiKey || !apiSecret || cloudName === 'placeholder' || apiSecret === 'placeholder') {
+      return { mode: 'mock' };
+    }
+    const timestamp = Math.round(Date.now() / 1000);
+    const params = {
+      folder: MEDIA_FOLDER.test(folder || '') ? folder : 'hotel-management/rooms',
+      format: 'webp',
+      transformation: 'q_auto:good',
+    };
+    const signature = cloudinary.utils.api_sign_request({ ...params, timestamp }, apiSecret);
+    return { mode: 'cloudinary', cloudName, apiKey, timestamp, signature, params };
+  }
+
+  static async destroyMedia(publicId) {
+    await SyncService.recordHubContact();
+    if (!MEDIA_FOLDER.test(publicId || '')) {
+      throw ApiError.badRequest('Only hotel-management images can be deleted');
+    }
+    await deleteFromCloudinary(publicId);
+    return { deleted: true };
   }
 
   /** Staff ke liye: hub par cloud sync ka haal; cloud par booking gate ka haal */

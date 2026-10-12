@@ -39,6 +39,10 @@ Useful flags: `--hub-url=<url>` overrides the saved Hub for one run; `--dev-url=
 
 Security: `contextIsolation` and `sandbox` are on, Node integration is off, external links open in the system browser, and navigation outside the app is blocked. `allowRunningInsecureContent` is enabled because the Hub serves plain HTTP on the LAN.
 
-## Not in this step
+## Offline
 
-Cloud sync (Step 4), offline fonts/images (Google Fonts and Unsplash fallbacks still need internet), code signing, and auto-update.
+Fonts (`@fontsource-variable`) and the login/housekeeping photos are bundled, so the app itself makes no internet requests; the smoke test reports `fontsLoaded` and `externalRequests` (should be empty). Room photos already on Cloudinary still need internet to display (the login screen falls back to a bundled photo); photos uploaded on the Hub are served by the Hub until they reach Cloudinary.
+
+## Installer
+
+`npm run dist` builds `dist/GrandHorizonStaff-Setup-<version>.exe` (icon: `build/icon.png`). It is not code-signed yet, so Windows SmartScreen shows "unknown publisher" — choose *More info → Run anyway*. Not included yet: code signing, auto-update.

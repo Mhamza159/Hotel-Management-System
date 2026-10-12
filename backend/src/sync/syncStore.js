@@ -123,6 +123,10 @@ const applyDoc = async (entry, doc, results) => {
 
   if (entry.kind === 'room') {
     const { _id, reservedRanges, ...fields } = doc; // eslint-disable-line no-unused-vars
+    // Hub ki 'pending:' photos (abhi Cloudinary nahi gayin) ka link sirf hotel LAN par chalta hai
+    if (config.sync.node === 'cloud' && Array.isArray(fields.images)) {
+      fields.images = fields.images.filter((image) => !String(image.publicId || '').startsWith('pending:'));
+    }
     const write = await collection.updateOne(
       { _id },
       { $set: fields, $setOnInsert: { reservedRanges: [] } },

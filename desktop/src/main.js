@@ -50,6 +50,12 @@ const flags = {
   smokeFetch: readFlag('smoke-fetch'),
 };
 
+// Smoke test apne alag profile me chalta hai: staff ki khuli app se single-instance
+// lock par na takraye aur saved Hub setting / login data ko na chhooye
+if (flags.smokeTest) {
+  app.setPath('userData', path.join(app.getPath('temp'), 'grand-horizon-staff-smoke'));
+}
+
 let mainWindow = null;
 let settingsWindow = null;
 
@@ -174,6 +180,16 @@ const runSmokeTest = async (window) => {
         hasRandomUUID: typeof crypto.randomUUID === 'function',
         rootRendered: Boolean(document.getElementById('root')?.children.length),
       };
+      // Offline-ready check: bundled fonts load and nothing comes from the internet
+      await document.fonts.ready;
+      result.fontsLoaded = ['Inter Variable', 'Fraunces Variable', 'Playfair Display Variable'].filter(
+        (family) => document.fonts.check('16px "' + family + '"')
+      );
+      const hubOrigin = window.hotelDesktop ? new URL(window.hotelDesktop.hubUrl).origin : null;
+      result.externalRequests = performance
+        .getEntriesByType('resource')
+        .map((entry) => entry.name)
+        .filter((url) => !url.startsWith('app://') && !url.startsWith('data:') && (!hubOrigin || !url.startsWith(hubOrigin)));
       const target = ${JSON.stringify(flags.smokeFetch)};
       if (target) {
         try {
