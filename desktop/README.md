@@ -8,7 +8,7 @@ Guests keep using the website; the desktop app blocks guest accounts and hides g
 
 - Windows 10/11
 - Node.js 20+ (for building only)
-- A reachable Hub running the backend (`backend/`), e.g. `http://192.168.1.10:5000`
+- A reachable Hub running the backend, e.g. `http://192.168.1.10:5000` — install it with `hub/install-hub.ps1` (see `hub/README.md`)
 
 ## Commands (run inside `desktop/`)
 
@@ -41,4 +41,4 @@ Security: `contextIsolation` and `sandbox` are on, Node integration is off, exte
 
 ## Not in this step
 
-Hub installer/auto-start (Step 3), cloud sync (Step 4), offline fonts/images (Google Fonts and Unsplash fallbacks still need internet), code signing, and auto-update.
+Cloud sync (Step 4), offline fonts/images (Google Fonts and Unsplash fallbacks still need internet), code signing, and auto-update.

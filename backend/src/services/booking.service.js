@@ -9,6 +9,19 @@ const ApiError = require('../utils/apiError');
 // Payment methods jin me guest counter par pay karta hai (online gateway nahi)
 const PAY_AT_DESK_METHODS = ['pay_at_desk', 'cash', 'card', 'offline-card'];
 
+// Transaction write conflict par kitni dafa poori booking dobara try ho
+const MAX_TRANSACTION_ATTEMPTS = 5;
+const WRITE_CONFLICT_CODE = 112;
+
+const isTransientTransactionError = (error) =>
+  Boolean(
+    error &&
+      !(error instanceof ApiError) &&
+      ((typeof error.hasErrorLabel === 'function' &&
+        error.hasErrorLabel('TransientTransactionError')) ||
+        error.code === WRITE_CONFLICT_CODE)
+  );
+
 /**
  * ============================================================================
  * BOOKING SERVICE (The Core Commercial Engine)
@@ -40,7 +53,36 @@ class BookingService {
    * @param {string} [params.idempotencyKey] - Duplicate prevention token
    * @returns {Promise<Object>} Created booking document
    */
-  static async createBooking({
+  static async createBooking(params) {
+    // Replica set (Atlas / hotel Hub) par transaction chalti hai. Do log ek hi
+    // waqt me same room (ya same coupon / user document) likhein to MongoDB haarne
+    // wali transaction ko "WriteConflict" (TransientTransactionError) de deta hai.
+    // Ye asal "room booked" jawab nahi — dobara koshish karne par haarne wala
+    // jeetne wale ka reservedRanges lock dekhta hai aur saaf 409 paata hai.
+    for (let attempt = 1; ; attempt += 1) {
+      try {
+        return await BookingService._createBookingAttempt(params);
+      } catch (error) {
+        if (!isTransientTransactionError(error)) {
+          throw error;
+        }
+        if (attempt >= MAX_TRANSACTION_ATTEMPTS) {
+          throw ApiError.conflict(
+            'These rooms are being booked by someone else right now. Please try again.'
+          );
+        }
+        // Thora sa random intezar taake retries aapas me dobara na takrayein
+        await new Promise((resolve) => setTimeout(resolve, 20 + Math.random() * 80 * attempt));
+      }
+    }
+  }
+
+  /**
+   * Ek booking attempt (ek transaction). `createBooking` isay transient
+   * conflicts par dobara chalata hai — direct call na karein.
+   * @private
+   */
+  static async _createBookingAttempt({
     userId,
     roomIds,
     checkInDate,
@@ -333,7 +375,8 @@ class BookingService {
     } catch (error) {
       // Masla aane par rollback karein
       if (inTransaction && session) {
-        await session.abortTransaction();
+        // Abort khud fail ho (e.g. server pehle hi abort kar chuka) to asal error na chhupe
+        await session.abortTransaction().catch(() => {});
       } else if (lockedRoomIds.length > 0) {
         // Standalone mode me locked rooms se reserved range ko wapis nikaal dein
         await Room.updateMany(

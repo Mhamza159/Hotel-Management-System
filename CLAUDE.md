@@ -10,7 +10,9 @@ Single-hotel reservation + operations app. Three independent npm packages, no wo
 - `frontend/` — React 18 + Vite SPA (ESM), MUI 5 + Tailwind + Zustand + axios. Entry `src/main.jsx` → `src/App.jsx` (all routes).
 - `desktop/` — Electron staff-only client (see `desktop/README.md`). Loads the built frontend from `desktop/web` on origin `app://hotel` and points the API at the hotel Hub (LAN backend). Frontend detects it via `window.hotelDesktop` (`frontend/src/config/runtime.js`).
 
-Roadmap: staff desktop app + hotel Hub PC + cloud sync (Step 2 desktop client done; Step 3 Hub installer, Step 4 sync engine pending). **Pushing `main` auto-deploys both Vercel projects to production — work on feature branches and never push/merge without the user's approval.**
+- `hub/` — PowerShell installer for the hotel Hub PC (see `hub/README.md`): pinned + SHA-256-verified Node/MongoDB/WinSW, MongoDB replica set `rs0` and backend as Windows services, firewall, daily backups. Node helpers in `backend/src/hub/` (`cli.js`).
+
+Roadmap: staff desktop app + hotel Hub PC + cloud sync (Steps 2–3 done: desktop client, Hub installer; Step 4 sync engine pending). **Pushing `main` auto-deploys both Vercel projects to production — work on feature branches and never push/merge without the user's approval.**
 
 Personas: guest (`user`), `receptionist`, `housekeeping`, `super-admin`.
 
@@ -20,7 +22,7 @@ Personas: guest (`user`), `receptionist`, `housekeeping`, `super-admin`.
 # backend (needs backend/.env with MONGO_URI, JWT_SECRET, JWT_REFRESH_SECRET ≥16 chars)
 cd backend && npm install
 npm run dev        # nodemon src/server.js on :5000, Swagger at /api-docs
-npm test           # jest --runInBand, in-memory MongoDB (~2 min). Baseline: 166/168 pass (2 known stale tests: auth register perms, room description)
+npm test           # jest --runInBand, in-memory MongoDB (~2 min). Baseline: 177/179 pass (2 known stale tests: auth register perms, room description)
 npx jest tests/integration/desk.test.js   # single file
 npm run seed       # destructive for seed users/rooms/coupons
 
@@ -34,6 +36,9 @@ cd desktop && npm install
 npm run build:web  # frontend -> desktop/web
 npm start          # first run asks for the Hub address
 npm run smoke -- --hub-url=http://<hub>:5000   # headless check, prints SMOKE_RESULT
+
+# hub (Windows PowerShell 5.1, elevated; -StageOnly needs no admin and touches no services)
+powershell -ExecutionPolicy Bypass -File hubinstall-hub.ps1 [-StageOnly -InstallDir X -DataDir Y]
 ```
 
 Run backend scripts/tests with `backend/` as the working directory (env and the mongodb-memory-server binary cache resolve from cwd). No linter, formatter, TypeScript, or frontend tests exist.
@@ -85,7 +90,9 @@ Single source of truth for roles, permissions, statuses: `backend/src/config/con
 - Room-overlap checks are duplicated in several services with different status sets; `createBooking` is the only atomic path (`reservedRanges` + `$not/$elemMatch`).
 - Walk-ins take the same atomic `reservedRanges` lock as `createBooking` (fields `checkIn`/`checkOut`/`bookingReference`); never push ranges with other field names or `room.save()` will fail validation.
 - `engagementService.getWishlist()` / `getWaitlists()` resolve to plain arrays (the API returns bare arrays).
-- Transactions only run when MongoDB is a replica set; tests use a standalone in-memory server (non-transactional path).
+- Transactions only run when MongoDB is a replica set (Atlas, Hub); most tests use a standalone in-memory server (non-transactional path). `tests/integration/hub-replset-booking.test.js` covers the replica-set path; `createBooking` retries TransientTransactionError/WriteConflict (else concurrent bookings got 500). `MongoMemoryReplSet` fails inside Jest (its mongodb@7 driver handshake) — start mongod with `args: ['--replSet','rs0']` and use `src/hub/replicaSet.js`.
+- Backend env: `HOTEL_ENV_FILE` overrides the `.env` path (Hub); `RATE_LIMIT_MAX` / `AUTH_RATE_LIMIT_MAX` (default 300/20); in production `connectDB` never falls back to localhost.
+- `User.email` regex only accepts 2–3 letter TLDs (`.info`, `.hotel` are rejected).
 - Some checks are hard-coded by role on top of PBAC (booking view/invoice, cancellation approve/reject, chat staff/admin, review delete).
 - Several tests use fixed late-2026 dates and will fail once those dates are in the past.
 - `.planning/`, `.specify/`, `backend/specs/`, `.agents/` are AI planning/tooling docs, not runtime code.

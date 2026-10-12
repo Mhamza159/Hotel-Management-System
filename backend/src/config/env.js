@@ -2,8 +2,15 @@ const dotenv = require('dotenv');
 const joi = require('joi');
 const path = require('path');
 
-// Load environment variables from .env file
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+// Load environment variables from .env file.
+// Hotel Hub par Windows service HOTEL_ENV_FILE set karti hai (e.g. C:ProgramDataGrandHorizonHubhub.env)
+// taake secrets program folder se bahar rahein aur update par overwrite na hon.
+dotenv.config({
+  path: process.env.HOTEL_ENV_FILE
+    ? path.resolve(process.env.HOTEL_ENV_FILE)
+    : path.resolve(process.cwd(), '.env'),
+  quiet: true, // dotenv 17+ ka "injected env" tip logs aur HUB_RESULT output me shor na kare
+});
 
 const envSchema = joi
   .object({
@@ -18,6 +25,10 @@ const envSchema = joi
     CLOUDINARY_CLOUD_NAME: joi.string().allow('').default('placeholder'),
     CLOUDINARY_API_KEY: joi.string().allow('').default('placeholder'),
     CLOUDINARY_API_SECRET: joi.string().allow('').default('placeholder'),
+    // Har IP ke liye 15 minute me max requests. Hub par saare staff PCs LAN se
+    // aate hain aur dashboards bar bar poll karte hain, is liye wahan zyada rakhein.
+    RATE_LIMIT_MAX: joi.number().integer().min(1).default(300),
+    AUTH_RATE_LIMIT_MAX: joi.number().integer().min(1).default(20),
   })
   .unknown(); // Allow other standard system variables without failing
 
@@ -40,6 +51,10 @@ module.exports = {
   },
   stripe: {
     secretKey: validatedEnv.STRIPE_SECRET_KEY,
+  },
+  rateLimit: {
+    max: validatedEnv.RATE_LIMIT_MAX,
+    authMax: validatedEnv.AUTH_RATE_LIMIT_MAX,
   },
   cloudinary: {
     cloudName: validatedEnv.CLOUDINARY_CLOUD_NAME,

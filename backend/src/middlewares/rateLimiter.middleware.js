@@ -1,4 +1,5 @@
 const ApiError = require('../utils/apiError');
+const config = require('../config/env');
 
 /**
  * ============================================================================
@@ -97,14 +98,14 @@ const createRateLimiter = (options = {}) => {
 // Preset limiters
 const authLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: config.rateLimit.authMax,
   message: 'Too many authentication attempts. Please try again after 15 minutes.',
   skipInTest: true,
 });
 
 const generalLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
-  max: 300,
+  max: config.rateLimit.max,
   message: 'Too many API requests from this IP, please try again later.',
   skipInTest: true,
 });

@@ -3,11 +3,15 @@ const mongoose = require("mongoose");
 const config = require("./env");
 const logger = require("../utils/logger");
 
-// Resolve Windows DNS querySrv ECONNREFUSED error for MongoDB Atlas
-try {
-  dns.setServers(["8.8.8.8", "8.8.4.4"]);
-} catch (e) {
-  // Ignore if unable to set custom DNS servers
+// Resolve Windows DNS querySrv ECONNREFUSED error for MongoDB Atlas.
+// Sirf "mongodb+srv" (Atlas) URI ke liye — hotel Hub local MongoDB use karta hai
+// aur offline LAN par public DNS servers tak pohnch hi nahi sakta.
+if (config.mongoUri.startsWith("mongodb+srv://")) {
+  try {
+    dns.setServers(["8.8.8.8", "8.8.4.4"]);
+  } catch (e) {
+    // Ignore if unable to set custom DNS servers
+  }
 }
 
 /**
@@ -42,6 +46,12 @@ const connectDB = async () => {
 
     return conn;
   } catch (error) {
+    // Production (Vercel / hotel Hub) me kabhi kisi doosre database par fallback na karein —
+    // warna Hub ka data ghalat jagah likha ja sakta hai. Service manager restart kar dega.
+    if (config.env === "production") {
+      logger.error(`Error connecting to MongoDB: ${error.message}`);
+      process.exit(1);
+    }
     logger.warn(
       `Primary MongoDB connection failed (${error.message}). Attempting local fallback (127.0.0.1:27017)...`,
     );
