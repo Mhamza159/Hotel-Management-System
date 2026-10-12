@@ -15,8 +15,81 @@ const {
 } = require("../config/constants");
 const LoyaltyService = require("./loyalty.service");
 const AuditService = require("./audit.service");
-const { reconcileBookingRanges } = require("../sync/bookingRanges");
+const { reconcileBookingRanges, ROOM_HOLDING_STATUSES } = require("../sync/bookingRanges");
 const { CONFLICT_REASON } = require("../sync/syncStore");
+
+/**
+ * Kya koi aur active booking (pending / confirmed / checked-in / cancellation-requested)
+ * is room ko in dates me rakhti hai? Sync conflict wali bookings room nahi rakhtin.
+ */
+const findRoomDateConflict = (booking, roomId) =>
+  Booking.findOne({
+    _id: { $ne: booking._id },
+    "rooms.roomId": roomId,
+    status: { $in: ROOM_HOLDING_STATUSES },
+    syncConflict: null,
+    checkInDate: { $lt: booking.checkOutDate },
+    checkOutDate: { $gt: booking.checkInDate },
+  });
+
+/**
+ * Booking ka room lock ek room se doosre room par ATOMIC tareeqe se le jao (H5).
+ * Naye room par lock wahi $not/$elemMatch shart se lagta hai jo createBooking aur
+ * walk-in me hai — do receptionist ek hi waqt me same room dein to sirf ek jeetegi.
+ * @returns {Promise<{ fromRoomId, toRoomId }>} move record (wapis karne ke liye)
+ */
+const moveBookingRoomLock = async (booking, fromRoomId, toRoom) => {
+  const ref = booking.bookingReference;
+  const alreadyHeld = await Room.exists({ _id: toRoom._id, "reservedRanges.bookingReference": ref });
+  if (!alreadyHeld) {
+    const locked = await Room.findOneAndUpdate(
+      {
+        _id: toRoom._id,
+        reservedRanges: {
+          $not: {
+            $elemMatch: {
+              bookingReference: { $ne: ref },
+              checkIn: { $lt: booking.checkOutDate },
+              checkOut: { $gt: booking.checkInDate },
+            },
+          },
+        },
+      },
+      {
+        $push: {
+          reservedRanges: { checkIn: booking.checkInDate, checkOut: booking.checkOutDate, bookingReference: ref },
+        },
+      },
+      { new: true }
+    );
+    if (!locked) {
+      throw ApiError.conflict(`Room ${toRoom.roomNumber} is already booked for these dates.`);
+    }
+  }
+  let releasedFrom = false;
+  if (fromRoomId && String(fromRoomId) !== String(toRoom._id)) {
+    const released = await Room.updateOne({ _id: fromRoomId }, { $pull: { reservedRanges: { bookingReference: ref } } });
+    releasedFrom = released.modifiedCount > 0;
+  }
+  return { fromRoomId, toRoomId: toRoom._id, addedLock: !alreadyHeld, releasedFrom };
+};
+
+/** Aadhe raste fail hui allotment ke locks wapis pehle jaise karo */
+const revertRoomLockMoves = async (booking, moves) => {
+  const ref = booking.bookingReference;
+  for (const move of [...moves].reverse()) {
+    if (move.addedLock) {
+      await Room.findByIdAndUpdate(move.toRoomId, { $pull: { reservedRanges: { bookingReference: ref } } });
+    }
+    if (move.releasedFrom) {
+      await Room.findByIdAndUpdate(move.fromRoomId, {
+        $push: {
+          reservedRanges: { checkIn: booking.checkInDate, checkOut: booking.checkOutDate, bookingReference: ref },
+        },
+      });
+    }
+  }
+};
 
 /**
  * ============================================================================
@@ -118,14 +191,9 @@ class DeskService {
 
       // Agar receptionist ne puranay pre-assigned room se mukhtalif room chuna hai:
       if (currentPrimaryRoomId !== targetRoomIdStr) {
-        // Overlap verification: ensure koi doosri active booking is room ko use na kar rahi ho
-        const conflict = await Booking.findOne({
-          _id: { $ne: booking._id },
-          'rooms.roomId': targetRoom._id,
-          status: { $in: [BOOKING_STATUS.CONFIRMED, BOOKING_STATUS.CHECKED_IN] },
-          checkInDate: { $lt: booking.checkOutDate },
-          checkOutDate: { $gt: booking.checkInDate },
-        });
+        // Overlap verification: koi doosri active booking (pending / cancellation-requested
+        // samet) is room ko in dates me na rakhti ho
+        const conflict = await findRoomDateConflict(booking, targetRoom._id);
 
         if (conflict) {
           throw ApiError.conflict(
@@ -133,25 +201,8 @@ class DeskService {
           );
         }
 
-        // Purane room ke reservedRanges se booking reference nikaalein
-        if (currentPrimaryRoomId) {
-          await Room.findByIdAndUpdate(currentPrimaryRoomId, {
-            $pull: {
-              reservedRanges: { bookingReference: booking.bookingReference },
-            },
-          });
-        }
-
-        // Naye allot shuda room me reservation range push karein
-        await Room.findByIdAndUpdate(targetRoom._id, {
-          $push: {
-            reservedRanges: {
-              checkIn: booking.checkInDate,
-              checkOut: booking.checkOutDate,
-              bookingReference: booking.bookingReference,
-            },
-          },
-        });
+        // Atomic lock: naye room par lock + purane room se release (H5)
+        await moveBookingRoomLock(booking, currentPrimaryRoomId, targetRoom);
 
         // Booking record me naya room assign karein
         if (booking.rooms && booking.rooms.length > 0) {
@@ -197,7 +248,8 @@ class DeskService {
     const overlapConflict = await Booking.findOne({
       _id: { $ne: booking._id },
       'rooms.roomId': { $in: finalRoomIds },
-      status: { $in: [BOOKING_STATUS.CONFIRMED, BOOKING_STATUS.CHECKED_IN] },
+      status: { $in: ROOM_HOLDING_STATUSES },
+      syncConflict: null,
       checkInDate: { $lt: booking.checkOutDate },
       checkOutDate: { $gt: booking.checkInDate },
     });
@@ -280,99 +332,84 @@ class DeskService {
       throw ApiError.badRequest("Cannot allocate the same physical room to multiple slots in the same booking");
     }
 
-    // Process each allocation
-    for (const alloc of allocations) {
-      const { slotIndex = 0, allocatedRoomId } = alloc;
+    // Process each allocation. Har room ka lock atomic move hota hai (H5); koi slot
+    // fail ho to pichhle slots ke moves wapis, taake rooms aadhe-adhoore na rahein.
+    const moves = [];
+    try {
+      for (const alloc of allocations) {
+        const { slotIndex = 0, allocatedRoomId } = alloc;
 
-      if (!mongoose.Types.ObjectId.isValid(allocatedRoomId)) {
-        throw ApiError.badRequest(`Invalid allocated room ID format for slot ${slotIndex}`);
-      }
-
-      if (slotIndex < 0 || slotIndex >= (booking.rooms?.length || 1)) {
-        throw ApiError.badRequest(`Invalid slotIndex ${slotIndex}. Booking only contains ${booking.rooms?.length} room(s)`);
-      }
-
-      const targetRoom = await Room.findOne({
-        _id: allocatedRoomId,
-        isActive: true,
-        isDeleted: false,
-      });
-
-      if (!targetRoom) {
-        throw ApiError.badRequest(`Allocated room for slot ${slotIndex} does not exist or is inactive`);
-      }
-
-      if (targetRoom.housekeepingStatus !== 'clean') {
-        throw ApiError.badRequest(
-          `Room ${targetRoom.roomNumber} cannot be allotted because its status is '${targetRoom.housekeepingStatus}'. It must be clean before check-in.`
-        );
-      }
-
-      const currentRoomSlot = booking.rooms[slotIndex];
-      const currentRoomIdStr = currentRoomSlot?.roomId?.toString();
-      const targetRoomIdStr = targetRoom._id.toString();
-
-      // Overlap verification: ensure room is not booked by another active booking
-      const conflict = await Booking.findOne({
-        _id: { $ne: booking._id },
-        'rooms.roomId': targetRoom._id,
-        status: { $in: [BOOKING_STATUS.CONFIRMED, BOOKING_STATUS.CHECKED_IN] },
-        checkInDate: { $lt: booking.checkOutDate },
-        checkOutDate: { $gt: booking.checkInDate },
-      });
-
-      if (conflict) {
-        throw ApiError.conflict(
-          `Room ${targetRoom.roomNumber} is already booked or occupied for these dates (Ref: ${conflict.bookingReference}).`
-        );
-      }
-
-      // Check if room is currently occupied by an in-house guest
-      const currentOccupant = await Booking.findOne({
-        _id: { $ne: booking._id },
-        'rooms.roomId': targetRoom._id,
-        status: BOOKING_STATUS.CHECKED_IN,
-      });
-
-      if (currentOccupant) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const checkIn = new Date(booking.checkInDate);
-        checkIn.setHours(0, 0, 0, 0);
-        if (checkIn <= today || checkIn < new Date(currentOccupant.checkOutDate)) {
-          throw ApiError.conflict(
-            `Room ${targetRoom.roomNumber} is currently occupied by an in-house guest (Ref: ${currentOccupant.bookingReference}). It cannot be allotted until checkout.`
-          );
-        }
-      }
-
-      if (currentRoomIdStr !== targetRoomIdStr) {
-        // Release reservation range from old room
-        if (currentRoomIdStr) {
-          await Room.findByIdAndUpdate(currentRoomIdStr, {
-            $pull: {
-              reservedRanges: { bookingReference: booking.bookingReference },
-            },
-          });
+        if (!mongoose.Types.ObjectId.isValid(allocatedRoomId)) {
+          throw ApiError.badRequest(`Invalid allocated room ID format for slot ${slotIndex}`);
         }
 
-        // Add reservation range to new room
-        await Room.findByIdAndUpdate(targetRoom._id, {
-          $push: {
-            reservedRanges: {
-              checkIn: booking.checkInDate,
-              checkOut: booking.checkOutDate,
-              bookingReference: booking.bookingReference,
-            },
-          },
+        if (slotIndex < 0 || slotIndex >= (booking.rooms?.length || 1)) {
+          throw ApiError.badRequest(`Invalid slotIndex ${slotIndex}. Booking only contains ${booking.rooms?.length} room(s)`);
+        }
+
+        const targetRoom = await Room.findOne({
+          _id: allocatedRoomId,
+          isActive: true,
+          isDeleted: false,
         });
 
-        // Update slot
-        currentRoomSlot.roomId = targetRoom._id;
-        currentRoomSlot.pricePerNight = targetRoom.pricePerNight;
-      }
+        if (!targetRoom) {
+          throw ApiError.badRequest(`Allocated room for slot ${slotIndex} does not exist or is inactive`);
+        }
 
-      currentRoomSlot.isAllocated = true;
+        if (targetRoom.housekeepingStatus !== 'clean') {
+          throw ApiError.badRequest(
+            `Room ${targetRoom.roomNumber} cannot be allotted because its status is '${targetRoom.housekeepingStatus}'. It must be clean before check-in.`
+          );
+        }
+
+        const currentRoomSlot = booking.rooms[slotIndex];
+        const currentRoomIdStr = currentRoomSlot?.roomId?.toString();
+        const targetRoomIdStr = targetRoom._id.toString();
+
+        // Overlap verification: koi doosri active booking (pending / cancellation-requested
+        // samet) is room ko in dates me na rakhti ho
+        const conflict = await findRoomDateConflict(booking, targetRoom._id);
+
+        if (conflict) {
+          throw ApiError.conflict(
+            `Room ${targetRoom.roomNumber} is already booked or occupied for these dates (Ref: ${conflict.bookingReference}).`
+          );
+        }
+
+        // Check if room is currently occupied by an in-house guest
+        const currentOccupant = await Booking.findOne({
+          _id: { $ne: booking._id },
+          'rooms.roomId': targetRoom._id,
+          status: BOOKING_STATUS.CHECKED_IN,
+        });
+
+        if (currentOccupant) {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const checkIn = new Date(booking.checkInDate);
+          checkIn.setHours(0, 0, 0, 0);
+          if (checkIn <= today || checkIn < new Date(currentOccupant.checkOutDate)) {
+            throw ApiError.conflict(
+              `Room ${targetRoom.roomNumber} is currently occupied by an in-house guest (Ref: ${currentOccupant.bookingReference}). It cannot be allotted until checkout.`
+            );
+          }
+        }
+
+        if (currentRoomIdStr !== targetRoomIdStr) {
+          // Atomic: naye room par lock (kisi aur ki range ho to 409), phir purane se release
+          moves.push(await moveBookingRoomLock(booking, currentRoomIdStr, targetRoom));
+
+          // Update slot
+          currentRoomSlot.roomId = targetRoom._id;
+          currentRoomSlot.pricePerNight = targetRoom.pricePerNight;
+        }
+
+        currentRoomSlot.isAllocated = true;
+      }
+    } catch (error) {
+      await revertRoomLockMoves(booking, moves);
+      throw error;
     }
 
     // Dynamic price recalculation

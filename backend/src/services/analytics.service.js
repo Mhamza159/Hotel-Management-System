@@ -5,6 +5,7 @@ const Room = require('../models/Room');
 const AuditLog = require('../models/AuditLog');
 const { BOOKING_STATUS, PAYMENT_STATUS } = require('../config/constants');
 const ApiError = require('../utils/apiError');
+const escapeRegex = require('../utils/escapeRegex');
 
 /**
  * ============================================================================
@@ -228,14 +229,14 @@ class AnalyticsService {
     // 2. Try finding by transactionReference / slip
     if (!payment) {
       payment = await Payment.findOne({
-        transactionReference: new RegExp(`^${trimmed}$`, 'i'),
+        transactionReference: new RegExp(`^${escapeRegex(trimmed)}$`, 'i'),
       });
     }
 
     // 3. Try finding by Booking Reference
     if (!payment) {
       const booking = await Booking.findOne({
-        bookingReference: new RegExp(`^${trimmed}$`, 'i'),
+        bookingReference: new RegExp(`^${escapeRegex(trimmed)}$`, 'i'),
       });
       if (booking) {
         payment = await Payment.findOne({ bookingId: booking._id }).sort({ createdAt: -1 });

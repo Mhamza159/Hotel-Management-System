@@ -136,7 +136,7 @@ export const WarmCancellationReviewDialog = ({ open, onClose, bookingId, onSucce
                 <div className="flex items-center space-x-2 bg-[#FAF8F2] px-3 py-1.5 rounded-xl border border-[#E4DFD0]">
                   <Clock className="w-3.5 h-3.5 text-[#2B3A2A]" />
                   <span className="text-xs font-mono font-semibold text-[#2B3A2A]">
-                    {reviewData.hoursUntilCheckIn ?? 0} hrs until check-in
+                    {reviewData.timeline?.hoursUntilCheckIn ?? 'N/A'} hrs until check-in
                   </span>
                 </div>
               </div>
@@ -146,31 +146,36 @@ export const WarmCancellationReviewDialog = ({ open, onClose, bookingId, onSucce
                 <div className="p-3.5 bg-[#FAF8F2] rounded-2xl border border-[#E4DFD0]">
                   <span className="text-[10px] font-mono uppercase text-[#2A2A28]/60 block">Applied Tier</span>
                   <span className="font-serif font-bold text-sm text-[#2B3A2A] capitalize">
-                    {reviewData.tier || 'Standard Policy'}
+                    {reviewData.refundPolicyEvaluation?.applicableTier || 'Evaluated'}
                   </span>
                   <span className="text-[10px] font-mono text-[#2B3A2A]/70 block mt-0.5">
-                    Refund: {reviewData.refundPercentage}%
+                    Refund: {reviewData.refundPolicyEvaluation?.refundPercentage ?? 0}%
                   </span>
                 </div>
 
                 <div className="p-3.5 bg-[#FAF8F2] rounded-2xl border border-[#E4DFD0]">
                   <span className="text-[10px] font-mono uppercase text-[#2A2A28]/60 block">Total Guest Paid</span>
                   <span className="font-serif font-bold text-sm text-[#2A2A28]">
-                    ${Number(reviewData.totalPaid || 0).toFixed(2)}
+                    ${Number(reviewData.financials?.totalPaid || 0).toFixed(2)}
                   </span>
                 </div>
 
                 <div className="p-3.5 bg-[#B7CBA8]/20 rounded-2xl border border-[#B7CBA8]/40">
                   <span className="text-[10px] font-mono uppercase text-[#2B3A2A]/70 block">Authorized Refund</span>
                   <span className="font-serif font-bold text-base text-[#2B3A2A]">
-                    ${Number(reviewData.refundAmount || 0).toFixed(2)}
+                    ${Number(reviewData.refundPolicyEvaluation?.estimatedRefundAmount || 0).toFixed(2)}
                   </span>
                 </div>
 
                 <div className="p-3.5 bg-[#D97757]/10 rounded-2xl border border-[#D97757]/30">
                   <span className="text-[10px] font-mono uppercase text-[#D97757] block">Retained Fee</span>
                   <span className="font-serif font-bold text-base text-[#D97757]">
-                    ${Number(reviewData.cancellationFee || 0).toFixed(2)}
+                    {/* API fee field nahi deta: jo diya gaya minus jo wapis hoga */}
+                    ${Math.max(
+                      0,
+                      Number(reviewData.financials?.totalPaid || 0) -
+                        Number(reviewData.refundPolicyEvaluation?.estimatedRefundAmount || 0)
+                    ).toFixed(2)}
                   </span>
                 </div>
               </div>

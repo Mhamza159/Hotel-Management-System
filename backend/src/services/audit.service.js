@@ -3,6 +3,7 @@ const Booking = require('../models/Booking');
 const Payment = require('../models/Payment');
 const logger = require('../utils/logger');
 const ApiError = require('../utils/apiError');
+const escapeRegex = require('../utils/escapeRegex');
 
 /**
  * ============================================================================
@@ -122,7 +123,7 @@ class AuditService {
     if (actorId) query.actorId = actorId;
     if (targetType) query.targetType = targetType;
     if (targetId) query.targetId = targetId;
-    if (action) query.action = new RegExp(action, 'i');
+    if (action) query.action = new RegExp(escapeRegex(action), 'i');
 
     if (fromDate || toDate) {
       query.createdAt = {};

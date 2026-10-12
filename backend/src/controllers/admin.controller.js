@@ -2,6 +2,7 @@ const AuditService = require('../services/audit.service');
 const ApiResponse = require('../utils/apiResponse');
 const Booking = require('../models/Booking');
 const User = require('../models/User');
+const escapeRegex = require('../utils/escapeRegex');
 
 /**
  * ============================================================================
@@ -82,7 +83,7 @@ class AdminController {
       }
 
       if (search) {
-        const regex = new RegExp(search.trim(), 'i');
+        const regex = new RegExp(escapeRegex(search), 'i');
         const matchedUsers = await User.find({
           $or: [{ name: regex }, { email: regex }, { phone: regex }],
         }).select('_id');

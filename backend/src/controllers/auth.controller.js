@@ -9,6 +9,7 @@ const {
   generateRefreshToken,
   verifyToken,
 } = require("../middlewares/auth.middleware");
+const escapeRegex = require("../utils/escapeRegex");
 
 /**
  * =========================================================================
@@ -263,8 +264,8 @@ const getStaffList = async (req, res, next) => {
 
     if (search) {
       filter.$or = [
-        { name: { $regex: search.trim(), $options: "i" } },
-        { email: { $regex: search.trim(), $options: "i" } },
+        { name: { $regex: escapeRegex(search), $options: "i" } },
+        { email: { $regex: escapeRegex(search), $options: "i" } },
       ];
     }
 

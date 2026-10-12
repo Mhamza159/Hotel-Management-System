@@ -117,10 +117,16 @@ api.interceptors.response.use(
     }
 
     // Standardize error payload
+    const statusCode = error.response?.status || 500;
+    const message = error.response?.data?.message || error.message || 'An unexpected error occurred.';
     const formattedError = {
-      statusCode: error.response?.status || 500,
-      message: error.response?.data?.message || error.message || 'An unexpected error occurred.',
+      statusCode,
+      message,
       errors: error.response?.data?.errors || [],
+      // ~40 components `err?.response?.data?.message` parhte hain (axios style). Ye shape
+      // na hone se server ka asal message ("room occupied", "balance due") kho jata tha
+      // aur generic text dikhta tha (H9). Naye code me `err.message` parhein.
+      response: { status: statusCode, data: { ...(error.response?.data || {}), message } },
     };
 
     return Promise.reject(formattedError);

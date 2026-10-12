@@ -199,6 +199,9 @@ class BookingService {
     }
 
     const lockedRoomIds = [];
+    // Bina transaction (standalone MongoDB) ghalti par ye wapis karne hain (H6)
+    let incrementedCouponId = null;
+    let deductedPoints = 0;
     // Har booking ke liye unique readable reference (e.g. 'BK-M2K8P9-7F3A')
     const bookingReference = Booking.generateBookingReference();
 
@@ -321,6 +324,7 @@ class BookingService {
           }
           coupon.usedCount = (coupon.usedCount || 0) + 1;
           await coupon.save(session ? { session } : {});
+          incrementedCouponId = coupon._id;
         }
       }
 
@@ -338,6 +342,7 @@ class BookingService {
           discountAmount += pointsDiscount;
           user.loyaltyPoints -= loyaltyPointsUsed;
           await user.save(session ? { session } : {});
+          deductedPoints = loyaltyPointsUsed;
         }
       }
 
@@ -377,12 +382,21 @@ class BookingService {
       if (inTransaction && session) {
         // Abort khud fail ho (e.g. server pehle hi abort kar chuka) to asal error na chhupe
         await session.abortTransaction().catch(() => {});
-      } else if (lockedRoomIds.length > 0) {
+      } else {
         // Standalone mode me locked rooms se reserved range ko wapis nikaal dein
-        await Room.updateMany(
-          { _id: { $in: lockedRoomIds } },
-          { $pull: { reservedRanges: { bookingReference } } }
-        );
+        if (lockedRoomIds.length > 0) {
+          await Room.updateMany(
+            { _id: { $in: lockedRoomIds } },
+            { $pull: { reservedRanges: { bookingReference } } }
+          );
+        }
+        // Coupon ka istemal aur kaate gaye loyalty points bhi wapis (H6)
+        if (incrementedCouponId) {
+          await Coupon.updateOne({ _id: incrementedCouponId, usedCount: { $gt: 0 } }, { $inc: { usedCount: -1 } });
+        }
+        if (deductedPoints > 0) {
+          await User.updateOne({ _id: userId }, { $inc: { loyaltyPoints: deductedPoints } });
+        }
       }
       throw error;
     } finally {
@@ -390,6 +404,33 @@ class BookingService {
         session.endSession();
       }
     }
+  }
+
+  /**
+   * Cancel / expire hui booking ka coupon istemal aur redeem kiye loyalty points
+   * wapis karo (H6). Booking par discountsReleasedAt atomic tor par set hota hai,
+   * is liye do jagah se (cron + staff) chalne par bhi sirf ek dafa wapis hota hai.
+   *
+   * @param {Object} booking - couponApplied, loyaltyPointsUsed, userId, _id
+   * @returns {Promise<boolean>} true agar is call ne wapis kiya
+   */
+  static async releaseBookingDiscounts(booking) {
+    const points = booking.loyaltyPointsUsed || 0;
+    if (!booking.couponApplied && points <= 0) return false;
+
+    const claimed = await Booking.updateOne(
+      { _id: booking._id, discountsReleasedAt: null },
+      { $set: { discountsReleasedAt: new Date() } }
+    );
+    if (claimed.modifiedCount === 0) return false;
+
+    if (booking.couponApplied) {
+      await Coupon.updateOne({ _id: booking.couponApplied, usedCount: { $gt: 0 } }, { $inc: { usedCount: -1 } });
+    }
+    if (points > 0) {
+      await User.updateOne({ _id: booking.userId }, { $inc: { loyaltyPoints: points } });
+    }
+    return true;
   }
 
   /**

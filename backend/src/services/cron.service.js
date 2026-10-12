@@ -4,6 +4,7 @@ const Room = require("../models/Room");
 const logger = require("../utils/logger");
 const { BOOKING_STATUS } = require("../config/constants");
 const WaitlistService = require("./waitlist.service");
+const BookingService = require("./booking.service");
 
 /**
  * ============================================================================
@@ -92,6 +93,8 @@ class CronService {
         };
 
         await booking.save();
+        // Coupon ka istemal aur redeem kiye loyalty points wapis (H6)
+        await BookingService.releaseBookingDiscounts(booking);
         releasedReferences.push(booking.bookingReference);
 
         // Notify matching waitlist entries for freed room inventory

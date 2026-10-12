@@ -7,6 +7,7 @@ const {
   deleteFromCloudinary,
 } = require('../config/cloudinary');
 const MediaQueue = require('../sync/mediaQueue');
+const escapeRegex = require('../utils/escapeRegex');
 
 /**
  * ============================================================================
@@ -335,7 +336,7 @@ class RoomService {
       filter.isActive = query.isActive === "true" || query.isActive === true;
     }
     if (query.search) {
-      filter.roomNumber = { $regex: query.search.trim(), $options: "i" };
+      filter.roomNumber = { $regex: escapeRegex(query.search), $options: "i" };
     }
 
     const [rooms, total] = await Promise.all([

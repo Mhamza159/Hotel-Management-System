@@ -11,6 +11,7 @@ const {
   ROLES,
 } = require("../config/constants");
 const WaitlistService = require("./waitlist.service");
+const BookingService = require("./booking.service");
 
 /**
  * ============================================================================
@@ -423,6 +424,9 @@ class CancellationService {
     }
 
     await booking.save();
+
+    // Coupon ka istemal aur redeem kiye loyalty points wapis (stay hua hi nahi)
+    await BookingService.releaseBookingDiscounts(booking);
 
     // 7. Payment ledger me refund record create karein (Audit trail)
     let refundPaymentRecord = null;

@@ -22,7 +22,7 @@ Personas: guest (`user`), `receptionist`, `housekeeping`, `super-admin`.
 # backend (needs backend/.env with MONGO_URI, JWT_SECRET, JWT_REFRESH_SECRET ≥16 chars)
 cd backend && npm install
 npm run dev        # nodemon src/server.js on :5000, Swagger at /api-docs
-npm test           # jest --runInBand, in-memory MongoDB (~2 min). All 203 tests pass
+npm test           # jest --runInBand, in-memory MongoDB (~2 min). All 214 tests pass
 npx jest tests/integration/desk.test.js   # single file
 npm run seed       # destructive for seed users/rooms/coupons
 
@@ -68,7 +68,7 @@ Single source of truth for roles, permissions, statuses: `backend/src/config/con
 
 ## Frontend architecture
 
-- `services/api.js`: axios instance; attaches Bearer token; adds `Idempotency-Key` on `POST /bookings`; **returns `response.data.data` (unwrapped)**; on 401 refreshes once then redirects to `/login`; **rejects with `{ statusCode, message, errors }` — there is no `err.response`**.
+- `services/api.js`: axios instance; attaches Bearer token; adds `Idempotency-Key` on `POST /bookings`; **returns `response.data.data` (unwrapped)**; on 401 refreshes once then redirects to `/login`; **rejects with `{ statusCode, message, errors }` plus an axios-style `response: { status, data: { message } }` for older components — prefer `err.message`**.
 - One service file per backend domain in `services/`. Data fetching is `useEffect` + `useState` (React Query is provided but unused).
 - Auth state: `stores/useAuthStore.js` (localStorage `grand_horizon_auth`). Guards: `ProtectedRoute` (`requiredPermission(s)` or `allowedRoles`), `<Can>`, `can(user, perm)`; super-admin bypasses.
 - Two staff shells: `StaffLayout` (`/desk`, `/admin/*`, dark/light) and `HousekeepingLayout` (`/housekeeping/*`, warm theme) with partly duplicated dialogs/pages.
@@ -97,8 +97,9 @@ Single source of truth for roles, permissions, statuses: `backend/src/config/con
 - Pay-at-desk methods (`pay_at_desk`, `cash`, `card`, `offline-card`) create `confirmed` bookings; online methods (`stripe`, `online`, `pay_now_stripe`) are `pending` with a 5-minute `expiresAt` and get auto-cancelled by the cron (no online payment exists yet).
 - `bookings:create` is a guest permission (online booking). Walk-ins (`POST /desk/walk-in`) are gated by `checkin:manage`, plus `payments:recordCash/Card` when money is collected.
 - Staff admin: only a super-admin can assign `super-admin`; non-super-admins cannot edit themselves or grant permissions they don't hold (`assertCanGrantAccess` in `auth.controller.js`).
-- Regression tests for fixed bugs: `backend/tests/integration/critical-fixes.test.js`, `backend/tests/integration/walk-in-room-lock.test.js`.
-- Room-overlap checks are duplicated in several services with different status sets; `createBooking` is the only atomic path (`reservedRanges` + `$not/$elemMatch`).
+- Regression tests for fixed bugs: `critical-fixes`, `walk-in-room-lock`, `room-reassign-lock` (H5), `discount-release` (H6), `search-regex-safety` (H7) in `backend/tests/integration/`.
+- Room moves at the desk (`checkInGuest`, `allotRooms`) use `moveBookingRoomLock` (atomic, rolled back on failure). Build regexes from user input only via `utils/escapeRegex`. Cancel/expiry paths must call `BookingService.releaseBookingDiscounts`.
+- Room-overlap checks are duplicated in several services; the atomic paths (`reservedRanges` + `$not/$elemMatch`) are `createBooking`, walk-in and desk room moves.
 - Walk-ins take the same atomic `reservedRanges` lock as `createBooking` (fields `checkIn`/`checkOut`/`bookingReference`); never push ranges with other field names or `room.save()` will fail validation.
 - `engagementService.getWishlist()` / `getWaitlists()` resolve to plain arrays (the API returns bare arrays).
 - Transactions only run when MongoDB is a replica set (Atlas, Hub); most tests use a standalone in-memory server (non-transactional path). `tests/integration/hub-replset-booking.test.js` covers the replica-set path; `createBooking` retries TransientTransactionError/WriteConflict (else concurrent bookings got 500). `MongoMemoryReplSet` fails inside Jest (its mongodb@7 driver handshake) — start mongod with `args: ['--replSet','rs0']` and use `src/hub/replicaSet.js`.

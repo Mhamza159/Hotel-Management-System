@@ -235,6 +235,13 @@ const bookingSchema = new mongoose.Schema(
       min: [0, 'Loyalty points used cannot be negative'],
     },
 
+    // Cancel / expire par coupon istemal aur loyalty points kab wapis kiye gaye
+    // (BookingService.releaseBookingDiscounts — sirf ek dafa)
+    discountsReleasedAt: {
+      type: Date,
+      default: null,
+    },
+
     // Total actual payments received for this booking so far
     paidAmount: {
       type: Number,
