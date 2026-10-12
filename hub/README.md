@@ -44,6 +44,30 @@ Run the same command again to update code or runtimes. Data, `hub.env` (JWT secr
 
 The Hub starts with an **empty database** apart from the first super-admin; create staff accounts and rooms from the desktop app (or wait for Step 4 sync).
 
+## Cloud sync (website ↔ Hub)
+
+The Hub's sync agent (inside the API service) pushes Hub changes to the cloud and pulls website changes (online bookings, guest accounts, reviews…) every 15 s. Without internet the Hub keeps working; changes queue and upload later.
+
+**Rules**
+
+- The Hub is the inventory authority. While the Hub has not synced for 2 minutes, the website returns "online booking temporarily unavailable" (bookings and web walk-ins).
+- Each record is "last writer wins" by its change time. Room locks (`reservedRanges`) are rebuilt on each side from bookings, never copied.
+- If a website booking arrives for a room the hotel already sold for those dates, it is flagged as a **booking conflict** on both sides and holds no room. The desktop header shows a red "booking conflict" badge; allotting a free room at the front desk clears it.
+- Duplicate unique values (same email, room number or coupon code created separately on both sides) are skipped and listed under recent conflicts.
+- Images uploaded on the Hub go straight to Cloudinary and need internet at that moment.
+
+**One-time setup** (needs the sync version of the backend deployed to the cloud):
+
+1. On the Hub: `scripts\configure-sync.ps1 -GenerateKey` and copy the printed key.
+2. Cloud backend environment (Vercel → backend project → Settings → Environment Variables): `SYNC_SHARED_KEY=<key>`, then redeploy.
+3. Once, against the cloud database, stamp existing records so they reach the Hub: `node src/hub/cli.js sync-backfill` with the cloud `MONGO_URI` (`SYNC_NODE` unset = cloud).
+4. On the Hub (elevated): `scripts\configure-sync.ps1 -CloudUrl https://<backend-domain>`, paste the key. It verifies the key, saves it in `hub.env`, prepares existing Hub data and restarts the API.
+5. `hub-status.ps1` → "Cloud sync" shows the last successful sync.
+
+Use a **fresh Hub** (uninstall with `-RemoveData`, install again) before connecting it to the real cloud if it contains test rooms or bookings — otherwise they upload to the website.
+
+`configure-sync.ps1 -Disable` turns sync off again (the website then keeps online booking closed while `SYNC_SHARED_KEY` is set in the cloud).
+
 ## Day-to-day
 
 ```powershell
@@ -76,6 +100,7 @@ Logs: `C:\ProgramData\GrandHorizonHub\logs` (`GrandHorizonHubApi.*.log`, `mongod
 | --- | --- |
 | `install-hub.ps1` | Install / update |
 | `versions.json` | Pinned download URLs and SHA-256 checksums |
-| `backup-hub.ps1`, `hub-status.ps1`, `uninstall-hub.ps1` | Copied to `<InstallDir>\scripts` |
+| `backup-hub.ps1`, `hub-status.ps1`, `uninstall-hub.ps1`, `configure-sync.ps1` | Copied to `<InstallDir>\scripts` |
 | `lib/HubCommon.ps1` | Shared helpers (verified download, safe unzip, service helpers) |
-| `backend/src/hub/` | Node side: `cli.js` (`init-replset`, `create-admin`, `status`, `rotate-logs`), `replicaSet.js`, `createAdmin.js` |
+| `backend/src/hub/` | Node side: `cli.js` (`init-replset`, `create-admin`, `status`, `rotate-logs`, `sync-backfill`), `replicaSet.js`, `createAdmin.js` |
+| `backend/src/sync/` | Sync engine: `syncPlugin.js` (change stamps + tombstones), `syncStore.js` (collect/apply), `bookingRanges.js` (room locks), `hubAgent.js` (push/pull loop) |

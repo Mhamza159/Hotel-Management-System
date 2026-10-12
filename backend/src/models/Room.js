@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const syncPlugin = require('../sync/syncPlugin');
 
 /**
  * ============================================================================
@@ -183,6 +184,9 @@ roomSchema.pre(/^find/, function (next) {
   }
   next();
 });
+
+// Hub <-> cloud sync. reservedRanges har node apni bookings se khud banata hai, is liye sync nahi hota
+roomSchema.plugin(syncPlugin, { ignoreFields: ['reservedRanges'] });
 
 const Room = mongoose.model('Room', roomSchema);
 

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const syncPlugin = require('../sync/syncPlugin');
 
 /**
  * ============================================================================
@@ -120,6 +121,9 @@ reviewSchema.post('findOneAndDelete', async function (doc) {
     await doc.constructor.calculateAverageRating(doc.roomId);
   }
 });
+
+// Hub <-> cloud sync: har tabdeeli par syncUpdatedAt/syncOrigin muhar (src/sync/syncPlugin.js)
+reviewSchema.plugin(syncPlugin);
 
 const Review = mongoose.model('Review', reviewSchema);
 

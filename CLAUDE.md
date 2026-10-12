@@ -12,7 +12,7 @@ Single-hotel reservation + operations app. Three independent npm packages, no wo
 
 - `hub/` — PowerShell installer for the hotel Hub PC (see `hub/README.md`): pinned + SHA-256-verified Node/MongoDB/WinSW, MongoDB replica set `rs0` and backend as Windows services, firewall, daily backups. Node helpers in `backend/src/hub/` (`cli.js`).
 
-Roadmap: staff desktop app + hotel Hub PC + cloud sync (Steps 2–3 done: desktop client, Hub installer; Step 4 sync engine pending). **Pushing `main` auto-deploys both Vercel projects to production — work on feature branches and never push/merge without the user's approval.**
+Roadmap: staff desktop app + hotel Hub PC + cloud sync (Steps 2–4 done on `feature/desktop-app`: desktop client, Hub installer, sync engine; Step 5 multi-PC/offline field testing pending). **Pushing `main` auto-deploys both Vercel projects to production — work on feature branches and never push/merge without the user's approval.**
 
 Personas: guest (`user`), `receptionist`, `housekeeping`, `super-admin`.
 
@@ -22,7 +22,7 @@ Personas: guest (`user`), `receptionist`, `housekeeping`, `super-admin`.
 # backend (needs backend/.env with MONGO_URI, JWT_SECRET, JWT_REFRESH_SECRET ≥16 chars)
 cd backend && npm install
 npm run dev        # nodemon src/server.js on :5000, Swagger at /api-docs
-npm test           # jest --runInBand, in-memory MongoDB (~2 min). Baseline: 177/179 pass (2 known stale tests: auth register perms, room description)
+npm test           # jest --runInBand, in-memory MongoDB (~2 min). Baseline: 199/201 pass (2 known stale tests: auth register perms, room description)
 npx jest tests/integration/desk.test.js   # single file
 npm run seed       # destructive for seed users/rooms/coupons
 
@@ -59,6 +59,7 @@ Request path: **route → `authenticate` → `requirePermission`/`requireAnyPerm
 | Admin bookings/audit/analytics | `admin.routes.js` + `analytics.routes.js` (`/admin`) | `audit`, `analytics` |
 | "AI" assistant (rule-based, no LLM) | `chat.routes.js` (`/chat`) | `ai.service` |
 | Expiry watchdog | — | `cron.service` (every minute, server.js only) |
+| Hub ↔ cloud sync | `sync.routes.js` (`/sync`: push/pull with shared key, public availability, staff status) | `sync.service`, `src/sync/*` (agent runs in server.js on the hub) |
 
 Key models (`src/models`): User, Room (`reservedRanges` = per-room date lock), Booking, Payment (refunds are separate rows with `status:'refunded'`), AuditLog (update/delete blocked), Review, Waitlist, Coupon, IdempotencyKey (TTL 24h), ChatSession.
 
@@ -81,6 +82,14 @@ Single source of truth for roles, permissions, statuses: `backend/src/config/con
 - Comments are long and bilingual (Roman Urdu + English); match surrounding style when editing.
 - Money is USD numbers on documents; prices are always recomputed server-side from `Room.pricePerNight`.
 
+## Sync engine (src/sync, hub/README.md)
+
+- `syncPlugin` on User, Room, Booking, Payment, Coupon, Review, Waitlist, AuditLog stamps `syncUpdatedAt` + `syncOrigin` (`SYNC_NODE`: cloud|hub) on every Mongoose write and writes `SyncTombstone` rows on deletes. Writes that bypass Mongoose (raw `collection.*`, `bulkWrite`) are NOT synced — keep all writes on models.
+- `syncStore.collectChanges` pages by (syncUpdatedAt, _id) per collection (only settled writes, `SYNC_SETTLE_MS`); `applyChanges` is last-writer-wins via the raw driver (keeps remote stamps, no echo). Remote rooms never overwrite `reservedRanges`; `bookingRanges.reconcileBookingRanges` rebuilds locks from bookings.
+- A cloud booking that overlaps a hub booking gets `Booking.syncConflict` (hub is authority) and holds no lock; `DeskService.allotRooms` clears it. Option 1 gate: `SyncController.requireHubOnline` on `POST /bookings` and `POST /desk/walk-in` returns 503 when `SYNC_SHARED_KEY` is set on the cloud and the hub has not called for `HUB_OFFLINE_AFTER_MS`. Without the key the cloud behaves as before.
+- Sync push/pull bypass the 16kb JSON parser and the general rate limiter (`isSyncTransfer` in app.js). Payloads are EJSON (`sync/wire.js`).
+- Tests: `sync-store.test.js` (plugin/collect/apply) and `sync-e2e.test.js` (spawns a real cloud server.js; ~20 s).
+
 ## Gotchas (see PROJECT_OVERVIEW.md §12 for the full list)
 
 - Pay-at-desk methods (`pay_at_desk`, `cash`, `card`, `offline-card`) create `confirmed` bookings; online methods (`stripe`, `online`, `pay_now_stripe`) are `pending` with a 5-minute `expiresAt` and get auto-cancelled by the cron (no online payment exists yet).
@@ -91,7 +100,7 @@ Single source of truth for roles, permissions, statuses: `backend/src/config/con
 - Walk-ins take the same atomic `reservedRanges` lock as `createBooking` (fields `checkIn`/`checkOut`/`bookingReference`); never push ranges with other field names or `room.save()` will fail validation.
 - `engagementService.getWishlist()` / `getWaitlists()` resolve to plain arrays (the API returns bare arrays).
 - Transactions only run when MongoDB is a replica set (Atlas, Hub); most tests use a standalone in-memory server (non-transactional path). `tests/integration/hub-replset-booking.test.js` covers the replica-set path; `createBooking` retries TransientTransactionError/WriteConflict (else concurrent bookings got 500). `MongoMemoryReplSet` fails inside Jest (its mongodb@7 driver handshake) — start mongod with `args: ['--replSet','rs0']` and use `src/hub/replicaSet.js`.
-- Backend env: `HOTEL_ENV_FILE` overrides the `.env` path (Hub); `RATE_LIMIT_MAX` / `AUTH_RATE_LIMIT_MAX` (default 300/20); in production `connectDB` never falls back to localhost.
+- Backend env: `HOTEL_ENV_FILE` overrides the `.env` path (Hub); sync: `SYNC_NODE`, `SYNC_SHARED_KEY`, `CLOUD_SYNC_URL`, `SYNC_INTERVAL_MS`, `HUB_OFFLINE_AFTER_MS`, `SYNC_SETTLE_MS`; `RATE_LIMIT_MAX` / `AUTH_RATE_LIMIT_MAX` (default 300/20); in production `connectDB` never falls back to localhost.
 - `User.email` regex only accepts 2–3 letter TLDs (`.info`, `.hotel` are rejected).
 - Some checks are hard-coded by role on top of PBAC (booking view/invoice, cancellation approve/reject, chat staff/admin, review delete).
 - Several tests use fixed late-2026 dates and will fail once those dates are in the past.

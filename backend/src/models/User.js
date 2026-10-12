@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const syncPlugin = require("../sync/syncPlugin");
 const bcrypt = require("bcryptjs");
 const { ROLES, ROLE_DEFAULT_PERMISSIONS } = require("../config/constants");
 
@@ -134,6 +135,9 @@ userSchema.methods.hasPermission = function (permission) {
   }
   return Array.isArray(this.permissions) && this.permissions.includes(permission);
 };
+
+// Hub <-> cloud sync: har tabdeeli par syncUpdatedAt/syncOrigin muhar (src/sync/syncPlugin.js)
+userSchema.plugin(syncPlugin);
 
 const User = mongoose.model("User", userSchema);
 

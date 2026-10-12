@@ -8,6 +8,7 @@
  *   node src/hub/cli.js create-admin [--allow-additional]
  *   node src/hub/cli.js status
  *   node src/hub/cli.js rotate-logs
+ *   node src/hub/cli.js sync-backfill   (sync se pehle ka data; cloud par bhi ek dafa)
  *
  * create-admin details environment se leta hai (command line se nahi, taake
  * password shell history / process list me na aaye):
@@ -65,6 +66,14 @@ const commands = {
     });
   },
 
+  // Sync se pehle ke documents ko is node (SYNC_NODE) ki muhar do — ek dafa chalana kafi
+  "sync-backfill": async () =>
+    withDatabase(async () => {
+      const { backfillLegacyDocuments } = require("../sync/syncStore");
+      const config = require("../config/env");
+      return { ok: true, node: config.sync.node, stamped: await backfillLegacyDocuments() };
+    }),
+
   // Rozana backup task chalata hai: mongod.log ko rename kar ke naya shuru karta hai
   "rotate-logs": async () =>
     withDatabase(async (mongoose) => {
@@ -77,7 +86,23 @@ const commands = {
       const User = require("../models/User");
       const { ROLES } = require("../config/constants");
       const hello = await mongoose.connection.db.admin().command({ hello: 1 });
+      const config = require("../config/env");
+      const SyncState = require("../models/SyncState");
+      const Booking = require("../models/Booking");
+      const { ROOM_HOLDING_STATUSES } = require("../sync/bookingRanges");
+      const syncState = (await SyncState.findById("hub").lean()) || {};
       return {
+        sync: {
+          node: config.sync.node,
+          enabled: Boolean(config.sync.cloudUrl && config.sync.sharedKey),
+          cloudUrl: config.sync.cloudUrl || null,
+          lastSuccessAt: syncState.lastSuccessAt || null,
+          lastError: syncState.lastError || null,
+          conflictBookings: await Booking.countDocuments({
+            syncConflict: { $ne: null },
+            status: { $in: ROOM_HOLDING_STATUSES },
+          }),
+        },
         ok: true,
         database: mongoose.connection.name,
         replicaSet: hello.setName || null,

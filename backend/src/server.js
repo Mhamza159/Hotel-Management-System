@@ -3,6 +3,7 @@ const config = require("./config/env");
 const { connectDB } = require("./config/db");
 const logger = require("./utils/logger");
 const CronService = require("./services/cron.service");
+const HubSyncAgent = require("./sync/hubAgent");
 
 /**
  * =========================================================================
@@ -27,12 +28,16 @@ const startServer = async () => {
 
       // 3. Initialize background watchdog cron jobs (e.g. 15-minute unpaid release)
       CronService.initScheduledJobs();
+
+      // 4. Hotel hub par cloud sync agent (SYNC_NODE=hub + CLOUD_SYNC_URL + SYNC_SHARED_KEY)
+      HubSyncAgent.start();
     });
 
     // 4. Handle unhandled promise rejections safely
     process.on("unhandledRejection", (err) => {
       logger.error(`Unhandled Promise Rejection: ${err.message}`);
       CronService.stopScheduledJobs();
+      HubSyncAgent.stop();
       server.close(() => process.exit(1));
     });
 
@@ -40,6 +45,7 @@ const startServer = async () => {
     process.on("uncaughtException", (err) => {
       logger.error(`Uncaught Exception: ${err.message}`);
       CronService.stopScheduledJobs();
+      HubSyncAgent.stop();
       server.close(() => process.exit(1));
     });
   } catch (error) {

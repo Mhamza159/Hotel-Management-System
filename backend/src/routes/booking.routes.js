@@ -1,5 +1,6 @@
 const express = require('express');
 const BookingController = require('../controllers/booking.controller');
+const SyncController = require('../controllers/sync.controller');
 const { authenticate } = require('../middlewares/auth.middleware');
 const idempotency = require('../middlewares/idempotency.middleware');
 const validate = require('../middlewares/validate.middleware');
@@ -26,7 +27,8 @@ router.use(authenticate);
 // POST /api/v1/bookings
 // Headers: Authorization: Bearer <token>, Idempotency-Key: <unique-uuid>
 // Body: { roomIds: [...], checkInDate, checkOutDate, numberOfGuests, paymentMethod }
-router.post('/', idempotency({ required: false }), validate(createBookingSchema), BookingController.createBooking);
+// requireHubOnline idempotency se pehle: 503 jawab idempotency key ke saath save na ho
+router.post('/', SyncController.requireHubOnline, idempotency({ required: false }), validate(createBookingSchema), BookingController.createBooking);
 
 // 2. Guest ki apni personal booking history dekhna
 // GET /api/v1/bookings/my?page=1&limit=10

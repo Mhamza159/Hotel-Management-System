@@ -15,6 +15,7 @@ const {
 } = require("./routes/engagement.routes");
 const adminRoutes = require("./routes/admin.routes");
 const chatRoutes = require("./routes/chat.routes");
+const syncRoutes = require("./routes/sync.routes");
 const { authLimiter, generalLimiter } = require("./middlewares/rateLimiter.middleware");
 const { notFoundHandler, errorHandler } = require("./middlewares/error.middleware");
 const { setupSwagger } = require("./config/swagger");
@@ -61,8 +62,15 @@ app.use(
   })
 );
 
+// Hub <-> cloud sync batches apna parser (bari limit, key check ke baad) use karte hain
+const isSyncTransfer = (req) => {
+  const path = req.originalUrl.split("?")[0];
+  return path === "/api/v1/sync/push" || path === "/api/v1/sync/pull";
+};
+
 // 3. Body parsers: JSON payload parsing with safety size limit (16kb)
-app.use(express.json({ limit: "16kb" }));
+const jsonParser = express.json({ limit: "16kb" });
+app.use((req, res, next) => (isSyncTransfer(req) ? next() : jsonParser(req, res, next)));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 
 // 4. HTTP Request Logging: Streams morgan access logs into Winston structured logger
@@ -87,7 +95,8 @@ app.get("/health", (req, res) => {
 });
 
 // General rate limiter for all /api endpoints
-app.use("/api", generalLimiter);
+// (sync push/pull shared key se protected hain aur har cycle me chalte hain — limiter se bahar)
+app.use("/api", (req, res, next) => (isSyncTransfer(req) ? next() : generalLimiter(req, res, next)));
 
 // Mount module routes
 app.use("/api/v1/auth", authLimiter, authRoutes);
@@ -100,6 +109,7 @@ app.use("/api/v1/waitlist", waitlistRouter);
 app.use("/api/v1/wishlist", wishlistRouter);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/chat", chatRoutes);
+app.use("/api/v1/sync", syncRoutes);
 
 /**
  * =========================================================================

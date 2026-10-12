@@ -15,6 +15,8 @@ const {
 } = require("../config/constants");
 const LoyaltyService = require("./loyalty.service");
 const AuditService = require("./audit.service");
+const { reconcileBookingRanges } = require("../sync/bookingRanges");
+const { CONFLICT_REASON } = require("../sync/syncStore");
 
 /**
  * ============================================================================
@@ -385,7 +387,26 @@ class DeskService {
     const rawTotal = diffDays * sumPerNight;
     booking.totalPrice = Math.max(0, rawTotal - (booking.discountAmount || 0));
 
+    // Sync conflict (website booking jo hotel ki booking se takrayi thi): staff ne
+    // naya room de diya to flag hatao aur booking ke saare rooms ka lock lagao.
+    // Koi aur room ab bhi takra raha ho to flag wapis aur staff ko bata do.
+    const resolvingSyncConflict = Boolean(booking.syncConflict);
+    if (resolvingSyncConflict) {
+      booking.syncConflict = null;
+    }
+
     await booking.save();
+
+    if (resolvingSyncConflict) {
+      const { conflicts } = await reconcileBookingRanges(booking.toObject());
+      if (conflicts.length > 0) {
+        await Booking.updateOne({ _id: booking._id }, { $set: { syncConflict: CONFLICT_REASON } });
+        await reconcileBookingRanges({ ...booking.toObject(), syncConflict: CONFLICT_REASON });
+        throw ApiError.conflict(
+          "Another room in this booking is still booked for these dates. Allot a free room for every slot."
+        );
+      }
+    }
 
     await booking.populate("userId", "name email phone");
     await booking.populate("rooms.roomId", "roomNumber type pricePerNight housekeepingStatus capacity");

@@ -23,6 +23,7 @@ import { useAuthStore } from '../../stores/useAuthStore';
 import { useBookingDraftStore } from '../../stores/useBookingDraftStore';
 import { bookingService } from '../../services/booking.service';
 import { engagementService } from '../../services/engagement.service';
+import { syncService } from '../../services/sync.service';
 import { PAYMENT_PROVIDERS } from '../../config/constants';
 
 const checkoutSchema = z.object({
@@ -40,6 +41,15 @@ export const CheckoutPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmedBooking, setConfirmedBooking] = useState(null);
   const [serverError, setServerError] = useState('');
+  // Hotel ka hub offline ho to website par nayi booking band hoti hai (server 503 deta hai)
+  const [onlineBookingOpen, setOnlineBookingOpen] = useState(true);
+
+  useEffect(() => {
+    syncService
+      .getAvailability()
+      .then((res) => setOnlineBookingOpen(res?.available !== false))
+      .catch(() => {});
+  }, []);
 
   const nights = Math.max(
     1,
@@ -242,6 +252,16 @@ export const CheckoutPage = () => {
               </p>
             </div>
 
+            {!onlineBookingOpen && (
+              <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start space-x-3 text-amber-800 text-sm">
+                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                <span>
+                  Online booking is paused for a few minutes while the hotel system reconnects.
+                  Please try again shortly or call the hotel to reserve.
+                </span>
+              </div>
+            )}
+
             {serverError && (
               <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start space-x-3 text-rose-700 text-sm">
                 <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
@@ -428,7 +448,7 @@ export const CheckoutPage = () => {
 
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !onlineBookingOpen}
                     className="w-full sm:w-auto px-8 py-3.5 bg-[#2B3A2A] hover:bg-[#1F2B20] disabled:opacity-75 disabled:cursor-not-allowed text-[#F5F1E8] font-semibold text-sm rounded-xl shadow-md transition-all duration-200 active:scale-98 flex items-center justify-center space-x-2 cursor-pointer"
                   >
                     {isSubmitting ? (

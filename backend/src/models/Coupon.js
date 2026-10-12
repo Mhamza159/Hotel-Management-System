@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const syncPlugin = require('../sync/syncPlugin');
 
 /**
  * ============================================================================
@@ -71,6 +72,9 @@ couponSchema.methods.isValid = function (bookingAmount = 0) {
   if (bookingAmount < this.minBookingAmount) return false;
   return true;
 };
+
+// Hub <-> cloud sync: har tabdeeli par syncUpdatedAt/syncOrigin muhar (src/sync/syncPlugin.js)
+couponSchema.plugin(syncPlugin);
 
 const Coupon = mongoose.model('Coupon', couponSchema);
 

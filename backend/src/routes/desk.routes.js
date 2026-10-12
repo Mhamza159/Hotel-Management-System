@@ -1,5 +1,6 @@
 const express = require("express");
 const DeskController = require("../controllers/desk.controller");
+const SyncController = require("../controllers/sync.controller");
 const { authenticate } = require("../middlewares/auth.middleware");
 const {
   requirePermission,
@@ -47,6 +48,8 @@ router.use(authenticate);
 router.post(
   "/walk-in",
   requirePermission(PERMISSIONS.CHECKIN_MANAGE),
+  // Cloud website par hub offline ho to walk-in bhi band (hub asal inventory hai)
+  SyncController.requireHubOnline,
   validate(createWalkInBookingSchema),
   DeskController.createWalkInBooking
 );

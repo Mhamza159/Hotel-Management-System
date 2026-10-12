@@ -54,6 +54,35 @@ function Write-HubTextFile {
     [System.IO.File]::WriteAllText($Path, $Content, $encoding)
 }
 
+function Set-HubEnvValue {
+    # Sets NAME=value in hub.env: replaces an existing NAME= line or appends one
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$Name,
+        [AllowEmptyString()][string]$Value
+    )
+    $lines = @()
+    if (Test-Path -LiteralPath $Path) { $lines = @([System.IO.File]::ReadAllLines($Path)) }
+    $found = $false
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i] -match "^\s*$([regex]::Escape($Name))\s*=") {
+            $lines[$i] = "$Name=$Value"
+            $found = $true
+        }
+    }
+    if (-not $found) { $lines += "$Name=$Value" }
+    Write-HubTextFile -Path $Path -Content (($lines -join "`r`n") + "`r`n")
+}
+
+function Get-HubEnvValue {
+    param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][string]$Name)
+    if (-not (Test-Path -LiteralPath $Path)) { return $null }
+    foreach ($line in [System.IO.File]::ReadAllLines($Path)) {
+        if ($line -match "^\s*$([regex]::Escape($Name))\s*=(.*)$") { return $Matches[1].Trim() }
+    }
+    return $null
+}
+
 function Get-HubFileSha256 {
     param([Parameter(Mandatory)][string]$Path)
     return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()

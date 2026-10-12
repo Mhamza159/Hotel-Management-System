@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const syncPlugin = require('../sync/syncPlugin');
 
 /**
  * ============================================================================
@@ -107,6 +108,9 @@ auditLogSchema.pre('findOneAndUpdate', blockModification);
 auditLogSchema.pre('deleteOne', blockModification);
 auditLogSchema.pre('deleteMany', blockModification);
 auditLogSchema.pre('findOneAndDelete', blockModification);
+
+// Hub <-> cloud sync: har tabdeeli par syncUpdatedAt/syncOrigin muhar (src/sync/syncPlugin.js)
+auditLogSchema.plugin(syncPlugin);
 
 const AuditLog = mongoose.model('AuditLog', auditLogSchema);
 

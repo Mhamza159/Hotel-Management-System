@@ -42,6 +42,20 @@ if (Test-HubAdministrator) {
             -Arguments @('status')
         Write-HubInfo "Database $($status.database), replica set $($status.replicaSet), primary: $($status.isWritablePrimary)"
         Write-HubInfo "Staff accounts: $($status.staff) (super-admins: $($status.superAdmins))"
+
+        Write-HubStep 'Cloud sync'
+        if (-not $status.sync.enabled) {
+            Write-HubWarning 'Not configured - run scripts\configure-sync.ps1. The website keeps online booking closed until the Hub syncs.'
+        }
+        else {
+            Write-HubInfo "Cloud: $($status.sync.cloudUrl)"
+            if ($status.sync.lastSuccessAt) { Write-HubInfo "Last successful sync: $($status.sync.lastSuccessAt)" }
+            else { Write-HubWarning 'No successful sync yet' }
+            if ($status.sync.lastError) { Write-HubWarning "Last error: $($status.sync.lastError)" }
+        }
+        if ($status.sync.conflictBookings -gt 0) {
+            Write-HubWarning "$($status.sync.conflictBookings) online booking(s) clash with hotel bookings - allot another room at the front desk."
+        }
     }
     catch {
         Write-HubWarning $_.Exception.Message

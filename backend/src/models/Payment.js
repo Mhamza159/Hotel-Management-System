@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const syncPlugin = require("../sync/syncPlugin");
 const { PAYMENT_STATUS, PAYMENT_PROVIDERS } = require("../config/constants");
 
 /**
@@ -120,6 +121,9 @@ paymentSchema.index({ receivedByStaffId: 1, paymentMethod: 1, createdAt: -1 });
 // 2. Booking Financial Statement Index:
 // "Booking ID Y ke tamaam payment records laao"
 paymentSchema.index({ bookingId: 1, status: 1 });
+
+// Hub <-> cloud sync: har tabdeeli par syncUpdatedAt/syncOrigin muhar (src/sync/syncPlugin.js)
+paymentSchema.plugin(syncPlugin);
 
 const Payment = mongoose.model("Payment", paymentSchema);
 

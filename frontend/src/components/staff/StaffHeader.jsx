@@ -4,6 +4,7 @@ import { Calendar, RefreshCw, Search, ShieldCheck, Plus, Sparkles } from 'lucide
 import { useAuthStore } from '../../stores/useAuthStore';
 import { CommandPalette } from '../common/CommandPalette';
 import { ThemeToggle } from '../common/ThemeToggle';
+import { SyncStatusBadge } from './SyncStatusBadge';
 
 export const StaffHeader = ({ title = 'Overview', subtitle = 'Rooms, arrivals, reservations, and balances at a glance' }) => {
   const user = useAuthStore((state) => state.user);
@@ -87,6 +88,9 @@ export const StaffHeader = ({ title = 'Overview', subtitle = 'Rooms, arrivals, r
               </kbd>
             </div>
           </button>
+
+          {/* Hub <-> cloud sync status + online booking conflicts */}
+          <SyncStatusBadge />
 
           {/* Operational Date/Time Badge (Harborlight Style) */}
           <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#F4F6F4] dark:bg-[#0A140F] border border-[#E3EAE5] dark:border-[#264334] text-xs text-[#4A5550] dark:text-[#E8EFEA]">

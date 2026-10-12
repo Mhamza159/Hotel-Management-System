@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const syncPlugin = require('../sync/syncPlugin');
 
 /**
  * ============================================================================
@@ -74,6 +75,9 @@ const waitlistSchema = new mongoose.Schema(
 
 // Compound Index: Jab koi room free ho, to tezi se matching active waitlist entries dhoondnay ke liye
 waitlistSchema.index({ roomType: 1, status: 1, checkIn: 1, checkOut: 1 });
+
+// Hub <-> cloud sync: har tabdeeli par syncUpdatedAt/syncOrigin muhar (src/sync/syncPlugin.js)
+waitlistSchema.plugin(syncPlugin);
 
 const Waitlist = mongoose.model('Waitlist', waitlistSchema);
 

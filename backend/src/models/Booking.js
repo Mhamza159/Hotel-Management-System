@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const syncPlugin = require('../sync/syncPlugin');
 const { BOOKING_STATUS, PAYMENT_STATUS } = require('../config/constants');
 
 /**
@@ -290,6 +291,14 @@ const bookingSchema = new mongoose.Schema(
       type: Date,
     },
 
+    // Hub <-> cloud sync conflict: website ne ye booking li jab hub (asal inventory)
+    // pehle hi wahi room un dates ke liye de chuka tha. Set ho to booking room lock
+    // nahi rakhti; staff naya room de ya cancel kare (src/sync/bookingRanges.js).
+    syncConflict: {
+      type: String,
+      default: null,
+    },
+
     // Duplicate requests ko rokne ke liye unique client header token
     idempotencyKey: {
       type: String,
@@ -336,6 +345,9 @@ bookingSchema.index({ userId: 1, createdAt: -1 });
 // 3. Desk arrivals query by status and check-in date:
 // Receptionist dashboard par aaj aane wale guests ki list foran lane ke liye.
 bookingSchema.index({ status: 1, checkInDate: 1 });
+
+// Hub <-> cloud sync: har tabdeeli par syncUpdatedAt/syncOrigin muhar (src/sync/syncPlugin.js)
+bookingSchema.plugin(syncPlugin);
 
 const Booking = mongoose.model('Booking', bookingSchema);
 

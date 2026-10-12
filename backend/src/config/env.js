@@ -29,6 +29,17 @@ const envSchema = joi
     // aate hain aur dashboards bar bar poll karte hain, is liye wahan zyada rakhein.
     RATE_LIMIT_MAX: joi.number().integer().min(1).default(300),
     AUTH_RATE_LIMIT_MAX: joi.number().integer().min(1).default(20),
+    // Hub <-> Cloud sync. Ye server "cloud" (Vercel/Atlas) hai ya hotel "hub".
+    SYNC_NODE: joi.string().valid('cloud', 'hub').default('cloud'),
+    // Dono taraf same secret. Cloud par khaali ho to sync band aur website booking pehle jaisi.
+    SYNC_SHARED_KEY: joi.string().min(32).allow('').default(''),
+    // Sirf hub: cloud API ka base URL, e.g. https://api.example.com/api/v1
+    CLOUD_SYNC_URL: joi.string().uri({ scheme: ['http', 'https'] }).allow('').default(''),
+    SYNC_INTERVAL_MS: joi.number().integer().min(2000).default(15000),
+    // Cloud: hub itni dair se na mile to online booking band (option 1)
+    HUB_OFFLINE_AFTER_MS: joi.number().integer().min(10000).default(120000),
+    // Itni purani tabdeeliyan hi bheji jati hain (abhi commit ho rahi writes peechhe na rahein)
+    SYNC_SETTLE_MS: joi.number().integer().min(0).default(5000),
   })
   .unknown(); // Allow other standard system variables without failing
 
@@ -55,6 +66,14 @@ module.exports = {
   rateLimit: {
     max: validatedEnv.RATE_LIMIT_MAX,
     authMax: validatedEnv.AUTH_RATE_LIMIT_MAX,
+  },
+  sync: {
+    node: validatedEnv.SYNC_NODE,
+    sharedKey: validatedEnv.SYNC_SHARED_KEY,
+    cloudUrl: validatedEnv.CLOUD_SYNC_URL.replace(/\/+$/, ''),
+    intervalMs: validatedEnv.SYNC_INTERVAL_MS,
+    hubOfflineAfterMs: validatedEnv.HUB_OFFLINE_AFTER_MS,
+    settleMs: validatedEnv.SYNC_SETTLE_MS,
   },
   cloudinary: {
     cloudName: validatedEnv.CLOUDINARY_CLOUD_NAME,

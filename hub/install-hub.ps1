@@ -160,7 +160,7 @@ finally {
 
 # Hub scripts travel with the install so status/backup/uninstall work without the repo
 New-Item -ItemType Directory -Force -Path (Join-Path $paths.Scripts 'lib') | Out-Null
-foreach ($script in @('backup-hub.ps1', 'hub-status.ps1', 'uninstall-hub.ps1', 'versions.json')) {
+foreach ($script in @('backup-hub.ps1', 'hub-status.ps1', 'uninstall-hub.ps1', 'configure-sync.ps1', 'versions.json')) {
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot $script) -Destination $paths.Scripts -Force
 }
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'lib\HubCommon.ps1') -Destination (Join-Path $paths.Scripts 'lib') -Force
@@ -187,6 +187,11 @@ if (-not $StageOnly) {
 $mongoUri = "mongodb://127.0.0.1:$MongoPort/$($HubNames.DatabaseName)?replicaSet=$($HubNames.ReplSetName)"
 if (Test-Path -LiteralPath $paths.EnvFile) {
     Write-HubInfo 'Keeping existing hub.env (JWT secrets and settings unchanged)'
+    # Older installs: this server must always run as the hotel hub for cloud sync
+    if ((Get-HubEnvValue -Path $paths.EnvFile -Name 'SYNC_NODE') -ne 'hub') {
+        Set-HubEnvValue -Path $paths.EnvFile -Name 'SYNC_NODE' -Value 'hub'
+        Write-HubInfo 'Added SYNC_NODE=hub to hub.env'
+    }
 }
 else {
     $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
@@ -208,6 +213,10 @@ else {
         'RATE_LIMIT_MAX=5000'
         'AUTH_RATE_LIMIT_MAX=100'
         'CLIENT_URL='
+        '# Cloud sync: set with scripts\configure-sync.ps1 (CLOUD_SYNC_URL + SYNC_SHARED_KEY)'
+        'SYNC_NODE=hub'
+        'CLOUD_SYNC_URL='
+        'SYNC_SHARED_KEY='
         ''
     ) -join "`r`n"
     $rng.Dispose()
