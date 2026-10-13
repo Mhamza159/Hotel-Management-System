@@ -402,6 +402,11 @@ else {
         $second = Read-Host '    Repeat password' -AsSecureString
         $plainFirst = [System.Net.NetworkCredential]::new('', $first).Password
         $plainSecond = [System.Net.NetworkCredential]::new('', $second).Password
+        # Wahi shart jo backend (createAdmin.js) lagata hai — pehle ghalat password par poora install ruk jata tha
+        if ($plainFirst.Length -lt 10 -or $plainFirst -notmatch '[A-Za-z]' -or $plainFirst -notmatch '\d') {
+            Write-HubWarning 'Password needs at least 10 characters with both letters and numbers (e.g. Hotel2026Admin). Try again.'
+            continue
+        }
         if ($plainFirst -ceq $plainSecond) { break }
         Write-HubWarning 'Passwords do not match, try again.'
     }
