@@ -11,7 +11,7 @@ The **Hub** is one always-on PC in the hotel that runs the backend and its own M
 
 ## Hotel setup package (USB, no internet needed)
 
-On a developer PC: `powershell -ExecutionPolicy Bypass -File .hubuild-release.ps1` builds `releaseGrandHorizon-Hotel-Setup-<version>` (~1 GB) with `Install-Hub.cmd` (double-click, asks for Administrator), `START-HERE.txt`, the backend with its production dependencies, the verified runtime downloads and the staff app installer. Copy the folder to the Hub PC and follow START-HERE. `-SkipDesktopBuild` reuses the existing staff installer; `-Zip` also writes a zip.
+On a developer PC: `powershell -ExecutionPolicy Bypass -File .\hub\build-release.ps1` builds `release\GrandHorizon-Hotel-Setup-<version>\` (~1 GB) with `Install-Hub.cmd` (double-click, asks for Administrator), `START-HERE.txt`, the backend with its production dependencies, the verified runtime downloads and the staff app installer. Copy the folder to the Hub PC and follow START-HERE. `-SkipDesktopBuild` reuses the existing staff installer; `-Zip` also writes a zip.
 
 ## Install / update
 

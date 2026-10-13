@@ -39,8 +39,8 @@ npm run smoke -- --hub-url=http://<hub>:5000   # headless check, prints SMOKE_RE
 npm run dist       # dist/GrandHorizonStaff-Setup-<version>.exe (unsigned)
 
 # hub (Windows PowerShell 5.1, elevated; -StageOnly needs no admin and touches no services)
-powershell -ExecutionPolicy Bypass -File hubinstall-hub.ps1 [-StageOnly -InstallDir X -DataDir Y]
-powershell -ExecutionPolicy Bypass -File hubuild-release.ps1   # USB package for the hotel (release/, git-ignored)
+powershell -ExecutionPolicy Bypass -File hub\install-hub.ps1 [-StageOnly -InstallDir X -DataDir Y]
+powershell -ExecutionPolicy Bypass -File hub\build-release.ps1   # USB package for the hotel (release/, git-ignored)
 ```
 
 Run backend scripts/tests with `backend/` as the working directory (env and the mongodb-memory-server binary cache resolve from cwd). No linter, formatter, TypeScript, or frontend tests exist.
