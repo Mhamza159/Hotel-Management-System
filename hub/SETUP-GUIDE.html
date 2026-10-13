@@ -82,9 +82,16 @@
     <li><a href="#pehla-din">Hissa C — Pehla din (admin)</a></li>
     <li><a href="#roz">Hissa D — Roz ka istemal (har role)</a></li>
     <li><a href="#masle">Masle aur un ka hal</a></li>
-    <li><a href="#hub-dekh-bhal">Hub ki dekh-bhal (status, backup, update)</a></li>
-    <li><a href="#sync">Cloud sync (baad mein)</a></li>
+    <li><a href="#hub-dekh-bhal">Hub ki dekh-bhal (status, backup, restore, update)</a></li>
+    <li><a href="#sync">Cloud sync — website aur Hub ka rabta</a></li>
+    <li><a href="#flow">Data ka flow (online booking se staff tak)</a></li>
+    <li><a href="#naya-staff">Naya staff laptop jorna / hatana</a></li>
+    <li><a href="#hub-shift">Hub ko doosre PC par shift karna</a></li>
+    <li><a href="#commands">Saari commands ek jagah</a></li>
   </ol>
+
+  <div class="note"><strong>Commands kaise chalayein:</strong> Start → "PowerShell" → right-click → <em>Run as administrator</em>. Har command <strong>ek hi line</strong> hai. Agar <code>&gt;&gt;</code> aa jaye to <strong>Ctrl + C</strong> dabayein aur dobara paste karein. PowerShell me paste = <strong>mouse ka right-click</strong>.<br>
+  Is developer laptop wale Hub ke ports: <strong>API 5100, MongoDB 27100</strong>. Alag Hub PC par default <strong>5000 / 27017</strong>.</div>
 
   <h2 id="samjhein">1. System kaise kaam karta hai</h2>
   <div class="diagram">         Hotel ka WiFi / Router  (internet ki zaroorat NAHI)
@@ -100,7 +107,7 @@
     <li><strong>Hub laptop</strong> par hotel ka saara data hota hai (rooms, bookings, staff, payments). Ye hamesha on rehta hai.</li>
     <li><strong>Staff laptops</strong> par "Grand Horizon Staff" app chalti hai jo WiFi ke zariye Hub se baat karti hai.</li>
     <li>Sab laptops ka <strong>ek hi WiFi/router</strong> par hona zaroori hai. Internet chahiye nahi.</li>
-    <li>Website (guests ki online booking) alag chalti hai; Hub se us ka rabta baad mein "cloud sync" se hoga.</li>
+    <li>Website (guests ki online booking) internet par chalti hai. <strong>Cloud sync</strong> har 15 second me Hub aur website ka data aapas me milata hai (tafseel: hissa 9 aur 10).</li>
   </ul>
 
   <h2 id="tayyari">2. Shuru karne se pehle</h2>
@@ -128,6 +135,7 @@
     <li><span class="step">6</span>Aakhir me likha aayega <code>Staff app Hub URL: http://192.168.x.x:5100</code> aur <span class="ok">MUKAMMAL</span>. Ye URL upar box me likh lein.</li>
   </ol>
   <p>Ye script khud ye bhi karti hai: WiFi ko <em>Private</em> banana (taake doosre laptops aa sakein) aur charger par laptop ka <em>sleep</em> band karna.</p>
+  <div class="danger">Ye sirf <strong>pehli dafa</strong> ke liye hai. Hub ban jane ke baad ise dobara chalane se Hub ka data mit sakta hai — update ke liye hissa 8 ki "Naya version" command use karein.</div>
 
   <h3>Option 2: Kisi alag PC ko Hub banana</h3>
   <ol>
@@ -209,6 +217,10 @@
     <tr><td>Staff ka password bhool gaya</td><td>Admin <em>Staff &amp; Roles</em> se naya password set kare.</td></tr>
     <tr><td>Permissions badli par asar nahi</td><td>Us staff ko logout karke dobara login karwayein. PBAC page par <strong>Save</strong> dabaya tha?</td></tr>
     <tr><td>"Windows protected your PC"</td><td>Normal hai (app abhi signed nahi): <strong>More info → Run anyway</strong></td></tr>
+    <tr><td>Header me laal <strong>booking conflict</strong> badge</td><td>Website ki booking ne woh room le liya jo hotel me pehle se bika tha. Front desk us booking ko <strong>doosra khali room allot</strong> kare (conflict khud khatam ho jata hai), ya room na ho to cancel kare.</td></tr>
+    <tr><td>Website ki nayi booking staff app me nahi aayi</td><td>20–30 second ruk kar page refresh karein. Phir bhi na aaye to Hub par status check: "Cloud sync" me last sync haal hi ka ho; Hub ka internet chal raha ho.</td></tr>
+    <tr><td>Hub ka internet band</td><td>Hotel ke andar sab chalta rahega, website bhi booking leti rahegi. Internet aate hi data khud mil jayega.</td></tr>
+    <tr><td>PowerShell me <code>&gt;&gt;</code> aa gaya</td><td>Command poori paste nahi hui. <strong>Ctrl + C</strong> dabayein aur dobara ek line me paste karein.</td></tr>
   </table>
 
   <h2 id="hub-dekh-bhal">8. Hub ki dekh-bhal</h2>
@@ -226,18 +238,227 @@
   <pre>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\backup-hub.ps1"</pre>
   <div class="note">Hafte me ek dafa <code>backups</code> folder ki copy USB par bhi rakhein — laptop kharab ho to data bach jayega.</div>
 
-  <h3>Naya version (update)</h3>
-  <p>Naya setup folder mile to Hub laptop par wahi double-click file dobara chalayein (<code>Setup-This-Laptop-As-Hub.cmd</code> ya <code>Install-Hub.cmd</code>).
-  <strong>Update me data, accounts aur bookings mehfooz rehte hain</strong> — sirf program badalta hai. Staff laptops par naya <code>.exe</code> chala dein.</p>
-  <div class="danger"><strong>Dhyan:</strong> <code>Setup-This-Laptop-As-Hub.cmd</code> agar <code>Type DELETE</code> poochhe to wo data mitane ka sawal hai. Sirf update karna ho to window band kar dein aur us ke bajaye ye chalayein:
-  <pre>powershell -ExecutionPolicy Bypass -File "&lt;setup folder&gt;\hub\install-hub.ps1" -ApiPort 5100 -MongoPort 27100</pre></div>
+  <h3>Services restart</h3>
+  <pre>Restart-Service GrandHorizonHubApi</pre>
+  <pre>Restart-Service GrandHorizonMongo</pre>
+  <p>Dono ka haal: <code>Get-Service GrandHorizonMongo, GrandHorizonHubApi</code> (dono <em>Running</em> honi chahiye).</p>
+  <p>Logs (masla ho to): <code>C:\ProgramData\GrandHorizonHub\logs</code> — khaas taur par <code>GrandHorizonHubApi.err.log</code>.</p>
+
+  <h3>Backup se data wapis lana (restore)</h3>
+  <div class="danger">Restore Hub ka <strong>abhi ka saara data</strong> purane backup se badal deta hai. Cloud sync on ho to pehle developer se baat karein.</div>
+  <p>Admin PowerShell me ek ek line (is laptop par port <code>27100</code>, alag Hub PC par <code>27017</code>; file ka naam backups folder se):</p>
+  <pre>Stop-Service GrandHorizonHubApi</pre>
+  <pre>&amp; "C:\Program Files\GrandHorizonHub\runtime\tools\bin\mongorestore.exe" --uri="mongodb://127.0.0.1:27100/?directConnection=true" --gzip --archive="C:\ProgramData\GrandHorizonHub\backups\hub-YYYYMMDD-HHMMSS.archive.gz" --drop</pre>
+  <pre>Start-Service GrandHorizonHubApi</pre>
+
+  <h3>Naya version (update) — data mehfooz rehta hai</h3>
+  <p>Naya setup folder mile to us folder me jayein aur admin PowerShell me ye chalayein. <strong>Data, accounts, bookings aur sync key (hub.env) wesi ki wesi rehti hai</strong> — sirf program badalta hai.</p>
+  <pre>cd "C:\GrandHorizon-Setup"</pre>
+  <p>Is developer laptop wala Hub:</p>
+  <pre>powershell -ExecutionPolicy Bypass -File .\hub\install-hub.ps1 -ApiPort 5100 -MongoPort 27100 -SkipAdmin</pre>
+  <p>Alag Hub PC (default ports):</p>
+  <pre>powershell -ExecutionPolicy Bypass -File .\hub\install-hub.ps1 -SkipAdmin</pre>
+  <p>Phir staff laptops par naya <code>staff-app\GrandHorizonStaff-Setup-&lt;version&gt;.exe</code> chala dein.</p>
+  <div class="danger"><strong>Khabardar:</strong> ab jab ye laptop asal Hub hai, <code>Setup-This-Laptop-As-Hub.cmd</code> <strong>dobara na chalayein</strong> — wo purane Hub ko <strong>data samait mita</strong> deta hai (<code>Type DELETE</code> poochhe to window band kar dein). Update ke liye sirf upar wali command.</div>
 
   <h3>Hub hatana</h3>
   <pre>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\uninstall-hub.ps1"</pre>
   <p>Data rakhta hai. Sab mitana ho to aakhir me <code>-RemoveData</code> lagayein (DELETE poochhega).</p>
 
-  <h2 id="sync">9. Cloud sync (baad mein)</h2>
-  <p>Hub aur website ka data aapas me milane ke liye ek dafa setup hota hai (secret key Vercel par aur Hub par). Ye developer ke saath mil kar karein — tafseel <code>hub\README.md</code> ke "Cloud sync" hisse me. Tab tak Hub aur website alag alag chalte hain.</p>
+  <h2 id="sync">9. Cloud sync — website aur Hub ka rabta</h2>
+  <p>Hub ka <strong>sync agent</strong> har 15 second me internet par website ke backend se data ka len-den karta hai. Dono taraf ek hi <strong>sync key</strong> lagi hoti hai (Vercel par <code>SYNC_SHARED_KEY</code>, Hub par <code>hub.env</code> me).</p>
+
+  <h3>Haal check</h3>
+  <ul>
+    <li>Hub par status: <code>hub-status.ps1</code> (hissa 8) → "Cloud sync" me last sync haal hi ka ho.</li>
+    <li>Website ko Hub dikh raha hai? Jawab me <code>"hubOnline":true</code> aana chahiye:</li>
+  </ul>
+  <pre>curl.exe -s https://hotel-backend-api-zeta.vercel.app/api/v1/sync/availability</pre>
+
+  <h3>Sync on karna (pehli dafa, ya naye Hub par)</h3>
+  <ol>
+    <li><span class="step">1</span>Nayi key banayein — lambi key aayegi, use <strong>select karke Enter</strong> (copy) aur <strong>Notepad file me save</strong> kar lein:
+      <pre>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\configure-sync.ps1" -GenerateKey</pre></li>
+    <li><span class="step">2</span>Vercel → <strong>hotel-backend-api</strong> → Settings → <strong>Environment Variables</strong> → <code>SYNC_SHARED_KEY</code>:
+      <ul>
+        <li>Naya ho to <strong>Add</strong>: <em>Key</em> me <code>SYNC_SHARED_KEY</code> (naam), <em>Value</em> me key, Type <em>Secret</em>, Environment <em>Production</em> → Save.</li>
+        <li>Pehle se ho to us ki line par <strong>⋯ → Edit</strong> → Value me nayi key → Save. (Value box me dikhne wala <code>sk_live_…</code> sirf hint hai.)</li>
+      </ul></li>
+    <li><span class="step">3</span><strong>Deployments</strong> → sab se upar wale deploy par <strong>⋯ → Redeploy</strong> → "Ready" ka intezar.</li>
+    <li><span class="step">4</span>Hub ko jorein — key maange to Notepad se copy, <strong>right-click</strong> (kuch nazar nahi aayega, ye normal hai), phir <strong>Enter</strong>:
+      <pre>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\configure-sync.ps1" -CloudUrl https://hotel-backend-api-zeta.vercel.app</pre>
+      Kamyabi par likha aayega: <span class="ok">Cloud accepted the key … Cloud sync is on.</span></li>
+  </ol>
+  <table>
+    <tr><th>Error</th><th>Matlab</th></tr>
+    <tr><td><code>must be at least 32 characters</code></td><td>Key paste nahi hui. Command dobara chalayein, is dafa right-click ya Ctrl + V.</td></tr>
+    <tr><td><code>rejected</code> / <code>401</code></td><td>Vercel par wohi key save nahi hui, ya Redeploy abhi "Ready" nahi hua.</td></tr>
+  </table>
+
+  <h3>Key bhool gaye ya leak ho gayi</h3>
+  <p>Key kahin dobara parhi nahi ja sakti. Upar ke <strong>chaaron steps dobara</strong> karein (nayi key → Vercel par Edit → Redeploy → Hub par <code>-CloudUrl</code>). Key kabhi screenshot ya chat me na bhejein.</p>
+
+  <h3>Sync band karna</h3>
+  <pre>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\configure-sync.ps1" -Disable</pre>
+  <p>Hub hotel ke andar chalta rahega; website se data milna ruk jayega.</p>
+
+  <h3>Vercel par sync settings</h3>
+  <table>
+    <tr><th>Variable</th><th>Kya</th></tr>
+    <tr><td><code>SYNC_SHARED_KEY</code></td><td>Hub wali key (zaroori)</td></tr>
+    <tr><td><code>HUB_OFFLINE_BOOKING_GATE</code></td><td><strong>Na lagayein</strong> = Hub offline ho tab bhi website booking chalti rahe (abhi yahi chal raha hai). <code>true</code> = Hub offline ho to website booking band.</td></tr>
+  </table>
+
+  <h2 id="flow">10. Data ka flow (online booking se staff tak)</h2>
+  <div class="diagram">  GUEST (mobile/laptop)                        HOTEL KE ANDAR (WiFi / LAN)
+  Website (Vercel)                             HUB laptop
+        |                                       - Hub API (backend)
+  Cloud backend  &lt;== har 15 sec sync ==&gt;       - Hub database
+        |              (internet)                - Sync agent
+  Atlas database (cloud)                               ^
+                                                       | WiFi (internet nahi chahiye)
+                                               Staff app      Staff app
+                                               (reception)    (housekeeping)</div>
+  <p>Staff app kabhi website se seedha baat nahi karti — sirf Hub se.</p>
+
+  <h3>A) Guest website par booking karta hai</h3>
+  <ol>
+    <li><span class="step">1</span>Guest website par room aur dates chun kar <strong>Book</strong> dabata hai.</li>
+    <li><span class="step">2</span>Cloud backend price khud calculate karta hai, room un dates ke liye <strong>lock</strong> karta hai aur booking save karta hai. Guest ko <code>BK-XXXX</code> confirmation milti hai.</li>
+    <li><span class="step">3</span>Hub ka sync agent (har 15 sec) cloud se nayi booking aur guest account le aata hai.</li>
+    <li><span class="step">4</span>Hub check karta hai: room khali hai to Hub bhi room lock kar leta hai. Room hotel me pehle se bika ho to booking par <strong>booking conflict</strong> lag jata hai.</li>
+    <li><span class="step">5</span>Staff app me booking ~20–30 second me aa jati hai (page refresh/dobara kholein). Header ka sync badge khud update hota hai.</li>
+    <li><span class="step">6</span>Guest hotel aata hai: check-in, payment — sab Hub me save hota hai aur agle sync par website par bhi status badal jata hai.</li>
+  </ol>
+
+  <h3>B) Staff hotel ke andar kaam karta hai</h3>
+  <ol>
+    <li><span class="step">1</span>Walk-in, check-out, safai, price — staff app WiFi par Hub ko bhejti hai, Hub foran save karta hai (internet nahi chahiye).</li>
+    <li><span class="step">2</span>Agle sync me Hub ye tabdeeliyan cloud ko bhejta hai.</li>
+    <li><span class="step">3</span>Website par woh room un dates me <strong>available nahi dikhta</strong>; price/room ki tabdeeli bhi website par aa jati hai.</li>
+  </ol>
+
+  <h3>C) Jab kuch band ho jaye</h3>
+  <table>
+    <tr><th>Kya hua</th><th>Kya hota hai</th></tr>
+    <tr><td>Hotel ka internet band</td><td>Staff app normal chalti hai. Website bhi booking leti rehti hai. Internet aate hi dono taraf ka data khud mil jata hai.</td></tr>
+    <tr><td>Internet band ke dauran website ne wohi room bech diya jo reception ne diya</td><td>Sync par us website booking par <strong>booking conflict</strong> (hotel ki booking jeetti hai). Staff app me laal badge → front desk doosra khali room allot kare, ya cancel.</td></tr>
+    <tr><td>Hub laptop band / so gaya</td><td>Staff app nahi chalegi. Website chalti rehti hai. Hub on hote hi sab sync.</td></tr>
+    <tr><td>WiFi / router band</td><td>Staff laptops Hub tak nahi pohnchte. Router on hote hi app chal padti hai.</td></tr>
+  </table>
+
+  <h3>Qaide</h3>
+  <ul>
+    <li><strong>Hub hakim hai:</strong> kamron ka faisla hotel karta hai; takrao me hotel ki booking jeetti hai.</li>
+    <li>Ek hi record dono taraf badla ho to <strong>jo baad me badla, woh jeetta hai</strong>.</li>
+    <li>Same email ka account ya same number ka room dono taraf alag bana ho to <strong>hotel (Hub) wala rehta hai</strong> aur website wala us me mil jata hai (us ki bookings bhi). Is liye website par admin login Hub wale password se hota hai.</li>
+    <li>Website par bane guest accounts Hub par aate hain, aur Hub ke staff accounts website par bhi login kar sakte hain.</li>
+    <li>Hub par upload ki gayi room photo internet milte hi Cloudinary par jati hai, phir website par dikhti hai.</li>
+  </ul>
+
+  <h2 id="naya-staff">11. Naya staff laptop jorna / hatana</h2>
+  <p>Staff laptop par <strong>sirf app</strong> install hoti hai — data Hub par rehta hai. Shart: staff laptop aur Hub <strong>ek hi WiFi/router</strong> par hon.</p>
+  <ol>
+    <li><span class="step">1</span><strong>Installer:</strong> setup folder ka <code>staff-app\GrandHorizonStaff-Setup-&lt;version&gt;.exe</code> USB par copy kar ke naye laptop par le jayein. (Developer laptop par ye <code>desktop\dist\</code> me bhi hai.)</li>
+    <li><span class="step">2</span><strong>Install:</strong> double-click. "Windows protected your PC" aaye to <strong>More info → Run anyway</strong>.</li>
+    <li><span class="step">3</span><strong>Hub address:</strong> is laptop wala Hub <code>http://192.168.18.140:5100</code>; alag Hub PC ka address woh jo install ke aakhir me print hua (jaise <code>http://192.168.1.10:5000</code>). <strong>Test</strong> → "Connected" → <strong>Save</strong>.</li>
+    <li><span class="step">4</span><strong>Account:</strong> super-admin <em>Staff &amp; Roles</em> me naya account banaye (receptionist / housekeeping), phir <em>PBAC Matrix</em> me permissions → <strong>Save</strong>.</li>
+    <li><span class="step">5</span><strong>Login:</strong> staff apne email/password se.</li>
+  </ol>
+  <h3>Test fail ho to</h3>
+  <ul>
+    <li>Dono laptop ek hi WiFi par hain? Hub laptop on hai, so to nahi raha?</li>
+    <li>Address me <code>http://</code> aur sahi port (<code>:5100</code> ya <code>:5000</code>) hai?</li>
+    <li>Hub par services: <code>Get-Service GrandHorizonMongo, GrandHorizonHubApi</code> → dono <em>Running</em>.</li>
+    <li>Hub ka network <em>Private</em> ho — Public ho to Hub par admin PowerShell me:
+      <pre>Get-NetConnectionProfile | Set-NetConnectionProfile -NetworkCategory Private</pre></li>
+  </ul>
+  <h3>Staff laptop hatana</h3>
+  <p>Windows Settings → Apps → <strong>Grand Horizon Staff</strong> → Uninstall. Data Hub par mehfooz rehta hai. Us staff ka account <em>Staff &amp; Roles</em> se band/delete kar dein.</p>
+
+  <h2 id="hub-shift">12. Hub ko doosre PC par shift karna</h2>
+  <div class="danger"><strong>Sab se zaroori qaida:</strong> purana aur naya Hub <strong>kabhi ek saath</strong> cloud se jure na hon. Neeche ki tarteeb bilkul isi tarah follow karein.</div>
+  <div class="card"><strong>Tayyari:</strong>
+    <ul>
+      <li>☐ Setup package ka folder (USB me)</li>
+      <li>☐ Sync key wali Notepad file</li>
+      <li>☐ USB jis me backup copy ho sake</li>
+      <li>☐ Naya PC: router se <strong>cable</strong>, <strong>charger/UPS</strong>, router me <strong>fixed IP</strong> (DHCP reservation)</li>
+    </ul>
+  </div>
+
+  <h3>Step 1 — Purane Hub par (admin PowerShell)</h3>
+  <ol>
+    <li>Staff ko kaam rokne ka bolein; sab staff apps band. Is ke baad purane Hub par koi booking na ho.</li>
+    <li>Sync poora hua? "Cloud sync" me last sync haal hi ka ho:
+      <pre>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\hub-status.ps1"</pre></li>
+    <li>Taaza backup:
+      <pre>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\backup-hub.ps1"</pre></li>
+    <li><code>C:\ProgramData\GrandHorizonHub\backups</code> se sab se naya <code>hub-YYYYMMDD-HHMMSS.archive.gz</code> USB par copy karein.</li>
+    <li>Purane Hub par sync band:
+      <pre>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\configure-sync.ps1" -Disable</pre></li>
+    <li>Purane Hub ki services rokein:
+      <pre>Stop-Service GrandHorizonHubApi, GrandHorizonMongo</pre></li>
+  </ol>
+
+  <h3>Step 2 — Naye PC par install (admin PowerShell)</h3>
+  <ol>
+    <li>Setup folder naye PC par copy karein, jaise <code>C:\GrandHorizon-Setup</code>.</li>
+    <li><pre>cd "C:\GrandHorizon-Setup"</pre></li>
+    <li><code>-SkipAdmin</code> kyunki admin account backup ke saath aa jayega (ports 5000 / 27017):
+      <pre>powershell -ExecutionPolicy Bypass -File .\hub\install-hub.ps1 -SkipAdmin</pre></li>
+    <li>Aakhir me print hua <strong>Hub address</strong> (jaise <code>http://192.168.1.10:5000</code>) likh lein.</li>
+  </ol>
+
+  <h3>Step 3 — Backup se data daalein (ek ek line)</h3>
+  <p>USB wala backup naye PC par copy karein, jaise <code>C:\GrandHorizon-Setup\hub-YYYYMMDD-HHMMSS.archive.gz</code> (asal naam likhein):</p>
+  <pre>Stop-Service GrandHorizonHubApi</pre>
+  <pre>&amp; "C:\Program Files\GrandHorizonHub\runtime\tools\bin\mongorestore.exe" --uri="mongodb://127.0.0.1:27017/?directConnection=true" --gzip --archive="C:\GrandHorizon-Setup\hub-YYYYMMDD-HHMMSS.archive.gz" --drop</pre>
+  <pre>Start-Service GrandHorizonHubApi</pre>
+  <p>Backup ke saath sync ka record bhi aata hai, is liye naya Hub wahin se aage chalta hai jahan purana ruka tha.</p>
+
+  <h3>Step 4 — Naye Hub ko cloud se jorein</h3>
+  <pre>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\configure-sync.ps1" -CloudUrl https://hotel-backend-api-zeta.vercel.app</pre>
+  <p>Wohi Notepad wali key (right-click, Enter). Nayi key ki zaroorat nahi.</p>
+
+  <h3>Step 5 — Network, power, check</h3>
+  <pre>Get-NetConnectionProfile | Set-NetConnectionProfile -NetworkCategory Private</pre>
+  <p>Laptop ho to charger par sleep band:</p>
+  <pre>powercfg /change standby-timeout-ac 0</pre>
+  <pre>powercfg /change hibernate-timeout-ac 0</pre>
+  <p>Haal (services <em>Running</em>, cloud sync <em>on</em>) aur website ko Hub dikh raha hai (<code>"hubOnline":true</code>):</p>
+  <pre>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\hub-status.ps1"</pre>
+  <pre>curl.exe -s https://hotel-backend-api-zeta.vercel.app/api/v1/sync/availability</pre>
+
+  <h3>Step 6 — Staff apps ka address badlein</h3>
+  <p>Har staff laptop: <strong>File → Hub Connection…</strong> → naya address → <strong>Test → Save</strong>. Sab ko <strong>ek dafa dobara login</strong> karna hoga (naye Hub ki security keys nayi hain; email/password wohi).</p>
+
+  <h3>Step 7 — Purana Hub hatayein (1–2 din baad, sab theek chalne par)</h3>
+  <pre>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\uninstall-hub.ps1"</pre>
+  <p>Data rakhta hai (emergency backup). Bilkul saaf karna ho to aakhir me <code>-RemoveData</code> (DELETE likhna padta hai).</p>
+  <div class="note"><strong>Kuch ghalat ho jaye:</strong> naye Hub par <code>configure-sync.ps1 -Disable</code>, phir purane Hub par <code>Start-Service GrandHorizonMongo, GrandHorizonHubApi</code> aur <code>-CloudUrl</code> se dobara jorein. Purana data wahan mehfooz hai.</div>
+
+  <h2 id="commands">13. Saari commands ek jagah</h2>
+  <p>Sab <strong>admin PowerShell</strong> me. <code>&lt;setup&gt;</code> = setup package ka folder.</p>
+  <table>
+    <tr><th>Kaam</th><th>Command</th></tr>
+    <tr><td>Hub ka haal</td><td><code>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\hub-status.ps1"</code></td></tr>
+    <tr><td>Abhi backup</td><td><code>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\backup-hub.ps1"</code></td></tr>
+    <tr><td>Services ka haal</td><td><code>Get-Service GrandHorizonMongo, GrandHorizonHubApi</code></td></tr>
+    <tr><td>API restart</td><td><code>Restart-Service GrandHorizonHubApi</code></td></tr>
+    <tr><td>Database restart</td><td><code>Restart-Service GrandHorizonMongo</code></td></tr>
+    <tr><td>Network Private</td><td><code>Get-NetConnectionProfile | Set-NetConnectionProfile -NetworkCategory Private</code></td></tr>
+    <tr><td>Nayi sync key</td><td><code>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\configure-sync.ps1" -GenerateKey</code></td></tr>
+    <tr><td>Hub ko website se jorna</td><td><code>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\configure-sync.ps1" -CloudUrl https://hotel-backend-api-zeta.vercel.app</code></td></tr>
+    <tr><td>Sync band</td><td><code>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\configure-sync.ps1" -Disable</code></td></tr>
+    <tr><td>Website ko Hub dikh raha?</td><td><code>curl.exe -s https://hotel-backend-api-zeta.vercel.app/api/v1/sync/availability</code></td></tr>
+    <tr><td>Update (is laptop, data rehta hai)</td><td><code>cd "&lt;setup&gt;"</code> phir <code>powershell -ExecutionPolicy Bypass -File .\hub\install-hub.ps1 -ApiPort 5100 -MongoPort 27100 -SkipAdmin</code></td></tr>
+    <tr><td>Update (alag Hub PC, data rehta hai)</td><td><code>cd "&lt;setup&gt;"</code> phir <code>powershell -ExecutionPolicy Bypass -File .\hub\install-hub.ps1 -SkipAdmin</code></td></tr>
+    <tr><td>Hub hatana (data rehta hai)</td><td><code>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\uninstall-hub.ps1"</code></td></tr>
+    <tr><td>Hub hatana + data mitana</td><td><code>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\uninstall-hub.ps1" -RemoveData</code></td></tr>
+    <tr><td>Restore</td><td>Hissa 8 → "Backup se data wapis lana"</td></tr>
+  </table>
+  <p>Developer ki commands (dev servers, tests, installer, package banana, live push) setup folder ki <code>COMMANDS.md</code> me hain.</p>
 </main>
 <script>
   function toggleTheme() {
