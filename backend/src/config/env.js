@@ -44,6 +44,9 @@ const envSchema = joi
     SYNC_INTERVAL_MS: joi.number().integer().min(2000).default(15000),
     // Cloud: hub itni dair se na mile to online booking band (option 1)
     HUB_OFFLINE_AFTER_MS: joi.number().integer().min(10000).default(120000),
+    // true = hub offline ho to website booking band (option 1). Default false: booking
+    // chalti rahe; takrao wali booking hub par syncConflict ban kar front desk tak jati hai
+    HUB_OFFLINE_BOOKING_GATE: joi.boolean().default(false),
     // Itni purani tabdeeliyan hi bheji jati hain (abhi commit ho rahi writes peechhe na rahein)
     SYNC_SETTLE_MS: joi.number().integer().min(0).default(5000),
     // Invoice par hotel ki maloomat (pehle code me likhi thin). HOTEL_TAX_ID khaali = line nahi chhapti
@@ -104,6 +107,7 @@ module.exports = {
     cloudUrl: validatedEnv.CLOUD_SYNC_URL.replace(/\/+$/, ''),
     intervalMs: validatedEnv.SYNC_INTERVAL_MS,
     hubOfflineAfterMs: validatedEnv.HUB_OFFLINE_AFTER_MS,
+    hubOfflineBookingGate: validatedEnv.HUB_OFFLINE_BOOKING_GATE,
     settleMs: validatedEnv.SYNC_SETTLE_MS,
   },
   cloudinary: {

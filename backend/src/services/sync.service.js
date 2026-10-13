@@ -17,8 +17,9 @@ const MEDIA_FOLDER = /^hotel-management\/[\w/-]{1,200}$/;
  * ============================================================================
  *
  * Cloud (Vercel) par: hub /sync/push aur /sync/pull bulata hai (shared key ke saath).
- * Har call "hub online" ka waqt save karta hai. Option 1: hub HUB_OFFLINE_AFTER_MS
- * se zyada der gayab rahe to website par nayi booking band.
+ * Har call "hub online" ka waqt save karta hai. Option 1 (sirf jab
+ * HUB_OFFLINE_BOOKING_GATE=true): hub HUB_OFFLINE_AFTER_MS se zyada der gayab rahe
+ * to website par nayi booking band. Default me booking chalti rehti hai.
  *
  * SYNC_SHARED_KEY cloud par set na ho to sync band hai aur website pehle jaisi
  * chalti hai (koi gate nahi).
@@ -64,8 +65,10 @@ class SyncService {
     }
     const state = await SyncState.findById('cloud').lean();
     const last = state && state.lastHubContactAt ? state.lastHubContactAt : null;
-    const available = Boolean(last && Date.now() - last.getTime() <= config.sync.hubOfflineAfterMs);
-    return { available, reason: available ? null : 'hotel-offline', lastHubContactAt: last };
+    const hubOnline = Boolean(last && Date.now() - last.getTime() <= config.sync.hubOfflineAfterMs);
+    // Gate band (default): hub offline ho tab bhi booking chalti hai
+    const available = hubOnline || !config.sync.hubOfflineBookingGate;
+    return { available, reason: available ? null : 'hotel-offline', lastHubContactAt: last, hubOnline };
   }
 
   static async assertOnlineBookingAvailable() {

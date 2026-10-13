@@ -54,10 +54,10 @@ The Hub's sync agent (inside the API service) pushes Hub changes to the cloud an
 
 **Rules**
 
-- The Hub is the inventory authority. While the Hub has not synced for 2 minutes, the website returns "online booking temporarily unavailable" (bookings and web walk-ins).
+- The Hub is the inventory authority. The website keeps taking online bookings even while the Hub is offline; a website booking that clashes with a hotel booking becomes a booking conflict (below) when the Hub syncs. To close online booking while the Hub has not synced for 2 minutes instead, set `HUB_OFFLINE_BOOKING_GATE=true` on the cloud.
 - Each record is "last writer wins" by its change time. Room locks (`reservedRanges`) are rebuilt on each side from bookings, never copied.
 - If a website booking arrives for a room the hotel already sold for those dates, it is flagged as a **booking conflict** on both sides and holds no room. The desktop header shows a red "booking conflict" badge; allotting a free room at the front desk clears it.
-- Duplicate unique values (same email, room number or coupon code created separately on both sides) are skipped and listed under recent conflicts.
+- Same user email, room number or coupon code created separately on both sides: the **hotel record wins**. When the Hub's record reaches the cloud, the website record is merged into it (its bookings, payments, reviews, waitlist, wishlist and audit entries move to the hotel record's id, then it is deleted). The hotel record's data is kept, so a merged user logs in on the website with the Hub password. On the Hub such a clash is only listed under recent conflicts until the cloud has merged it.
 - Room photos uploaded on the Hub are stored on the Hub and shown from there at once (no internet needed). When online, the agent gets a signed upload from the cloud and sends them to Cloudinary (no Cloudinary secret on the Hub); the website only ever sees the final Cloudinary link.
 
 **One-time setup** (needs the sync version of the backend deployed to the cloud):
@@ -68,9 +68,9 @@ The Hub's sync agent (inside the API service) pushes Hub changes to the cloud an
 4. On the Hub (elevated): `scripts\configure-sync.ps1 -CloudUrl https://<backend-domain>`, paste the key. It verifies the key, saves it in `hub.env`, prepares existing Hub data and restarts the API.
 5. `hub-status.ps1` → "Cloud sync" shows the last successful sync.
 
-Use a **fresh Hub** (uninstall with `-RemoveData`, install again) before connecting it to the real cloud if it contains test rooms or bookings — otherwise they upload to the website.
+Use a **fresh Hub** (uninstall with `-RemoveData`, install again) before connecting it to the real cloud if it contains test rooms or bookings — otherwise they upload to the website. Hub rooms and accounts that also exist on the website are merged (hotel wins), not duplicated.
 
-`configure-sync.ps1 -Disable` turns sync off again (the website then keeps online booking closed while `SYNC_SHARED_KEY` is set in the cloud).
+`configure-sync.ps1 -Disable` turns sync off again (with `HUB_OFFLINE_BOOKING_GATE=true` the website then keeps online booking closed while `SYNC_SHARED_KEY` is set in the cloud).
 
 ## Day-to-day
 

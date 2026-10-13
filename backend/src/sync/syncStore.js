@@ -2,6 +2,7 @@ const config = require('../config/env');
 const logger = require('../utils/logger');
 const SyncTombstone = require('../models/SyncTombstone');
 const { ROOM_HOLDING_STATUSES, reconcileBookingRanges, releaseBookingRanges } = require('./bookingRanges');
+const { mergeIntoIncoming } = require('./identityMerge');
 
 /**
  * ============================================================================
@@ -169,15 +170,23 @@ const applyTombstone = async (tombstone, results) => {
 
 /**
  * @param {Object} changes - { [name]: rawDocs[] } (collectChanges ka output)
- * @returns {Promise<{ applied: number, skipped: number, conflicts: Object[] }>}
+ * @returns {Promise<{ applied: number, skipped: number, conflicts: Object[], merged: Object[] }>}
  */
 const applyChanges = async (changes = {}) => {
-  const results = { applied: 0, skipped: 0, conflicts: [] };
+  const results = { applied: 0, skipped: 0, conflicts: [], merged: [] };
 
   for (const entry of SYNCED) {
     for (const doc of changes[entry.name] || []) {
       try {
-        await applyDoc(entry, doc, results);
+        try {
+          await applyDoc(entry, doc, results);
+        } catch (error) {
+          // Cloud par: hub ka record same email/roomNumber/code wale website record ko apne me mila leta hai
+          const merged = error.code === 11000 ? await mergeIntoIncoming(entry, doc) : null;
+          if (!merged) throw error;
+          results.merged.push(merged);
+          await applyDoc(entry, doc, results);
+        }
       } catch (error) {
         if (error.code !== 11000) throw error;
         // Doosre _id ke saath same unique value (email, roomNumber, coupon code...)

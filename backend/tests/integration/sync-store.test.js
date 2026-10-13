@@ -266,24 +266,119 @@ describe('Sync plugin and store', () => {
       expect(fresh.reservedRanges.map((r) => r.bookingReference)).toEqual([booking.bookingReference]);
     });
 
-    it('records a duplicate-email user as a conflict instead of failing the batch', async () => {
-      await makeUser('same@example.com');
-      const remoteUser = {
+    it('on the cloud merges a website user into the hotel user with the same email (hotel wins)', async () => {
+      const websiteUser = await makeUser('merge@example.com');
+      const room = await makeRoom('MU-1');
+      const websiteBooking = await Booking.create({
+        bookingReference: 'BK-MERGE-USER',
+        userId: websiteUser._id,
+        rooms: [{ roomId: room._id, pricePerNight: 100 }],
+        checkInDate: daysFromNow(40),
+        checkOutDate: daysFromNow(41),
+        numberOfGuests: 1,
+        totalPrice: 100,
+        status: 'confirmed',
+      });
+      const before = (await Booking.findById(websiteBooking._id).lean()).syncUpdatedAt;
+      const hotelUser = {
         _id: new mongoose.Types.ObjectId(),
-        name: 'Other Same',
-        email: 'same@example.com',
+        name: 'Hotel Name',
+        email: 'merge@example.com',
         password: 'hash',
-        role: 'user',
+        role: 'super-admin',
+        syncUpdatedAt: new Date(Date.now() - 60000),
+        syncOrigin: 'hub',
+      };
+
+      const result = await applyChanges({ users: [hotelUser] });
+      expect(result.conflicts).toEqual([]);
+      expect(result.merged).toEqual([
+        expect.objectContaining({ collection: 'users', value: 'merge@example.com', fromId: String(websiteUser._id) }),
+      ]);
+      const users = await User.find({ email: 'merge@example.com' }).lean();
+      expect(users.map((u) => String(u._id))).toEqual([String(hotelUser._id)]);
+      expect(users[0].name).toBe('Hotel Name');
+      expect(users[0].syncOrigin).toBe('hub');
+
+      const booking = await Booking.findById(websiteBooking._id).lean();
+      expect(String(booking.userId)).toBe(String(hotelUser._id));
+      // Badli hui booking cloud ki muhar ke saath hub tak jayegi
+      expect(booking.syncOrigin).toBe('cloud');
+      expect(booking.syncUpdatedAt.getTime()).toBeGreaterThanOrEqual(before.getTime());
+      expect(await SyncTombstone.countDocuments({ collectionName: 'users', docId: websiteUser._id })).toBe(1);
+    });
+
+    it('on the cloud merges a website room into the hotel room with the same number and keeps its locks', async () => {
+      const websiteRoom = await makeRoom('MR-1');
+      const user = await makeUser('roommerge@example.com');
+      const websiteBooking = remoteBooking({ room: websiteRoom, user, checkIn: daysFromNow(50), checkOut: daysFromNow(52), origin: 'cloud' });
+      await applyChanges({ bookings: [websiteBooking] });
+      expect((await Room.findById(websiteRoom._id).lean()).reservedRanges).toHaveLength(1);
+
+      const hotelRoom = {
+        ...(await Room.findById(websiteRoom._id).lean()),
+        _id: new mongoose.Types.ObjectId(),
+        description: 'Hotel description',
+        pricePerNight: 250,
+        reservedRanges: [],
         syncUpdatedAt: new Date(),
         syncOrigin: 'hub',
       };
-      const room = await makeRoom('D-1');
-      const result = await applyChanges({ users: [remoteUser], rooms: [] });
-      expect(result.conflicts).toEqual([
-        expect.objectContaining({ collection: 'users', reason: 'duplicate email', value: 'same@example.com' }),
-      ]);
-      expect(await User.countDocuments({ email: 'same@example.com' })).toBe(1);
-      expect(room).toBeTruthy();
+      const result = await applyChanges({ rooms: [hotelRoom] });
+      expect(result.merged).toHaveLength(1);
+
+      const rooms = await Room.find({ roomNumber: 'MR-1' }).lean();
+      expect(rooms.map((r) => String(r._id))).toEqual([String(hotelRoom._id)]);
+      expect(rooms[0].pricePerNight).toBe(250);
+      expect(rooms[0].reservedRanges.map((r) => r.bookingReference)).toEqual([websiteBooking.bookingReference]);
+      const booking = await Booking.findById(websiteBooking._id).lean();
+      expect(String(booking.rooms[0].roomId)).toBe(String(hotelRoom._id));
+    });
+
+    it('on the hub records a duplicate-email user as a conflict instead of failing the batch', async () => {
+      const config = require('../../src/config/env');
+      const previousNode = config.sync.node;
+      config.sync.node = 'hub';
+      try {
+        await makeUser('same@example.com');
+        const remoteUser = {
+          _id: new mongoose.Types.ObjectId(),
+          name: 'Other Same',
+          email: 'same@example.com',
+          password: 'hash',
+          role: 'user',
+          syncUpdatedAt: new Date(),
+          syncOrigin: 'cloud',
+        };
+        const room = await makeRoom('D-1');
+        const result = await applyChanges({ users: [remoteUser], rooms: [] });
+        expect(result.conflicts).toEqual([
+          expect.objectContaining({ collection: 'users', reason: 'duplicate email', value: 'same@example.com' }),
+        ]);
+        expect(result.merged).toEqual([]);
+        expect(await User.countDocuments({ email: 'same@example.com' })).toBe(1);
+        expect(room).toBeTruthy();
+      } finally {
+        config.sync.node = previousNode;
+      }
+    });
+
+    it('keeps website booking open while the hub is offline unless the gate is switched on', async () => {
+      const config = require('../../src/config/env');
+      const SyncService = require('../../src/services/sync.service');
+      const saved = { ...config.sync };
+      config.sync.sharedKey = 'k'.repeat(32);
+      try {
+        config.sync.hubOfflineBookingGate = false;
+        let state = await SyncService.getOnlineBookingAvailability();
+        expect(state).toEqual(expect.objectContaining({ available: true, hubOnline: false }));
+
+        config.sync.hubOfflineBookingGate = true;
+        state = await SyncService.getOnlineBookingAvailability();
+        expect(state).toEqual(expect.objectContaining({ available: false, reason: 'hotel-offline' }));
+      } finally {
+        Object.assign(config.sync, saved);
+      }
     });
 
     it('applies remote tombstones and releases a deleted booking lock', async () => {

@@ -17,7 +17,7 @@ jest.setTimeout(120000);
 
 const SYNC_KEY = crypto.randomBytes(32).toString('hex');
 const HUB_OFFLINE_AFTER_MS = 10000;
-const SYNC_ENV_KEYS = ['SYNC_NODE', 'SYNC_SHARED_KEY', 'CLOUD_SYNC_URL', 'SYNC_SETTLE_MS', 'HUB_OFFLINE_AFTER_MS'];
+const SYNC_ENV_KEYS = ['SYNC_NODE', 'SYNC_SHARED_KEY', 'CLOUD_SYNC_URL', 'SYNC_SETTLE_MS', 'HUB_OFFLINE_AFTER_MS', 'HUB_OFFLINE_BOOKING_GATE'];
 
 const freePort = () =>
   new Promise((resolve, reject) => {
@@ -100,6 +100,8 @@ describe('Hub <-> cloud sync (end to end)', () => {
         SYNC_SHARED_KEY: SYNC_KEY,
         SYNC_SETTLE_MS: '0',
         HUB_OFFLINE_AFTER_MS: String(HUB_OFFLINE_AFTER_MS),
+        // Ye test option 1 (gate on) ko check karta hai; default me gate band hai
+        HUB_OFFLINE_BOOKING_GATE: 'true',
       },
       stdio: ['ignore', 'pipe', 'pipe'],
     });
