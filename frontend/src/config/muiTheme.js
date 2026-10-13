@@ -20,6 +20,46 @@ import { createTheme } from '@mui/material/styles';
  */
 
 // 1. LUXURY DARK THEME
+
+/**
+ * Phone screens (< 600px) ke liye dono themes par lagne wali settings (Android staff app):
+ * - Tabs side me scroll hote hain (kat-te nahi)
+ * - Dialogs takreeban poori screen lete hain, actions wrap hote hain
+ * - Table cells aur pagination compact
+ */
+const PHONE = '@media (max-width:599.95px)';
+const mobileOverrides = {
+  components: {
+    MuiTabs: {
+      defaultProps: { variant: 'scrollable', scrollButtons: 'auto', allowScrollButtonsMobile: true },
+    },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          [PHONE]: {
+            margin: 8,
+            width: 'calc(100% - 16px)',
+            maxWidth: 'calc(100% - 16px) !important',
+            maxHeight: 'calc(100% - 16px)',
+          },
+        },
+      },
+    },
+    MuiDialogTitle: { styleOverrides: { root: { [PHONE]: { padding: '14px 16px' } } } },
+    MuiDialogContent: { styleOverrides: { root: { [PHONE]: { padding: '12px 16px' } } } },
+    MuiDialogActions: {
+      styleOverrides: { root: { [PHONE]: { padding: '10px 16px 14px', flexWrap: 'wrap', gap: 8, '& > :not(style) ~ :not(style)': { marginLeft: 0 } } } },
+    },
+    MuiTableCell: { styleOverrides: { root: { [PHONE]: { padding: '8px 10px' } } } },
+    MuiTablePagination: {
+      styleOverrides: {
+        toolbar: { [PHONE]: { flexWrap: 'wrap', paddingLeft: 8, paddingRight: 8 } },
+        spacer: { [PHONE]: { display: 'none' } },
+      },
+    },
+  },
+};
+
 export const darkTheme = createTheme({
   palette: {
     mode: 'dark',
@@ -150,7 +190,7 @@ export const darkTheme = createTheme({
       },
     },
   },
-});
+}, mobileOverrides);
 
 // 2. LUXURY LIGHT THEME
 export const lightTheme = createTheme({
@@ -283,7 +323,7 @@ export const lightTheme = createTheme({
       },
     },
   },
-});
+}, mobileOverrides);
 
 /**
  * Helper selector function to obtain active MUI theme

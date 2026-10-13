@@ -171,7 +171,7 @@ export const AdminAnalyticsPage = () => {
             size="small"
             value={periodDays}
             onChange={(e) => setPeriodDays(Number(e.target.value))}
-            sx={{ minWidth: 150 }}
+            sx={{ minWidth: { xs: 0, sm: 150 }, flex: { xs: '1 1 140px', sm: '0 0 auto' } }}
           >
             <MenuItem value={7}>Last 7 Days</MenuItem>
             <MenuItem value={30}>Last 30 Days</MenuItem>

@@ -63,7 +63,7 @@ export const DeskCancellationsPage = () => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       {/* Page Header Strip */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2 }}>
         <div>
           <Typography variant="h5" sx={{ fontWeight: 700, color: '#ECEFF3' }}>
             Cancellation Audit Queue

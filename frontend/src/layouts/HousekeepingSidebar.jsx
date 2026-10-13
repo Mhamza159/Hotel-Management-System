@@ -35,15 +35,7 @@ import { can } from '../components/common/Can';
  *   (coupons:manage & waitlist:manage omitted as per spec).
  * - Anti-template rule: sections without permission are never rendered (completely absent).
  */
-export const HousekeepingSidebar = () => {
-  const { user, logout } = useAuthStore();
-  const navigate = useNavigate();
-
-  const handleSignOut = () => {
-    logout();
-    navigate('/login', { replace: true });
-  };
-
+const buildNavItems = (user) => {
   // Base floor navigation items (always visible to housekeeping staff)
   const baseItems = [
     {
@@ -121,10 +113,22 @@ export const HousekeepingSidebar = () => {
   ];
 
   // Filter to only permitted items (Anti-template: absent from DOM if not permitted)
-  const navItems = [...baseItems, ...dynamicItems.filter((item) => item.allowed)];
+  return [...baseItems, ...dynamicItems.filter((item) => item.allowed)];
+};
+
+export const HousekeepingSidebar = () => {
+  const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleSignOut = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
+
+  const navItems = buildNavItems(user);
 
   return (
-    <aside className="w-20 sm:w-24 bg-[#2B3A2A] text-[#F3EFE7] flex flex-col items-center justify-between py-5 px-2 shrink-0 select-none z-30 shadow-md">
+    <aside className="hidden md:flex w-24 bg-[#2B3A2A] text-[#F3EFE7] flex-col items-center justify-between py-5 px-2 shrink-0 select-none z-30 shadow-md">
       {/* Top Section: Logo & Monogram Badge */}
       <div className="flex flex-col items-center space-y-4 w-full">
         <NavLink
@@ -213,6 +217,52 @@ export const HousekeepingSidebar = () => {
         </button>
       </div>
     </aside>
+  );
+};
+
+/**
+ * Phone (< md): side ki patti ki jagah neeche tab bar (ek haath se chalane me aasaan).
+ * Wohi permission-driven items; zyada hon to bar side me scroll hoti hai.
+ */
+export const HousekeepingMobileNav = () => {
+  const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
+  const navItems = buildNavItems(user);
+
+  const handleSignOut = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
+
+  const itemClass = 'w-[72px] shrink-0 py-2 flex flex-col items-center justify-center rounded-xl';
+
+  return (
+    <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#2B3A2A] text-[#F3EFE7] shadow-[0_-4px_16px_rgba(0,0,0,0.15)] pb-[env(safe-area-inset-bottom)]">
+      <div className="flex items-stretch gap-1 px-1.5 py-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              className={({ isActive }) =>
+                `${itemClass} ${isActive ? 'bg-[#E3B7A8] text-[#2B3A2A]' : 'text-[#F3EFE7]/75'}`
+              }
+            >
+              <Icon className="w-5 h-5" />
+              <span className="text-[8px] font-mono tracking-wider uppercase mt-1 truncate max-w-full px-1">
+                {item.label}
+              </span>
+            </NavLink>
+          );
+        })}
+        <button onClick={handleSignOut} className={`${itemClass} text-[#F3EFE7]/75`}>
+          <LogOut className="w-5 h-5" />
+          <span className="text-[8px] font-mono tracking-wider uppercase mt-1">SIGN OUT</span>
+        </button>
+      </div>
+    </nav>
   );
 };
 

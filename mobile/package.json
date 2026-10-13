@@ -1,6 +1,6 @@
 {
   "name": "grand-horizon-staff-mobile",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "Grand Horizon staff Android app (Capacitor). Connects to the hotel Hub backend over the hotel WiFi.",
   "author": "M Hamza Hakim",

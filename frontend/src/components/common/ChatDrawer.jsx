@@ -112,7 +112,7 @@ export const ChatDrawer = () => {
         onClick={() => setIsOpen(!isOpen)}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-full shadow-2xl transition-all group backdrop-blur-md ${
+        className={`fixed bottom-24 right-3 md:bottom-6 md:right-6 z-50 flex items-center gap-2.5 p-2 sm:px-4 sm:py-3 rounded-full shadow-2xl transition-all group backdrop-blur-md ${
           isStaff
             ? 'bg-[#131A26] border border-[#2A3547] text-[#ECEFF3] hover:border-[#3FD0C9]/50 shadow-[#0A0F1A]/80'
             : 'bg-[#FAF8F2] border border-[#E4DFD0] text-[#2A2A28] hover:border-[#2B3A2A]/40'
@@ -127,7 +127,7 @@ export const ChatDrawer = () => {
         >
           <Sparkles className="w-4 h-4" />
         </div>
-        <div className="text-left pr-1">
+        <div className="hidden sm:block text-left pr-1">
           <span className={`text-xs font-bold block leading-none ${isStaff ? 'text-[#3FD0C9]' : 'text-[#2B3A2A]'}`}>
             {isStaff ? 'Staff Copilot' : 'AI Concierge'}
           </span>
@@ -145,7 +145,7 @@ export const ChatDrawer = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 400 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed bottom-24 right-6 w-96 max-w-[calc(100vw-3rem)] h-[550px] bg-[#131A26] border border-[#2A3547] rounded-2xl shadow-2xl flex flex-col z-50 overflow-hidden font-sans"
+            className="fixed bottom-40 inset-x-3 h-[65vh] sm:inset-x-auto sm:right-6 sm:w-96 sm:max-w-[calc(100vw-3rem)] sm:h-[550px] md:bottom-24 bg-[#131A26] border border-[#2A3547] rounded-2xl shadow-2xl flex flex-col z-50 overflow-hidden font-sans"
           >
             {/* Drawer Header */}
             <div className="p-4 border-b border-[#2A3547] bg-[#0A0F1A]/80 flex items-center justify-between">

@@ -1,12 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, RefreshCw, Search, ShieldCheck, Plus, Sparkles } from 'lucide-react';
+import { Calendar, RefreshCw, Search, ShieldCheck, Plus, Sparkles, Menu } from 'lucide-react';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { CommandPalette } from '../common/CommandPalette';
 import { ThemeToggle } from '../common/ThemeToggle';
 import { SyncStatusBadge } from './SyncStatusBadge';
 
-export const StaffHeader = ({ title = 'Overview', subtitle = 'Rooms, arrivals, reservations, and balances at a glance' }) => {
+export const StaffHeader = ({
+  title = 'Overview',
+  subtitle = 'Rooms, arrivals, reservations, and balances at a glance',
+  onMenuClick,
+}) => {
   const user = useAuthStore((state) => state.user);
   const navigate = useNavigate();
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -61,19 +65,30 @@ export const StaffHeader = ({ title = 'Overview', subtitle = 'Rooms, arrivals, r
 
   return (
     <>
-      <header className="h-16 bg-white dark:bg-[#14241C] border-b border-[#E3EAE5] dark:border-[#264334] px-6 flex items-center justify-between sticky top-0 z-20 transition-colors duration-200">
+      <header className="h-14 sm:h-16 bg-white dark:bg-[#14241C] border-b border-[#E3EAE5] dark:border-[#264334] px-3 sm:px-6 flex items-center justify-between gap-2 sticky top-0 z-20 transition-colors duration-200">
+        {/* Phone/tablet: sidebar menu */}
+        {onMenuClick && (
+          <button
+            onClick={onMenuClick}
+            title="Menu"
+            className="lg:hidden p-2 -ml-1 rounded-lg text-[#143D2B] dark:text-white hover:bg-[#F4F6F4] dark:hover:bg-[#0A140F] shrink-0"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        )}
+
         {/* Title & Section */}
-        <div>
-          <h2 className="text-base font-bold text-[#143D2B] dark:text-white leading-tight font-sans">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-sm sm:text-base font-bold text-[#143D2B] dark:text-white leading-tight font-sans truncate">
             {title}
           </h2>
           {subtitle && (
-            <p className="text-xs text-[#7C8B84] dark:text-[#A9BCB2] font-normal">{subtitle}</p>
+            <p className="hidden sm:block text-xs text-[#7C8B84] dark:text-[#A9BCB2] font-normal truncate">{subtitle}</p>
           )}
         </div>
 
         {/* System Status, Date & Action Center */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {/* ⌘K Command Palette Trigger */}
           <button
             onClick={openPalette}
@@ -110,10 +125,11 @@ export const StaffHeader = ({ title = 'Overview', subtitle = 'Rooms, arrivals, r
           {/* Primary Action Button: + New Reservation (Harborlight Style) */}
           <button
             onClick={() => navigate('/desk/walk-in')}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#143D2B] hover:bg-[#1C523B] text-white text-xs font-semibold shadow-sm transition-all active:scale-95"
+            title="New Reservation"
+            className="flex items-center gap-1.5 p-2 sm:px-3.5 sm:py-1.5 rounded-lg bg-[#143D2B] hover:bg-[#1C523B] text-white text-xs font-semibold shadow-sm transition-all active:scale-95"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>New Reservation</span>
+            <span className="hidden sm:inline">New Reservation</span>
           </button>
 
           {/* Universal Theme Toggle */}

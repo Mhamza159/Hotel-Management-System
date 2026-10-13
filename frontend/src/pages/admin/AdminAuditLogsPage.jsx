@@ -144,7 +144,7 @@ export const AdminAuditLogsPage = () => {
             />
           </div>
 
-          <div className="min-w-[180px]">
+          <div className="w-full sm:w-auto sm:min-w-[180px]">
             <TextField
               fullWidth
               size="small"

@@ -284,7 +284,7 @@ export const RecordPaymentDialog = ({ open, onClose, booking, onSuccess }) => {
 
           {/* Form Input Fields */}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
               <TextField
                 label="Payment Amount ($)"
                 type="number"

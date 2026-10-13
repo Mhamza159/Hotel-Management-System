@@ -248,12 +248,12 @@ export const DeskDashboardPage = () => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       {/* Top Operational Metrics Cockpit - Harborlight Style */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 2 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: { xs: 1, md: 2 } }}>
         {/* Metric 1: Arrivals */}
         <Paper
           elevation={0}
           sx={{
-            p: 2.5,
+            p: { xs: 1.25, sm: 2.5 },
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -269,18 +269,19 @@ export const DeskDashboardPage = () => {
           onClick={() => setActiveTab(0)}
         >
           <Box>
-            <Typography variant="caption" sx={{ color: '#7C8B84', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <Typography variant="caption" sx={{ color: '#7C8B84', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: { xs: '0.62rem', sm: '0.75rem' }, lineHeight: 1.3, display: 'block' }}>
               Arrivals Scheduled
             </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: '#143D2B', mt: 0.5 }} className="dark:text-[#3ECF8E]">
+            <Typography variant="h4" sx={{ fontSize: { xs: '1.6rem', sm: '2.125rem' }, fontWeight: 800, color: '#143D2B', mt: 0.5 }} className="dark:text-[#3ECF8E]">
               {metrics.arrivalsCount}
             </Typography>
-            <Typography variant="caption" sx={{ color: '#7C8B84' }}>
+            <Typography variant="caption" sx={{ color: '#7C8B84', display: { xs: 'none', sm: 'block' } }}>
               For {selectedDate}
             </Typography>
           </Box>
           <Box
             sx={{
+              display: { xs: 'none', sm: 'block' },
               p: 1.5,
               borderRadius: 2,
               backgroundColor: 'rgba(20, 61, 43, 0.08)',
@@ -296,7 +297,7 @@ export const DeskDashboardPage = () => {
         <Paper
           elevation={0}
           sx={{
-            p: 2.5,
+            p: { xs: 1.25, sm: 2.5 },
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -312,18 +313,19 @@ export const DeskDashboardPage = () => {
           onClick={() => setActiveTab(1)}
         >
           <Box>
-            <Typography variant="caption" sx={{ color: '#7C8B84', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <Typography variant="caption" sx={{ color: '#7C8B84', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: { xs: '0.62rem', sm: '0.75rem' }, lineHeight: 1.3, display: 'block' }}>
               Departures Due
             </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: '#C19A5B', mt: 0.5 }}>
+            <Typography variant="h4" sx={{ fontSize: { xs: '1.6rem', sm: '2.125rem' }, fontWeight: 800, color: '#C19A5B', mt: 0.5 }}>
               {metrics.departuresCount}
             </Typography>
-            <Typography variant="caption" sx={{ color: '#7C8B84' }}>
+            <Typography variant="caption" sx={{ color: '#7C8B84', display: { xs: 'none', sm: 'block' } }}>
               For {selectedDate}
             </Typography>
           </Box>
           <Box
             sx={{
+              display: { xs: 'none', sm: 'block' },
               p: 1.5,
               borderRadius: 2,
               backgroundColor: 'rgba(193, 154, 91, 0.12)',
@@ -338,7 +340,7 @@ export const DeskDashboardPage = () => {
         <Paper
           elevation={0}
           sx={{
-            p: 2.5,
+            p: { xs: 1.25, sm: 2.5 },
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -354,18 +356,19 @@ export const DeskDashboardPage = () => {
           onClick={() => setActiveTab(2)}
         >
           <Box>
-            <Typography variant="caption" sx={{ color: '#7C8B84', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <Typography variant="caption" sx={{ color: '#7C8B84', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: { xs: '0.62rem', sm: '0.75rem' }, lineHeight: 1.3, display: 'block' }}>
               Currently In-House
             </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: '#1B7A4E', mt: 0.5 }}>
+            <Typography variant="h4" sx={{ fontSize: { xs: '1.6rem', sm: '2.125rem' }, fontWeight: 800, color: '#1B7A4E', mt: 0.5 }}>
               {metrics.inHouseCount}
             </Typography>
-            <Typography variant="caption" sx={{ color: '#7C8B84' }}>
+            <Typography variant="caption" sx={{ color: '#7C8B84', display: { xs: 'none', sm: 'block' } }}>
               Active Occupied Rooms
             </Typography>
           </Box>
           <Box
             sx={{
+              display: { xs: 'none', sm: 'block' },
               p: 1.5,
               borderRadius: 2,
               backgroundColor: 'rgba(27, 122, 78, 0.1)',
@@ -435,7 +438,7 @@ export const DeskDashboardPage = () => {
           </Tabs>
 
           {/* Action Toolbar */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: { xs: 2, md: 0 } }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: { xs: 'wrap', lg: 'nowrap' }, gap: 1.5, pb: { xs: 2, md: 0 } }}>
             {activeTab !== 2 && (
               <TextField
                 type="date"
@@ -443,7 +446,7 @@ export const DeskDashboardPage = () => {
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 sx={{
-                  width: 160,
+                  width: { xs: 'calc(100% - 56px)', sm: 160 },
                   '& .MuiInputBase-input': { fontSize: '0.8rem', color: '#ECEFF3', py: 0.75 },
                 }}
               />
@@ -463,6 +466,7 @@ export const DeskDashboardPage = () => {
               }}
               sx={{
                 width: { xs: '100%', sm: 240 },
+                order: { xs: 3, sm: 0 },
                 '& .MuiInputBase-input': { fontSize: '0.8rem', color: '#ECEFF3', py: 0.75 },
               }}
             />

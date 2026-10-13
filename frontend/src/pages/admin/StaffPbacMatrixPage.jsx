@@ -365,8 +365,8 @@ export const StaffPbacMatrixPage = () => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pb: hasUnsavedChanges ? 12 : 3 }}>
       {/* Top Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
           <Button
             size="small"
             variant="outlined"
@@ -474,7 +474,7 @@ export const StaffPbacMatrixPage = () => {
                     >
                       {member.name ? member.name.charAt(0).toUpperCase() : 'S'}
                     </Box>
-                    <Box sx={{ minWidth: 0 }}>
+                    <Box sx={{ minWidth: { xs: 0, sm: 0 }, flex: { xs: '1 1 140px', sm: '0 0 auto' } }}>
                       <Typography variant="body2" sx={{ fontWeight: isSelected ? 700 : 500, color: 'var(--text)' }} noWrap>
                         {member.name}
                       </Typography>
@@ -531,7 +531,7 @@ export const StaffPbacMatrixPage = () => {
               </Box>
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <FormControl size="small" sx={{ minWidth: 160 }}>
+                <FormControl size="small" sx={{ minWidth: { xs: 0, sm: 160 }, flex: { xs: '1 1 140px', sm: '0 0 auto' } }}>
                   <InputLabel id="role-change-label">Role</InputLabel>
                   <Select
                     labelId="role-change-label"

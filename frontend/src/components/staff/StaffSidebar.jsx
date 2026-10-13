@@ -13,6 +13,7 @@ import {
   Clock,
   LogOut,
   Star,
+  X,
 } from 'lucide-react';
 import { Can } from '../common/Can';
 import { useAuthStore } from '../../stores/useAuthStore';
@@ -131,8 +132,11 @@ const NAVIGATION_SECTIONS = [
 /**
  * Dense Flight-Ops Staff Navigation Sidebar
  * Enforces dynamic PBAC: unpermitted links and empty category headers are completely absent from DOM.
+ *
+ * Phone/tablet (< lg): sidebar screen se bahar rehta hai aur header ke menu button se
+ * slide ho kar aata hai (`mobileOpen`); link dabane ya bahar tap karne par band.
  */
-export const StaffSidebar = () => {
+export const StaffSidebar = ({ mobileOpen = false, onClose = () => {} }) => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
@@ -169,7 +173,16 @@ export const StaffSidebar = () => {
   }).filter((section) => section.items.length > 0);
 
   return (
-    <aside className="w-64 bg-[#143D2B] border-r border-[#1B4A35] flex flex-col h-screen sticky top-0 select-none z-30 transition-colors duration-200">
+    <>
+    {/* Phone: menu khula ho to peeche ka parda (tap = band) */}
+    {mobileOpen && (
+      <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={onClose} aria-hidden="true" />
+    )}
+    <aside
+      className={`w-72 max-w-[85vw] lg:w-64 bg-[#143D2B] border-r border-[#1B4A35] flex flex-col h-full lg:h-screen select-none transition-transform duration-200 fixed inset-y-0 left-0 z-50 lg:sticky lg:top-0 lg:z-30 lg:translate-x-0 ${
+        mobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
+      }`}
+    >
       {/* Brand & Console Header - Harborlight Style */}
       <div className="p-4 border-b border-[#1B4A35] flex items-center justify-between">
         <div className="flex items-center gap-2.5">
@@ -185,6 +198,13 @@ export const StaffSidebar = () => {
             </span>
           </div>
         </div>
+        <button
+          onClick={onClose}
+          title="Close menu"
+          className="lg:hidden p-2 -mr-1 rounded-lg text-[#94B5A5] hover:text-white hover:bg-white/10"
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Navigation Sections */}
@@ -203,6 +223,7 @@ export const StaffSidebar = () => {
                     to={item.to}
                     end={item.end}
                     className={navItemClass}
+                    onClick={onClose}
                   >
                     <Icon className="w-4 h-4 shrink-0" />
                     <span>{item.label}</span>
@@ -238,6 +259,7 @@ export const StaffSidebar = () => {
         </div>
       </div>
     </aside>
+    </>
   );
 };
 

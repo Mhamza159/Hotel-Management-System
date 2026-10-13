@@ -165,7 +165,7 @@ export const CancellationReviewDialog = ({ open, onClose, bookingId, onSuccess }
                 Audit Timeline & Notice Period
               </Typography>
 
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, mt: 1.5 }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: { xs: 1, sm: 2 }, mt: 1.5 }}>
                 <Box>
                   <Typography variant="caption" sx={{ color: '#8791A3', display: 'block' }}>
                     Check-in Date
@@ -233,7 +233,7 @@ export const CancellationReviewDialog = ({ open, onClose, bookingId, onSuccess }
                 />
               </Box>
 
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, my: 1.5 }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: { xs: 1, sm: 2 }, my: 1.5 }}>
                 <Box>
                   <Typography variant="caption" sx={{ color: '#8791A3', display: 'block' }}>
                     Total Booking Cost

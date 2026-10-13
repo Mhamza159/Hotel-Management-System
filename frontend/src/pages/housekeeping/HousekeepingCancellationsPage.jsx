@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { deskService } from '../../services/desk.service';
 import { WarmCancellationReviewDialog } from '../../components/housekeeping/WarmCancellationReviewDialog';
+import { bookingGuestName, bookingRoomNumbers } from '../../config/bookingDisplay';
 
 /**
  * ============================================================================
@@ -94,8 +95,8 @@ export const HousekeepingCancellationsPage = () => {
       ) : (
         <div className="space-y-3">
           {requests.map((req) => {
-            const guestName = req.user?.name || req.guestName || 'Guest';
-            const roomNum = req.room?.roomNumber || 'TBD';
+            const guestName = bookingGuestName(req) || 'Guest';
+            const roomNum = bookingRoomNumbers(req) || '—';
             const total = req.totalPrice ?? req.totalAmount ?? 0;
 
             return (

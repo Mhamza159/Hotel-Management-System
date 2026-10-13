@@ -14,6 +14,7 @@ import { useAuthStore } from '../../stores/useAuthStore';
 import { PERMISSIONS } from '../../config/constants';
 import { can } from '../../components/common/Can';
 import { WarmRecordPaymentDialog } from '../../components/housekeeping/WarmRecordPaymentDialog';
+import { bookingGuestName, bookingRoomNumbers, bookingRoomType } from '../../config/bookingDisplay';
 
 /**
  * ============================================================================
@@ -147,8 +148,8 @@ export const HousekeepingBookingsPage = () => {
       ) : (
         <div className="space-y-3">
           {bookings.map((b) => {
-            const guestName = b.user?.name || b.guestName || 'Valued Guest';
-            const roomNum = b.room?.roomNumber || 'TBD';
+            const guestName = bookingGuestName(b) || 'Walk-in Guest';
+            const roomNum = bookingRoomNumbers(b) || '—';
             const total = b.totalPrice ?? b.totalAmount ?? 0;
             const paid = b.paidAmount || 0;
             const balance = Math.max(0, total - paid);
@@ -206,7 +207,7 @@ export const HousekeepingBookingsPage = () => {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#2A2A28]/70 mt-1">
-                      <span>Type: <strong className="font-medium text-[#2A2A28] capitalize">{b.room?.type || 'Suite'}</strong></span>
+                      <span>Type: <strong className="font-medium text-[#2A2A28] capitalize">{bookingRoomType(b) || '—'}</strong></span>
                       <span>•</span>
                       <span>
                         Stay: {new Date(b.checkInDate).toLocaleDateString()} &rarr;{' '}

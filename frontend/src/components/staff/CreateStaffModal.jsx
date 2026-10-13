@@ -97,7 +97,7 @@ export const CreateStaffModal = ({ open, onClose, onSuccess }) => {
               disabled={loading}
             />
 
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
               <TextField
                 name="email"
                 type="email"
@@ -123,7 +123,7 @@ export const CreateStaffModal = ({ open, onClose, onSuccess }) => {
               />
             </Box>
 
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
               <TextField
                 name="password"
                 type="password"

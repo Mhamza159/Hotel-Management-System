@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { HousekeepingSidebar } from './HousekeepingSidebar';
+import { HousekeepingSidebar, HousekeepingMobileNav } from './HousekeepingSidebar';
 import { authService } from '../services/auth.service';
 
 /**
@@ -33,9 +33,12 @@ export const HousekeepingLayout = ({ children }) => {
       <HousekeepingSidebar />
 
       {/* Main Workspace */}
-      <main className="flex-1 overflow-y-auto min-w-0 bg-[#F3EFE7]">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 bg-[#F3EFE7] pb-24 md:pb-0">
         {children}
       </main>
+
+      {/* Phone: neeche tab bar */}
+      <HousekeepingMobileNav />
     </div>
   );
 };

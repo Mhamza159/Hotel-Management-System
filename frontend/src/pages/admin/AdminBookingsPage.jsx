@@ -191,7 +191,7 @@ export const AdminBookingsPage = () => {
             setPage(0);
           }}
           SelectProps={{ displayEmpty: true }}
-          sx={{ minWidth: 160 }}
+          sx={{ minWidth: { xs: 0, sm: 160 }, flex: { xs: '1 1 140px', sm: '0 0 auto' } }}
         >
           <MenuItem value="">All Statuses</MenuItem>
           {Object.values(BOOKING_STATUS).map((st) => (
@@ -210,7 +210,7 @@ export const AdminBookingsPage = () => {
             setPage(0);
           }}
           SelectProps={{ displayEmpty: true }}
-          sx={{ minWidth: 160 }}
+          sx={{ minWidth: { xs: 0, sm: 160 }, flex: { xs: '1 1 140px', sm: '0 0 auto' } }}
         >
           <MenuItem value="">All Payments</MenuItem>
           {Object.values(PAYMENT_STATUS).map((pst) => (
@@ -230,7 +230,7 @@ export const AdminBookingsPage = () => {
             setPage(0);
           }}
           InputLabelProps={{ shrink: true }}
-          sx={{ minWidth: 145 }}
+          sx={{ minWidth: { xs: 0, sm: 145 }, flex: { xs: '1 1 140px', sm: '0 0 auto' } }}
         />
 
         <TextField
@@ -243,7 +243,7 @@ export const AdminBookingsPage = () => {
             setPage(0);
           }}
           InputLabelProps={{ shrink: true }}
-          sx={{ minWidth: 145 }}
+          sx={{ minWidth: { xs: 0, sm: 145 }, flex: { xs: '1 1 140px', sm: '0 0 auto' } }}
         />
 
         <Button

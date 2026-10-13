@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StaffSidebar } from '../components/staff/StaffSidebar';
 import { StaffHeader } from '../components/staff/StaffHeader';
 import { authService } from '../services/auth.service';
@@ -21,6 +21,9 @@ import { authService } from '../services/auth.service';
  * Provides fixed operational sidebar, top action header, and responsive work area.
  */
 export const StaffLayout = ({ title = 'Operations Console', subtitle, children }) => {
+  // Phone/tablet par sidebar menu (header ka ☰ button)
+  const [menuOpen, setMenuOpen] = useState(false);
+
   useEffect(() => {
     // Silently synchronize staff permissions with authoritative backend DB state
     authService.getMe().catch(() => {});
@@ -29,13 +32,13 @@ export const StaffLayout = ({ title = 'Operations Console', subtitle, children }
   return (
     <div className="flex h-screen bg-[#F4F6F4] dark:bg-[#0A140F] text-[#1A2421] dark:text-[#E8EFEA] overflow-hidden transition-colors duration-200">
       {/* Fixed Operations Sidebar */}
-      <StaffSidebar />
+      <StaffSidebar mobileOpen={menuOpen} onClose={() => setMenuOpen(false)} />
 
       {/* Main Work Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <StaffHeader title={title} subtitle={subtitle} />
+        <StaffHeader title={title} subtitle={subtitle} onMenuClick={() => setMenuOpen(true)} />
 
-        <main className="flex-1 overflow-y-auto p-6 bg-[#F4F6F4] dark:bg-[#0A140F] transition-colors duration-200">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-6 bg-[#F4F6F4] dark:bg-[#0A140F] transition-colors duration-200">
           {children}
         </main>
       </div>

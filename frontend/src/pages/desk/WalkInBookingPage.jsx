@@ -37,7 +37,7 @@ export const WalkInBookingPage = () => {
   return (
     <Box sx={{ width: '100%', maxWidth: 1200, mx: 'auto', p: { xs: 2, md: 3 } }}>
       {/* Top Breadcrumb & Navigation Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1, mb: { xs: 2, sm: 3 } }}>
         <Button
           startIcon={<ArrowLeft className="w-4 h-4" />}
           onClick={() => navigate('/desk')}
@@ -74,7 +74,7 @@ export const WalkInBookingPage = () => {
       {/* Main Feature Banner Card */}
       <Paper
         sx={{
-          p: 4,
+          p: { xs: 2, sm: 4 },
           backgroundColor: 'var(--surface)',
           border: '1px solid var(--border)',
           borderRadius: 3,

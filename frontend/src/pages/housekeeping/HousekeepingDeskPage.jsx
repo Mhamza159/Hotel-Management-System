@@ -16,6 +16,7 @@ import { useAuthStore } from '../../stores/useAuthStore';
 import { PERMISSIONS } from '../../config/constants';
 import { can } from '../../components/common/Can';
 import { WarmRecordPaymentDialog } from '../../components/housekeeping/WarmRecordPaymentDialog';
+import { bookingGuestName, bookingGuestEmail, bookingRoomNumbers, bookingRoomType } from '../../config/bookingDisplay';
 
 /**
  * ============================================================================
@@ -91,9 +92,9 @@ export const HousekeepingDeskPage = () => {
   const filteredBookings = bookings.filter((b) => {
     if (!search) return true;
     const query = search.toLowerCase();
-    const guestName = (b.user?.name || b.guestName || '').toLowerCase();
+    const guestName = bookingGuestName(b).toLowerCase();
     const ref = (b.bookingReference || b._id || '').toLowerCase();
-    const room = (b.room?.roomNumber || '').toString();
+    const room = bookingRoomNumbers(b);
     return guestName.includes(query) || ref.includes(query) || room.includes(query);
   });
 
@@ -182,10 +183,10 @@ export const HousekeepingDeskPage = () => {
       ) : (
         <div className="space-y-3">
           {filteredBookings.map((b) => {
-            const guestName = b.user?.name || b.guestName || 'Unnamed Guest';
-            const guestEmail = b.user?.email || b.guestEmail || '';
-            const roomNum = b.room?.roomNumber || 'Unassigned';
-            const roomType = b.room?.type || 'Standard';
+            const guestName = bookingGuestName(b) || 'Walk-in Guest';
+            const guestEmail = bookingGuestEmail(b);
+            const roomNum = bookingRoomNumbers(b) || '—';
+            const roomType = bookingRoomType(b) || 'Standard';
             const total = b.totalPrice ?? b.totalAmount ?? 0;
             const paid = b.paidAmount || 0;
             const balance = Math.max(0, total - paid);
@@ -204,9 +205,9 @@ export const HousekeepingDeskPage = () => {
               >
                 {/* Guest & Room Details */}
                 <div className="flex items-start space-x-4">
-                  <div className="w-11 h-11 rounded-2xl bg-[#F3EFE7] border border-[#E4DFD0] text-[#2B3A2A] flex flex-col items-center justify-center shrink-0">
+                  <div className="min-w-11 max-w-24 h-11 px-1.5 rounded-2xl bg-[#F3EFE7] border border-[#E4DFD0] text-[#2B3A2A] flex flex-col items-center justify-center shrink-0">
                     <span className="text-[9px] font-mono text-[#2A2A28]/60">ROOM</span>
-                    <span className="font-serif font-bold text-sm text-[#2B3A2A]">{roomNum}</span>
+                    <span className="font-serif font-bold text-sm text-[#2B3A2A] truncate max-w-full">{roomNum}</span>
                   </div>
 
                   <div>

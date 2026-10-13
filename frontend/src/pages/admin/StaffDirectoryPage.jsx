@@ -88,7 +88,7 @@ export const StaffDirectoryPage = () => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       {/* Top Header & Actions Strip */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2 }}>
         <div>
           <Typography variant="h5" sx={{ fontWeight: 700, color: '#ECEFF3' }}>
             Staff & Access Management
@@ -169,7 +169,7 @@ export const StaffDirectoryPage = () => {
               sx={{ '& .MuiInputBase-input': { fontSize: '0.8rem', color: '#ECEFF3', py: 0.75 } }}
             />
 
-            <FormControl size="small" sx={{ minWidth: 160 }}>
+            <FormControl size="small" sx={{ minWidth: { xs: 0, sm: 160 }, flex: { xs: '1 1 140px', sm: '0 0 auto' } }}>
               <Select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}

@@ -211,7 +211,7 @@ export const AdminRoomsPage = () => {
             setPage(0);
           }}
           displayEmpty
-          sx={{ minWidth: 160 }}
+          sx={{ minWidth: { xs: 0, sm: 160 }, flex: { xs: '1 1 140px', sm: '0 0 auto' } }}
         >
           <MenuItem value="">All Suite Types</MenuItem>
           {Object.values(ROOM_TYPES).map((t) => (
@@ -230,7 +230,7 @@ export const AdminRoomsPage = () => {
             setPage(0);
           }}
           displayEmpty
-          sx={{ minWidth: 170 }}
+          sx={{ minWidth: { xs: 0, sm: 170 }, flex: { xs: '1 1 140px', sm: '0 0 auto' } }}
         >
           <MenuItem value="">All Cleanliness Statuses</MenuItem>
           {Object.values(HOUSEKEEPING_STATUS).map((hk) => (
