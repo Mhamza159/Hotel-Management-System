@@ -1,0 +1,19 @@
+{
+  "name": "grand-horizon-staff-mobile",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Grand Horizon staff Android app (Capacitor). Connects to the hotel Hub backend over the hotel WiFi.",
+  "author": "M Hamza Hakim",
+  "scripts": {
+    "build:web": "npm --prefix ../frontend run build -- --outDir ../mobile/web --emptyOutDir",
+    "sync": "npm run build:web && cap sync android",
+    "apk": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-apk.ps1"
+  },
+  "dependencies": {
+    "@capacitor/android": "7.6.9",
+    "@capacitor/core": "7.6.9"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "7.6.9"
+  }
+}

@@ -8,7 +8,7 @@ import AuthSplitLayout from '../../layouts/AuthSplitLayout';
 import { authService } from '../../services/auth.service';
 import { KeycardLoader } from '../../components/common/KeycardLoader';
 import { ROLES } from '../../config/constants';
-import { isDesktop } from '../../config/runtime';
+import { desktopRuntime, isDesktop, isMobileApp } from '../../config/runtime';
 import {
   getStaffHomePath,
   STAFF_ONLY_MESSAGE,
@@ -203,6 +203,16 @@ export const LoginPage = () => {
             <span>Sign In</span>
           )}
         </button>
+
+        {/* Android staff app: kis Hub se jura hai, aur badalne ka rasta */}
+        {isMobileApp && (
+          <div className="text-center pt-3">
+            <span className="text-xs text-[#2A2A28]/70">Hub: {desktopRuntime.hubUrl}</span>
+            <Link to="/hub-setup" className="text-xs font-semibold text-[#2B3A2A] hover:underline ml-2">
+              Change
+            </Link>
+          </div>
+        )}
 
         {/* Register Link (web only; staff accounts are created by an admin) */}
         {!isDesktop && (

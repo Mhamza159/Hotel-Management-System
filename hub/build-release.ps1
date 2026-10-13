@@ -70,6 +70,15 @@ foreach ($file in @('install-hub.ps1', 'setup-this-laptop.ps1', 'uninstall-hub.p
 }
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'lib\HubCommon.ps1') -Destination (Join-Path $target 'hub\lib') -Force
 Copy-Item -LiteralPath $setupExe -Destination (Join-Path $target 'staff-app') -Force
+# Android staff app (mobile\: npm run apk) bani ho to woh bhi saath
+$mobileVersion = (Get-Content -LiteralPath (Join-Path $repo 'mobile\package.json') -Raw | ConvertFrom-Json).version
+$apk = Join-Path $repo "mobile\dist\GrandHorizonStaff-$mobileVersion.apk"
+if (Test-Path -LiteralPath $apk) {
+    Copy-Item -LiteralPath $apk -Destination (Join-Path $target 'staff-app') -Force
+}
+else {
+    Write-HubWarning "Android app not included (build it with: cd mobile; npm run apk)"
+}
 # Poori setup + istemal guide (browser me khulti hai, offline bhi, print ho sakti hai)
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'SETUP-GUIDE.html') -Destination $target -Force
 # Saari zaroori commands ek file me

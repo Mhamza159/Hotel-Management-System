@@ -1,0 +1,12 @@
+{
+  "appId": "com.grandhorizon.staff",
+  "appName": "Grand Horizon Staff",
+  "webDir": "web",
+  "server": {
+    "androidScheme": "http",
+    "hostname": "localhost"
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}

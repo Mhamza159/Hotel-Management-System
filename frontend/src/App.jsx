@@ -48,7 +48,8 @@ import { ConciergePage } from './pages/public/ConciergePage';
 import { ChatDrawer } from './components/common/ChatDrawer';
 import { CommandPalette } from './components/common/CommandPalette';
 import { DesktopHomeRedirect } from './components/common/DesktopHomeRedirect';
-import { isDesktop } from './config/runtime';
+import { HubSetupPage } from './pages/public/HubSetupPage';
+import { isDesktop, isMobileApp, needsHubSetup } from './config/runtime';
 
 // Staff desktop app me guest-facing pages band hain; unhe staff home par bhej dein
 const webOnly = (element) => (isDesktop ? <Navigate to="/" replace /> : element);
@@ -74,6 +75,9 @@ const webOnly = (element) => (isDesktop ? <Navigate to="/" replace /> : element)
 export function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
+  // Android staff app: Hub ka address set hone tak sirf setup screen
+  if (needsHubSetup) return <HubSetupPage />;
+
   return (
     <>
       <Routes>
@@ -85,6 +89,7 @@ export function App() {
 
         {/* Auth Routes */}
         <Route path="/login" element={<LoginPage />} />
+        {isMobileApp && <Route path="/hub-setup" element={<HubSetupPage />} />}
         <Route path="/register" element={webOnly(<RegisterPage />)} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />

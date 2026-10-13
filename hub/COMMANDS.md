@@ -149,6 +149,36 @@ Staff laptop par sirf app install hoti hai. Data Hub par rehta hai, is liye yaha
 
 ---
 
+## 4b. Android phone par staff app
+
+Phone app bhi desktop app ki tarah sirf Hub se baat karti hai. **Shart:** phone hotel ke **usi WiFi** par ho jis router se Hub jura hai.
+
+1. **APK phone par bhejein.** File setup package ke `staff-app\GrandHorizonStaff-<version>.apk` mein hai (developer laptop par `mobile\dist\`). USB cable, WhatsApp (khud ko) ya Google Drive se phone par bhej dein.
+2. **Install karein.** Phone par APK kholein. Android poochhega "Install unknown apps", to us app (Files / WhatsApp / Chrome) ko **Allow** karein, phir **Install** dabayein. Play Protect "unknown developer" kahe to **More details → Install anyway** dabayein.
+3. **Hub address daalein.** **Grand Horizon Staff** app kholein. Pehli dafa Hub address maangegi, jaise `http://192.168.18.140:5100`. **Test** dabayein, "Connected" aaye to **Save**.
+4. **Login.** Apne staff email aur password se login karein.
+
+**Hub address baad mein badalna ho** to logout karein. Login screen par neeche "Hub: … **Change**" dabayein.
+
+**"Hub nahi mila" aaye to:**
+- Phone hotel WiFi par hai? Mobile data par Hub nahi milta.
+- Phone ke Chrome mein `http://192.168.18.140:5100/health` kholein. `{"status":"ok"...}` aana chahiye.
+- Hub ka backend phone app wale version par update hai? Purana Hub phone app ko mana kar deta hai (section 3, "Hub ka code update").
+
+**Developer: APK banana**
+
+```
+cd mobile
+npm run apk
+```
+
+APK `mobile\dist\GrandHorizonStaff-<version>.apk` mein banti hai.
+- Pehli build Gradle aur libraries download karti hai, is liye internet chahiye aur 10–20 minute lagte hain.
+- Pehli build `mobile\signing\` mein signing key banati hai. **Is folder ka backup zaroor rakhein.** Agli har APK isi key se sign honi chahiye, warna phone purani app ke upar naya version install nahi karega.
+- Naya version banane se pehle `mobile\package.json` mein `version` badhayein, jaise `0.2.0` → `0.2.1`.
+
+---
+
 ## 5. Hub ko kisi aur laptop/PC par shift karna
 
 Is ka matlab hai asal data purane Hub se naye Hub par le jana.
@@ -282,6 +312,7 @@ powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scrip
 | Frontend chalana (port 5173) | `cd frontend; npm run dev` |
 | Backend tests (~2.5 min) | `cd backend; npm test` |
 | Staff app ka installer banana | `cd desktop; npm run dist` (installer `desktop\dist\` mein banta hai) |
+| Android staff app (APK) banana | `cd mobile; npm run apk` (APK `mobile\dist\` mein banti hai) |
 | Hotel setup package banana (USB ke liye, `release\` mein) | `powershell -ExecutionPolicy Bypass -File .\hub\build-release.ps1` |
 | Production database par sync backfill (sirf zaroorat par, ek dafa) | `cd backend; node src/hub/cli.js sync-backfill` |
 

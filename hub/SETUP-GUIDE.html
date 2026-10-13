@@ -85,7 +85,7 @@
     <li><a href="#hub-dekh-bhal">Hub ki dekh-bhal (status, backup, restore, update)</a></li>
     <li><a href="#sync">Cloud sync — website aur Hub ka rabta</a></li>
     <li><a href="#flow">Data ka flow (online booking se staff tak)</a></li>
-    <li><a href="#naya-staff">Naya staff laptop jorna / hatana</a></li>
+    <li><a href="#naya-staff">Naya staff laptop jorna / hatana, aur Android phone app</a></li>
     <li><a href="#hub-shift">Hub ko doosre PC par shift karna</a></li>
     <li><a href="#commands">Saari commands ek jagah</a></li>
   </ol>
@@ -403,6 +403,17 @@
   </ul>
   <h3>Staff laptop hatana</h3>
   <p>Windows Settings → Apps → <strong>Grand Horizon Staff</strong> → Uninstall. Data Hub par mehfooz rehta hai. Us staff ka account <em>Staff &amp; Roles</em> se band/delete kar dein.</p>
+
+  <h3>Android phone par staff app</h3>
+  <p>Phone app bhi sirf Hub se baat karti hai. Shart: phone hotel ke <strong>usi WiFi</strong> par ho (mobile data par Hub nahi milta).</p>
+  <ol>
+    <li><span class="step">1</span>Setup folder ka <code>staff-app\GrandHorizonStaff-&lt;version&gt;.apk</code> phone par bhejein (USB cable, WhatsApp khud ko, ya Google Drive).</li>
+    <li><span class="step">2</span>Phone par APK kholein → "Install unknown apps" ke liye us app (Files / WhatsApp / Chrome) ko <strong>Allow</strong> → <strong>Install</strong>. Play Protect warning aaye to <strong>More details → Install anyway</strong>.</li>
+    <li><span class="step">3</span><strong>Grand Horizon Staff</strong> kholein → Hub address (jaise <code>http://192.168.18.140:5100</code>) → <strong>Test</strong> → <strong>Save</strong>.</li>
+    <li><span class="step">4</span>Staff email/password se login.</li>
+  </ol>
+  <p>Hub address badalna ho: logout → login screen par "Hub: … <strong>Change</strong>".</p>
+  <p>"Hub nahi mila": phone WiFi par hai? Phone ke Chrome me <code>http://192.168.18.140:5100/health</code> khulta hai? Hub ka backend phone app wale version par update hai (hissa 8 → "Naya version")?</p>
 
   <h2 id="hub-shift">12. Hub ko doosre PC par shift karna</h2>
   <div class="danger"><strong>Sab se zaroori qaida:</strong> purana aur naya Hub <strong>kabhi ek saath</strong> cloud se jure na hon. Neeche ki tarteeb bilkul isi tarah follow karein.</div>

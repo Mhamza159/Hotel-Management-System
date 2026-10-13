@@ -1,0 +1,5 @@
+node_modules/
+web/
+dist/
+# Release signing key + passwords: keep a backup OUTSIDE git (needed for every update)
+signing/

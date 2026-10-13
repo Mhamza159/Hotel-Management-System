@@ -10,6 +10,7 @@ Single-hotel reservation + operations app. Three independent npm packages, no wo
 - `frontend/` — React 18 + Vite SPA (ESM), MUI 5 + Tailwind + Zustand + axios. Entry `src/main.jsx` → `src/App.jsx` (all routes).
 - `desktop/` — Electron staff-only client (see `desktop/README.md`). Loads the built frontend from `desktop/web` on origin `app://hotel` and points the API at the hotel Hub (LAN backend). Frontend detects it via `window.hotelDesktop` (`frontend/src/config/runtime.js`).
 
+- `mobile/` — Android staff app (Capacitor 7, see `mobile/README.md`). Same frontend built into `mobile/web`, WebView origin `http://localhost` (in the backend CORS list); `runtime.js` detects `window.Capacitor`, the Hub URL is entered on `HubSetupPage` and kept in localStorage. `npm run apk` (`scripts/build-apk.ps1`, JDK 21 + SDK 35) → `dist/GrandHorizonStaff-<version>.apk`; release key in git-ignored `mobile/signing/` (must be backed up).
 - `hub/` — PowerShell installer for the hotel Hub PC (see `hub/README.md`): pinned + SHA-256-verified Node/MongoDB/WinSW, MongoDB replica set `rs0` and backend as Windows services, firewall, daily backups. Node helpers in `backend/src/hub/` (`cli.js`).
 
 Roadmap: staff desktop app + hotel Hub PC + cloud sync (Steps 2–4 done on `feature/desktop-app`: desktop client, Hub installer, sync engine; Step 5 multi-PC/offline field testing pending). **Pushing `main` auto-deploys both Vercel projects to production — work on feature branches and never push/merge without the user's approval.**

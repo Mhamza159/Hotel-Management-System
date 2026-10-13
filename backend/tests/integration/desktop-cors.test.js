@@ -29,6 +29,13 @@ describe('CORS for the staff desktop app', () => {
     expect(res.headers['access-control-allow-credentials']).toBe('true');
   });
 
+  it('allows the Android staff app origin http://localhost in production', async () => {
+    const res = await request(app).get('/health').set('Origin', 'http://localhost');
+
+    expect(res.status).toBe(200);
+    expect(res.headers['access-control-allow-origin']).toBe('http://localhost');
+  });
+
   it('answers the desktop preflight for authenticated API calls', async () => {
     const res = await request(app)
       .options('/api/v1/auth/me')
