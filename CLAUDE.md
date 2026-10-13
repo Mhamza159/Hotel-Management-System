@@ -22,7 +22,7 @@ Personas: guest (`user`), `receptionist`, `housekeeping`, `super-admin`.
 # backend (needs backend/.env with MONGO_URI, JWT_SECRET, JWT_REFRESH_SECRET ≥16 chars)
 cd backend && npm install
 npm run dev        # nodemon src/server.js on :5000, Swagger at /api-docs
-npm test           # jest --runInBand, in-memory MongoDB (~2 min). All 242 tests pass
+npm test           # jest --runInBand, in-memory MongoDB (~2 min). All 244 tests pass
 npx jest tests/integration/desk.test.js   # single file
 npm run seed       # destructive for seed users/rooms/coupons
 

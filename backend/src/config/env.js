@@ -12,6 +12,13 @@ dotenv.config({
   quiet: true, // dotenv 17+ ka "injected env" tip logs aur HUB_RESULT output me shor na kare
 });
 
+// Hosting dashboards me value ke saath Enter / space / bada harf aa jata hai ("production" + newline,
+// "Production") — pehle is se server start hote hi crash hota tha. Saaf kar ke poori app
+// (process.env padhne wale hisse bhi) ek hi value dekhe.
+if (typeof process.env.NODE_ENV === 'string') {
+  process.env.NODE_ENV = process.env.NODE_ENV.trim().toLowerCase();
+}
+
 const envSchema = joi
   .object({
     PORT: joi.number().default(5000),
