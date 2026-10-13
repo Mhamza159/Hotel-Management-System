@@ -1,5 +1,6 @@
 const ApiError = require('../utils/apiError');
 const config = require('../config/env');
+const { isTest, isLocalDevelopment } = require('../utils/runtime');
 
 /**
  * ============================================================================
@@ -103,7 +104,8 @@ const createRateLimiter = (options = {}) => {
 
   return async (req, res, next) => {
     // Bypass in test or development environment if configured
-    if (skipInTest && (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development')) {
+    // Sirf tests aur developer ki machine par band — Vercel par NODE_ENV=development ho tab bhi chalta hai
+    if (skipInTest && (isTest() || isLocalDevelopment())) {
       return next();
     }
 

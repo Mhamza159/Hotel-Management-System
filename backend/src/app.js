@@ -20,6 +20,7 @@ const mediaRoutes = require("./routes/media.routes");
 const { authLimiter, generalLimiter } = require("./middlewares/rateLimiter.middleware");
 const { notFoundHandler, errorHandler } = require("./middlewares/error.middleware");
 const { setupSwagger } = require("./config/swagger");
+const { isTest, isLocalDevelopment } = require("./utils/runtime");
 
 const app = express();
 
@@ -55,7 +56,9 @@ app.use(
       if (
         !origin ||
         allowedOrigins.includes(origin) ||
-        process.env.NODE_ENV !== "production" ||
+        // Sab origins sirf tests / developer ki machine par (Vercel par kabhi nahi)
+        isTest() ||
+        isLocalDevelopment() ||
         (allowVercelPreviews && origin.endsWith(".vercel.app"))
       ) {
         return callback(null, true);

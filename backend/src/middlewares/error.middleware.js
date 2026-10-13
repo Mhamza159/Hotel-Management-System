@@ -1,6 +1,6 @@
 const ApiError = require("../utils/apiError");
 const logger = require("../utils/logger");
-const config = require("../config/env");
+const { isLocalDevelopment } = require("../utils/runtime");
 
 /**
  * Catches 404 routes and forwards to error handler.
@@ -62,7 +62,8 @@ const errorHandler = (err, req, res, next) => {
     statusCode: error.statusCode,
     message: error.message,
     errors: error.errors || [],
-    ...(config.env === "development" && { stack: error.stack }),
+    // Stack sirf developer ki machine par (live par andar ke file paths bahar jate the)
+    ...(isLocalDevelopment() && { stack: error.stack }),
   };
 
   res.status(error.statusCode).json(responsePayload);
