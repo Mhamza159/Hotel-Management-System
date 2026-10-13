@@ -81,19 +81,164 @@ Asal hotel Hub PC par `27100` ki jagah `27017` likhein. `hub-YYYYMMDD-HHMMSS` ki
 
 ---
 
-## 4. Staff app (har staff PC)
+## 4. Naye laptop par staff app lagana
 
-- **Install:** setup package ke `staff-app\GrandHorizonStaff-Setup-<version>.exe` par double-click karein. "Unknown publisher" aaye to **More info → Run anyway** dabayein.
-- **Pehli dafa:** Hub ka address daalein, jaise `http://192.168.18.140:5100`, phir **Test** → **Save**.
-- **Hub ka address badalna ho** to app mein upar **File → Hub Connection…** kholein.
-- **Staff PC Hub tak na pohnche to:**
-  - check karein ke dono ek hi WiFi/router par hain
-  - Hub par `hub-status.ps1` chalayein
-  - Hub ka network Private hona chahiye (section 1)
+Staff laptop par sirf app install hoti hai. Data Hub par rehta hai, is liye yahan database ya koi aur setup nahi chahiye.
+
+**Zaroori shart:** staff laptop aur Hub **ek hi WiFi/router** par hon.
+
+1. **Installer le jayein.** Setup package ke folder mein `staff-app\GrandHorizonStaff-Setup-<version>.exe` hai. Isay USB mein copy kar ke naye laptop par le jayein. Developer laptop par yahi file `desktop\dist\` mein bhi milti hai.
+2. **Install karein.** File par double-click karein. "Windows protected your PC" ya "Unknown publisher" aaye to **More info → Run anyway** dabayein.
+3. **Hub ka address daalein.** App pehli dafa khulegi to Hub ka address maangegi:
+   - Is laptop wala Hub: `http://192.168.18.140:5100`
+   - Hotel ki asal Hub PC: jo address install ke aakhir mein print hua tha, jaise `http://192.168.1.10:5000`
+
+   **Test** dabayein. "Connected" aaye to **Save** dabayein.
+4. **Staff ka account banayein.** Super-admin staff app mein **Staff & Roles** mein ja kar naye staff ka account banaye (receptionist ya housekeeping). Phir **PBAC Matrix** mein us ki permissions check kar ke **Save** kare.
+5. **Login.** Staff apne email aur password se login kare.
+
+**Hub ka address baad mein badalna ho** to app mein upar **File → Hub Connection…** kholein, naya address daalein, phir **Test → Save**.
+
+**Agar Test fail ho:**
+- Dono laptop ek hi WiFi/router par hain?
+- Hub laptop on hai, aur so to nahi raha?
+- Hub par admin PowerShell mein `hub-status.ps1` chalayein. Network **Private** hona chahiye. Agar Public ho to yeh chalayein:
+  ```
+  Get-NetConnectionProfile | Set-NetConnectionProfile -NetworkCategory Private
+  ```
+- Address mein `http://` aur sahi port (`:5100` ya `:5000`) likha hai?
+- Hub par services chal rahi hain? `Get-Service GrandHorizonMongo, GrandHorizonHubApi` mein dono **Running** honi chahiye.
+
+**Staff laptop hatana ho** to Windows Settings → Apps → "Grand Horizon Staff" → **Uninstall** karein. Data Hub par mehfooz rehta hai. Us staff ka account Staff & Roles se band ya delete kar dein.
 
 ---
 
-## 5. Developer (project folder: `Hotel-Management-System`)
+## 5. Hub ko kisi aur laptop/PC par shift karna
+
+Is ka matlab hai asal data purane Hub se naye Hub par le jana.
+
+> **Sab se zaroori qaida:** purana aur naya Hub **kabhi ek saath** cloud se jure na hon. Neeche di gayi tarteeb bilkul isi tarah follow karein.
+
+**Pehle yeh cheezein tayyar rakhein:**
+- Setup package ka folder (USB mein)
+- Sync key wali Notepad file
+- Ek USB jis mein backup copy ho sake
+- Naya PC, jo ho sake to router se **cable** par jura ho, **charger/UPS** par ho, aur jis ko router mein **fixed IP** di gayi ho (DHCP reservation)
+
+### Step 1: Purane Hub par (admin PowerShell)
+
+1. **Staff ko kaam rokne ka bolein.** Sab staff apps band kar dein. Is ke baad purane Hub par koi booking na ho.
+2. **Check karein ke sync poora ho chuka hai.** "Cloud sync" mein last sync haal hi ka hona chahiye:
+   ```
+   powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\hub-status.ps1"
+   ```
+3. **Taaza backup lein:**
+   ```
+   powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\backup-hub.ps1"
+   ```
+4. **Backup copy karein.** `C:\ProgramData\GrandHorizonHub\backups` mein sab se naya `hub-YYYYMMDD-HHMMSS.archive.gz` USB par copy kar lein.
+5. **Purane Hub par cloud sync band karein:**
+   ```
+   powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\configure-sync.ps1" -Disable
+   ```
+6. **Purane Hub ki services rokein:**
+   ```
+   Stop-Service GrandHorizonHubApi, GrandHorizonMongo
+   ```
+
+### Step 2: Naye PC par Hub install karein (admin PowerShell)
+
+1. Setup package ka folder naye PC par copy karein, jaise `C:\GrandHorizon-Setup`.
+2. Us folder mein jayein:
+   ```
+   cd "C:\GrandHorizon-Setup"
+   ```
+3. Hub install karein. `-SkipAdmin` is liye hai ke admin account backup ke saath aa jayega:
+   ```
+   powershell -ExecutionPolicy Bypass -File .\hub\install-hub.ps1 -SkipAdmin
+   ```
+   Naye PC par default ports **5000 / 27017** use hote hain.
+4. Aakhir mein jo **Hub address** print ho (jaise `http://192.168.1.10:5000`), woh likh lein.
+
+### Step 3: Backup se data naye Hub mein daalein (admin PowerShell, ek ek line)
+
+USB wala backup naye PC par copy karein, jaise `C:\GrandHorizon-Setup\hub-YYYYMMDD-HHMMSS.archive.gz`. Phir:
+
+```
+Stop-Service GrandHorizonHubApi
+```
+```
+& "C:\Program Files\GrandHorizonHub\runtime\tools\bin\mongorestore.exe" --uri="mongodb://127.0.0.1:27017/?directConnection=true" --gzip --archive="C:\GrandHorizon-Setup\hub-YYYYMMDD-HHMMSS.archive.gz" --drop
+```
+```
+Start-Service GrandHorizonHubApi
+```
+
+`hub-YYYYMMDD-HHMMSS` ki jagah apni backup file ka asal naam likhein.
+
+Backup ke saath sync ka record (kahan tak data ja chuka hai) bhi aa jata hai. Is liye naya Hub wahin se aage chalta hai jahan purana ruka tha.
+
+### Step 4: Naye Hub ko cloud se jorein
+
+```
+powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\configure-sync.ps1" -CloudUrl https://hotel-backend-api-zeta.vercel.app
+```
+
+Key wohi Notepad wali paste karein (right-click, phir Enter). Nayi key banane ki zaroorat nahi.
+
+### Step 5: Network, power aur check
+
+- Network Private karein:
+  ```
+  Get-NetConnectionProfile | Set-NetConnectionProfile -NetworkCategory Private
+  ```
+- Agar naya Hub laptop hai to charger par sleep band karein:
+  ```
+  powercfg /change standby-timeout-ac 0
+  ```
+  ```
+  powercfg /change hibernate-timeout-ac 0
+  ```
+- Haal check karein. Services **Running** aur cloud sync **on** honi chahiye:
+  ```
+  powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\hub-status.ps1"
+  ```
+- Website ko naya Hub dikh raha hai? Jawab mein `hubOnline: true` aana chahiye:
+  ```
+  curl.exe -s https://hotel-backend-api-zeta.vercel.app/api/v1/sync/availability
+  ```
+
+### Step 6: Staff apps ka address badlein
+
+Har staff laptop par **File → Hub Connection…** mein naye Hub ka address daalein (jaise `http://192.168.1.10:5000`), phir **Test → Save**.
+
+Sab staff ko **ek dafa dobara login** karna hoga, kyunki naye Hub ki security keys nayi hain. Email aur password wohi rehte hain.
+
+### Step 7: Purana Hub hatayein (sab theek chal jane ke 1–2 din baad)
+
+Is command se program hat jata hai lekin data rehta hai, jo emergency backup ka kaam deta hai:
+```
+powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\uninstall-hub.ps1"
+```
+
+Bilkul saaf karna ho to yeh chalayein. Is mein **DELETE** likhna padta hai:
+```
+powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\uninstall-hub.ps1" -RemoveData
+```
+
+### Dhyan rakhne wali baatein
+
+- Step 1 mein `-Disable` zaroor karein. Do Hub ek saath cloud se jure hon to data kharab ho sakta hai.
+- Restore ke baad purane Hub par koi booking na karein. Woh data naye Hub mein nahi jayega.
+- Kuch ghalat ho jaye to purane Hub par services dobara start kar lein:
+  ```
+  Start-Service GrandHorizonMongo, GrandHorizonHubApi
+  ```
+  Phir `-CloudUrl` se usay dobara jor lein. Data wahan mehfooz hai. Pehle naye Hub par `configure-sync.ps1 -Disable` zaroor karein.
+
+---
+
+## 6. Developer (project folder: `Hotel-Management-System`)
 
 | Kaam | Command |
 |---|---|
