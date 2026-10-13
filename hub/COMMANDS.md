@@ -18,11 +18,47 @@ Is laptop wale Hub ke ports: **API 5100**, **MongoDB 27100**. Hotel ki asal Hub 
 | Database restart | `Restart-Service GrandHorizonMongo` |
 | Dono services ka haal | `Get-Service GrandHorizonMongo, GrandHorizonHubApi` |
 | Network Private karna (staff PCs Hub tak na pohnch rahe hon) | `Get-NetConnectionProfile \| Set-NetConnectionProfile -NetworkCategory Private` |
+| Hub ka IP address (neeche "Hub ka IP address check karna" bhi dekhein) | `ipconfig \| findstr IPv4` |
 
 **Folders:**
 - **Backups:** `C:\ProgramData\GrandHorizonHub\backups`. Har raat 02:00 baje banta hai, aur aakhri 14 backups rehte hain.
 - **Logs:** `C:\ProgramData\GrandHorizonHub\logs`. Masla ho to `GrandHorizonHubApi.err.log` dekhein.
 - **Settings:** `C:\ProgramData\GrandHorizonHub\hub.env`. Is mein secret keys hain, is liye ise kisi ko na bhejein.
+
+### Hub ka IP address check karna
+
+Router kabhi Hub ka IP badal deta hai. Tab staff app "Hub tak nahi pohnch saka" dikhati hai.
+
+**Hub laptop par** (koi bhi PowerShell):
+
+| Kaam | Command |
+|---|---|
+| Hub ka poora address, jo staff app mein daalna hai ("Staff app Hub URL" wali line) | `powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\hub-status.ps1"` |
+| Sirf IP address (WiFi wali `IPv4 Address` line) | `ipconfig \| findstr IPv4` |
+| IP aur WiFi ka naam ek saath | `Get-NetIPConfiguration \| Select-Object InterfaceAlias, @{n='IP';e={$_.IPv4Address.IPAddress}}, @{n='WiFi';e={$_.NetProfile.Name}}` |
+
+**Address bana kar staff app mein daalein:** `http://<IP>:<port>`
+- Is laptop wala Hub: `http://192.168.18.140:5100` (port **5100**)
+- Alag Hub PC: `http://<IP>:5000` (port **5000**)
+
+**Staff laptop se check karein ke Hub tak pohnch hai:**
+
+| Kaam | Command / tareeqa |
+|---|---|
+| Browser mein kholein. `{"status":"ok",...}` jaisa jawab aaye to Hub mil gaya | `http://192.168.18.140:5100/health` |
+| PowerShell se check. `TcpTestSucceeded : True` aana chahiye | `Test-NetConnection 192.168.18.140 -Port 5100` |
+| Hub ka laptop network par hai ya nahi | `ping 192.168.18.140` |
+
+IP aur port apne Hub ke hisaab se badlein.
+
+**IP badal gaya ho to:** har staff laptop par app mein **File → Hub Connection…** kholein, naya address daalein, phir **Test → Save**.
+
+**IP ko mustaqil fix karna (behtar):**
+1. Hub laptop par `ipconfig /all` chalayein. WiFi adapter ka **Physical Address** (MAC, jaise `A1-B2-C3-...`) note karein.
+2. Browser mein router ka page kholein (aam taur par `192.168.1.1` ya `192.168.18.1`; `ipconfig` mein "Default Gateway" dekhein) aur login karein.
+3. Router mein **DHCP Reservation** / **Address Reservation** / **Static Lease** dhoondein. Is MAC ke liye abhi wala IP (jaise `192.168.18.140`) reserve kar ke Save karein.
+
+Router ka menu har company ka alag hota hai. Mushkil ho to router ka model likh kar "DHCP reservation" search karein.
 
 ---
 

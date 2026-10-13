@@ -211,7 +211,7 @@
   <table>
     <tr><th>Masla</th><th>Kya karein</th></tr>
     <tr><td>App kahe "Hub tak nahi pohnch saka"</td><td>Hub laptop on hai? Staff laptop usi WiFi par hai? Hub laptop par status check (neeche) chalayein.</td></tr>
-    <tr><td>Kal tak chal raha tha, aaj nahi</td><td>Router ne Hub ka IP badal diya hoga. Hub par status check se naya URL dekhein → staff app me <em>File → Hub Connection…</em></td></tr>
+    <tr><td>Kal tak chal raha tha, aaj nahi</td><td>Router ne Hub ka IP badal diya hoga. Hub par <code>ipconfig | findstr IPv4</code> ya status check se naya address dekhein → staff app me <em>File → Hub Connection…</em> (hissa 8 → "Hub ka IP address check karna")</td></tr>
     <tr><td>Internet band</td><td>Kuch nahi karna — hotel ke andar sab chalta rahega.</td></tr>
     <tr><td>Bijli gayi</td><td>Hub on karein, 1–2 minute intezar, phir apps dobara kholein.</td></tr>
     <tr><td>Staff ka password bhool gaya</td><td>Admin <em>Staff &amp; Roles</em> se naya password set kare.</td></tr>
@@ -237,6 +237,34 @@
   </ul>
   <pre>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\backup-hub.ps1"</pre>
   <div class="note">Hafte me ek dafa <code>backups</code> folder ki copy USB par bhi rakhein — laptop kharab ho to data bach jayega.</div>
+
+  <h3>Hub ka IP address check karna</h3>
+  <p>Router kabhi Hub ka IP badal deta hai — tab staff app "Hub tak nahi pohnch saka" dikhati hai.</p>
+  <p><strong>Hub laptop par</strong> (koi bhi PowerShell):</p>
+  <table>
+    <tr><th>Kaam</th><th>Command</th></tr>
+    <tr><td>Poora address jo staff app me daalna hai ("Staff app Hub URL" wali line)</td><td><code>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\hub-status.ps1"</code></td></tr>
+    <tr><td>Sirf IP (WiFi wali <em>IPv4 Address</em> line)</td><td><code>ipconfig | findstr IPv4</code></td></tr>
+    <tr><td>IP aur WiFi ka naam ek saath</td><td><code>Get-NetIPConfiguration | Select-Object InterfaceAlias, @{n='IP';e={$_.IPv4Address.IPAddress}}, @{n='WiFi';e={$_.NetProfile.Name}}</code></td></tr>
+  </table>
+  <p>Address: <code>http://&lt;IP&gt;:&lt;port&gt;</code> — is laptop wala Hub <code>http://192.168.18.140:5100</code> (port <strong>5100</strong>), alag Hub PC <code>http://&lt;IP&gt;:5000</code>.</p>
+
+  <p><strong>Staff laptop se check</strong> (IP/port apne Hub ke hisaab se):</p>
+  <table>
+    <tr><th>Kaam</th><th>Command / tareeqa</th></tr>
+    <tr><td>Browser me kholein — <code>{"status":"ok",...}</code> aaye to Hub mil gaya</td><td><code>http://192.168.18.140:5100/health</code></td></tr>
+    <tr><td>PowerShell — <code>TcpTestSucceeded : True</code> aana chahiye</td><td><code>Test-NetConnection 192.168.18.140 -Port 5100</code></td></tr>
+    <tr><td>Hub laptop network par hai?</td><td><code>ping 192.168.18.140</code></td></tr>
+  </table>
+  <p><strong>IP badal gaya ho to:</strong> har staff laptop par <strong>File → Hub Connection…</strong> → naya address → <strong>Test → Save</strong>.</p>
+
+  <h3>IP ko mustaqil fix karna (behtar)</h3>
+  <ol>
+    <li>Hub laptop par <code>ipconfig /all</code> → WiFi adapter ka <strong>Physical Address</strong> (MAC, jaise <code>A1-B2-C3-…</code>) note karein.</li>
+    <li>Browser me router ka page kholein (<code>ipconfig</code> me <em>Default Gateway</em>, aam taur par <code>192.168.1.1</code> ya <code>192.168.18.1</code>) aur login karein.</li>
+    <li><strong>DHCP Reservation</strong> / <em>Address Reservation</em> / <em>Static Lease</em> dhoondein → is MAC ke liye abhi wala IP (jaise <code>192.168.18.140</code>) reserve → Save.</li>
+  </ol>
+  <p style="color:var(--muted);font-size:14px">Router ka menu har company ka alag hota hai — mushkil ho to router ka model likh kar "DHCP reservation" search karein.</p>
 
   <h3>Services restart</h3>
   <pre>Restart-Service GrandHorizonHubApi</pre>
@@ -448,6 +476,8 @@
     <tr><td>API restart</td><td><code>Restart-Service GrandHorizonHubApi</code></td></tr>
     <tr><td>Database restart</td><td><code>Restart-Service GrandHorizonMongo</code></td></tr>
     <tr><td>Network Private</td><td><code>Get-NetConnectionProfile | Set-NetConnectionProfile -NetworkCategory Private</code></td></tr>
+    <tr><td>Hub ka IP (Hub par)</td><td><code>ipconfig | findstr IPv4</code></td></tr>
+    <tr><td>Hub tak pohnch hai? (staff laptop se)</td><td><code>Test-NetConnection 192.168.18.140 -Port 5100</code> ya browser me <code>http://192.168.18.140:5100/health</code></td></tr>
     <tr><td>Nayi sync key</td><td><code>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\configure-sync.ps1" -GenerateKey</code></td></tr>
     <tr><td>Hub ko website se jorna</td><td><code>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\configure-sync.ps1" -CloudUrl https://hotel-backend-api-zeta.vercel.app</code></td></tr>
     <tr><td>Sync band</td><td><code>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\configure-sync.ps1" -Disable</code></td></tr>
