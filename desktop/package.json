@@ -1,6 +1,6 @@
 {
   "name": "grand-horizon-staff-desktop",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Grand Horizon staff desktop client. Connects to the hotel Hub backend over the LAN.",
   "author": "M Hamza Hakim",

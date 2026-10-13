@@ -48,6 +48,9 @@ $ErrorActionPreference = 'Stop'
 
 # Windows PowerShell 5.1 leaves $PSScriptRoot empty inside param() defaults
 if (-not $SourceDir) { $SourceDir = Join-Path $PSScriptRoot '..\backend' }
+# Hotel setup package (hub\build-release.ps1) apne saath verified downloads laata hai
+$bundledDownloads = Join-Path $PSScriptRoot '..\downloads'
+if (-not $CacheDir -and (Test-Path -LiteralPath $bundledDownloads)) { $CacheDir = (Resolve-Path -LiteralPath $bundledDownloads).Path }
 if (-not $CacheDir) { $CacheDir = Join-Path $DataDir 'downloads' }
 $versions = Get-HubVersions (Join-Path $PSScriptRoot 'versions.json')
 
@@ -146,16 +149,26 @@ Copy-Item -LiteralPath (Join-Path $SourceDir 'src') -Destination $appSrc -Recurs
 foreach ($file in @('package.json', 'package-lock.json')) {
     Copy-Item -LiteralPath (Join-Path $SourceDir $file) -Destination $paths.AppDir -Force
 }
-$oldPath = $env:PATH
-$env:PATH = "$($paths.NodeDir);$env:PATH"
-Push-Location -LiteralPath $paths.AppDir
-try {
-    & (Join-Path $paths.NodeDir 'npm.cmd') ci --omit=dev --ignore-scripts --no-audit --no-fund --loglevel=error
-    if ($LASTEXITCODE -ne 0) { throw "npm ci failed with exit code $LASTEXITCODE." }
+$appModules = Join-Path $paths.AppDir 'node_modules'
+$bundledModules = Join-Path $SourceDir 'node_modules'
+if (Test-Path -LiteralPath (Join-Path $bundledModules '.package-lock.json')) {
+    # Hotel setup package apne saath production dependencies laata hai: internet ke baghair install
+    Write-HubInfo 'Using bundled backend dependencies (no internet needed)'
+    if (Test-Path -LiteralPath $appModules) { Remove-Item -LiteralPath $appModules -Recurse -Force }
+    Copy-Item -LiteralPath $bundledModules -Destination $appModules -Recurse
 }
-finally {
-    Pop-Location
-    $env:PATH = $oldPath
+else {
+    $oldPath = $env:PATH
+    $env:PATH = "$($paths.NodeDir);$env:PATH"
+    Push-Location -LiteralPath $paths.AppDir
+    try {
+        & (Join-Path $paths.NodeDir 'npm.cmd') ci --omit=dev --ignore-scripts --no-audit --no-fund --loglevel=error
+        if ($LASTEXITCODE -ne 0) { throw "npm ci failed with exit code $LASTEXITCODE." }
+    }
+    finally {
+        Pop-Location
+        $env:PATH = $oldPath
+    }
 }
 
 # Hub scripts travel with the install so status/backup/uninstall work without the repo

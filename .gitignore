@@ -37,3 +37,6 @@ desktop/web/
 desktop/dist/
 # Desktop installer resources (icon) are source files, not build output
 !desktop/build/
+
+# Hotel setup packages (hub/build-release.ps1)
+release/

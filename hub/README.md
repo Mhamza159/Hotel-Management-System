@@ -9,6 +9,10 @@ The **Hub** is one always-on PC in the hotel that runs the backend and its own M
 - Internet **during installation only** (downloads ~900 MB once; interrupted downloads resume)
 - Ideally a fixed IP (DHCP reservation in the router) so staff apps keep finding the Hub
 
+## Hotel setup package (USB, no internet needed)
+
+On a developer PC: `powershell -ExecutionPolicy Bypass -File .hubuild-release.ps1` builds `releaseGrandHorizon-Hotel-Setup-<version>` (~1 GB) with `Install-Hub.cmd` (double-click, asks for Administrator), `START-HERE.txt`, the backend with its production dependencies, the verified runtime downloads and the staff app installer. Copy the folder to the Hub PC and follow START-HERE. `-SkipDesktopBuild` reuses the existing staff installer; `-Zip` also writes a zip.
+
 ## Install / update
 
 From this repository, in an **elevated** PowerShell:
