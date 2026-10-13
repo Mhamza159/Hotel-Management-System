@@ -5,6 +5,7 @@ const Room = require('../../src/models/Room');
 const Booking = require('../../src/models/Booking');
 const User = require('../../src/models/User');
 const { generateAccessToken } = require('../../src/middlewares/auth.middleware');
+const { futureDay } = require('../fixtures/dates');
 
 describe('Booking Concurrency & Race-Condition Safety (Zero Double-Booking)', () => {
   let room;
@@ -54,8 +55,8 @@ describe('Booking Concurrency & Race-Condition Safety (Zero Double-Booking)', ()
   });
 
   it('guarantees 100% isolation on concurrent overlapping reservations (1 commits 201, 1 rejected 409)', async () => {
-    const checkInDate = '2026-12-01';
-    const checkOutDate = '2026-12-05';
+    const checkInDate = futureDay(61);
+    const checkOutDate = futureDay(65);
 
     // Execute concurrent booking requests targeting the exact same room
     const [res1, res2] = await Promise.all([

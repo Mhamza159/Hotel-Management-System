@@ -4,6 +4,7 @@ const Booking = require("../../src/models/Booking");
 const User = require("../../src/models/User");
 const CronService = require("../../src/services/cron.service");
 const { BOOKING_STATUS } = require("../../src/config/constants");
+const { futureDay } = require('../fixtures/dates');
 
 /**
  * ============================================================================
@@ -65,8 +66,8 @@ describe("Cron Service - 15-Minute Unpaid Booking Watchdog Tests", () => {
    * Helper function: Pending booking create karna with room date locks
    */
   async function createPendingBooking({ expiresAt, bookingRef = "BK-CRON-TEST1" }) {
-    const checkIn = new Date("2026-11-01T14:00:00.000Z");
-    const checkOut = new Date("2026-11-03T11:00:00.000Z");
+    const checkIn = new Date(`${futureDay(31)}T14:00:00.000Z`);
+    const checkOut = new Date(`${futureDay(33)}T11:00:00.000Z`);
 
     const booking = await Booking.create({
       bookingReference: bookingRef,
@@ -158,8 +159,8 @@ describe("Cron Service - 15-Minute Unpaid Booking Watchdog Tests", () => {
   // TEST 3: CONFIRMED BOOKINGS ARE NEVER CANCELLED BY EXPIRY CRON
   // --------------------------------------------------------------------------
   it("never cancels a confirmed booking even if expiresAt date is in the past", async () => {
-    const checkIn = new Date("2026-11-01T14:00:00.000Z");
-    const checkOut = new Date("2026-11-03T11:00:00.000Z");
+    const checkIn = new Date(`${futureDay(31)}T14:00:00.000Z`);
+    const checkOut = new Date(`${futureDay(33)}T11:00:00.000Z`);
 
     const confirmedBooking = await Booking.create({
       bookingReference: "BK-CONFIRMED-01",

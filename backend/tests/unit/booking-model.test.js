@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const dbHelper = require('../fixtures/db-helper');
 const Booking = require('../../src/models/Booking');
 const { BOOKING_STATUS } = require('../../src/config/constants');
+const { futureDay } = require('../fixtures/dates');
 
 describe('Booking Model Unit Verification', () => {
   beforeAll(async () => {
@@ -30,8 +31,8 @@ describe('Booking Model Unit Verification', () => {
           pricePerNight: 120,
         },
       ],
-      checkInDate: new Date('2026-10-01'),
-      checkOutDate: new Date('2026-10-05'),
+      checkInDate: new Date(futureDay(0)),
+      checkOutDate: new Date(futureDay(4)),
       numberOfGuests: 2,
       totalPrice: 480,
     });
@@ -52,8 +53,8 @@ describe('Booking Model Unit Verification', () => {
       bookingReference: Booking.generateBookingReference(),
       userId: mockUserId,
       rooms: [],
-      checkInDate: new Date('2026-10-01'),
-      checkOutDate: new Date('2026-10-05'),
+      checkInDate: new Date(futureDay(0)),
+      checkOutDate: new Date(futureDay(4)),
       numberOfGuests: 1,
       totalPrice: 100,
     });
@@ -70,8 +71,8 @@ describe('Booking Model Unit Verification', () => {
       bookingReference: ref,
       userId: mockUserId,
       rooms: [{ roomId: mockRoomId, pricePerNight: 100 }],
-      checkInDate: new Date('2026-10-01'),
-      checkOutDate: new Date('2026-10-03'),
+      checkInDate: new Date(futureDay(0)),
+      checkOutDate: new Date(futureDay(2)),
       numberOfGuests: 1,
       totalPrice: 200,
     });
@@ -81,8 +82,8 @@ describe('Booking Model Unit Verification', () => {
         bookingReference: ref,
         userId: mockUserId,
         rooms: [{ roomId: mockRoomId, pricePerNight: 100 }],
-        checkInDate: new Date('2026-10-10'),
-        checkOutDate: new Date('2026-10-12'),
+        checkInDate: new Date(futureDay(9)),
+        checkOutDate: new Date(futureDay(11)),
         numberOfGuests: 1,
         totalPrice: 200,
       })

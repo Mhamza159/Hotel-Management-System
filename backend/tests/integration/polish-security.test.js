@@ -8,6 +8,7 @@ const { generateAccessToken } = require('../../src/middlewares/auth.middleware')
 const { createRateLimiter, rateLimiterStore } = require('../../src/middlewares/rateLimiter.middleware');
 const { ROLES } = require('../../src/config/constants');
 const express = require('express');
+const { futureDay } = require('../fixtures/dates');
 
 describe('Phase 9: Polish & Cross-Cutting Concerns Integration Tests', () => {
   let superAdminUser, superAdminToken;
@@ -116,8 +117,8 @@ describe('Phase 9: Polish & Cross-Cutting Concerns Integration Tests', () => {
         .set('Authorization', `Bearer ${guestToken}`)
         .send({
           roomIds: [testRoom._id.toString()],
-          checkInDate: '2026-10-15',
-          checkOutDate: '2026-10-10', // Invalid: prior to checkInDate
+          checkInDate: futureDay(14),
+          checkOutDate: futureDay(9), // Invalid: prior to checkInDate
           numberOfGuests: 2,
         });
 
@@ -231,8 +232,8 @@ describe('Phase 9: Polish & Cross-Cutting Concerns Integration Tests', () => {
         .set('Authorization', `Bearer ${guestToken}`)
         .send({
           roomIds: [testRoom._id.toString()],
-          checkInDate: '2026-11-01',
-          checkOutDate: '2026-11-04',
+          checkInDate: futureDay(31),
+          checkOutDate: futureDay(34),
           numberOfGuests: 1,
           paymentMethod: 'cash',
         });
@@ -293,8 +294,8 @@ describe('Phase 9: Polish & Cross-Cutting Concerns Integration Tests', () => {
         .set('Authorization', `Bearer ${guestToken}`)
         .send({
           roomIds: [testRoom._id.toString()],
-          checkInDate: '2026-12-10',
-          checkOutDate: '2026-12-12',
+          checkInDate: futureDay(70),
+          checkOutDate: futureDay(72),
           numberOfGuests: 1,
           paymentMethod: 'cash',
         });

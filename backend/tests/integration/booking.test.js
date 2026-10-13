@@ -5,6 +5,7 @@ const Room = require('../../src/models/Room');
 const Booking = require('../../src/models/Booking');
 const User = require('../../src/models/User');
 const { generateAccessToken } = require('../../src/middlewares/auth.middleware');
+const { futureDay } = require('../fixtures/dates');
 
 describe('Booking API Endpoints Integration Tests', () => {
   let roomA, roomB;
@@ -67,8 +68,8 @@ describe('Booking API Endpoints Integration Tests', () => {
       const res = await request(app)
         .get('/api/v1/rooms/available')
         .query({
-          checkInDate: '2026-11-01',
-          checkOutDate: '2026-11-04',
+          checkInDate: futureDay(31),
+          checkOutDate: futureDay(34),
         });
 
       expect(res.status).toBe(200);
@@ -91,8 +92,8 @@ describe('Booking API Endpoints Integration Tests', () => {
         .set('Authorization', `Bearer ${guestToken}`)
         .send({
           roomIds: [roomA._id.toString(), roomB._id.toString()],
-          checkInDate: '2026-11-10',
-          checkOutDate: '2026-11-13',
+          checkInDate: futureDay(40),
+          checkOutDate: futureDay(43),
           numberOfGuests: 3,
           specialRequests: 'High floor preferred',
           paymentMethod: 'pay_at_desk',
@@ -113,8 +114,8 @@ describe('Booking API Endpoints Integration Tests', () => {
         .set('Authorization', `Bearer ${guestToken}`)
         .send({
           roomIds: [roomA._id.toString()],
-          checkInDate: '2026-11-20',
-          checkOutDate: '2026-11-22',
+          checkInDate: futureDay(50),
+          checkOutDate: futureDay(52),
           numberOfGuests: 1,
           paymentMethod: 'online',
         });
@@ -130,8 +131,8 @@ describe('Booking API Endpoints Integration Tests', () => {
         .set('Authorization', `Bearer ${guestToken}`)
         .send({
           roomIds: [roomA._id.toString()], // Capacity is 1
-          checkInDate: '2026-11-10',
-          checkOutDate: '2026-11-12',
+          checkInDate: futureDay(40),
+          checkOutDate: futureDay(42),
           numberOfGuests: 5,
         });
 
@@ -144,8 +145,8 @@ describe('Booking API Endpoints Integration Tests', () => {
         .post('/api/v1/bookings')
         .send({
           roomIds: [roomA._id.toString()],
-          checkInDate: '2026-11-10',
-          checkOutDate: '2026-11-12',
+          checkInDate: futureDay(40),
+          checkOutDate: futureDay(42),
           numberOfGuests: 1,
         });
 
@@ -160,8 +161,8 @@ describe('Booking API Endpoints Integration Tests', () => {
         bookingReference: Booking.generateBookingReference(),
         userId: guestUser._id,
         rooms: [{ roomId: roomA._id, pricePerNight: 80 }],
-        checkInDate: new Date('2026-12-01'),
-        checkOutDate: new Date('2026-12-03'),
+        checkInDate: new Date(futureDay(61)),
+        checkOutDate: new Date(futureDay(63)),
         numberOfGuests: 1,
         totalPrice: 160,
       });
@@ -171,8 +172,8 @@ describe('Booking API Endpoints Integration Tests', () => {
         bookingReference: Booking.generateBookingReference(),
         userId: otherUser._id,
         rooms: [{ roomId: roomB._id, pricePerNight: 160 }],
-        checkInDate: new Date('2026-12-05'),
-        checkOutDate: new Date('2026-12-08'),
+        checkInDate: new Date(futureDay(65)),
+        checkOutDate: new Date(futureDay(68)),
         numberOfGuests: 2,
         totalPrice: 480,
       });
@@ -194,8 +195,8 @@ describe('Booking API Endpoints Integration Tests', () => {
         bookingReference: Booking.generateBookingReference(),
         userId: guestUser._id,
         rooms: [{ roomId: roomA._id, pricePerNight: 80 }],
-        checkInDate: new Date('2026-12-01'),
-        checkOutDate: new Date('2026-12-03'),
+        checkInDate: new Date(futureDay(61)),
+        checkOutDate: new Date(futureDay(63)),
         numberOfGuests: 1,
         totalPrice: 160,
       });
@@ -213,8 +214,8 @@ describe('Booking API Endpoints Integration Tests', () => {
         bookingReference: Booking.generateBookingReference(),
         userId: guestUser._id,
         rooms: [{ roomId: roomA._id, pricePerNight: 80 }],
-        checkInDate: new Date('2026-12-01'),
-        checkOutDate: new Date('2026-12-03'),
+        checkInDate: new Date(futureDay(61)),
+        checkOutDate: new Date(futureDay(63)),
         numberOfGuests: 1,
         totalPrice: 160,
       });

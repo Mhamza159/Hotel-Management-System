@@ -12,6 +12,7 @@ const {
   PAYMENT_STATUS,
   ROLE_DEFAULT_PERMISSIONS,
 } = require("../../src/config/constants");
+const { futureDay } = require('../fixtures/dates');
 
 /**
  * ============================================================================
@@ -100,8 +101,8 @@ describe("PDF Invoice Generation & Streaming Integration Tests", () => {
       bookingReference: "BK-INVOICE-TEST1",
       userId: guestUser._id,
       rooms: [{ roomId: testRoom._id, pricePerNight: 150 }],
-      checkInDate: new Date("2026-12-10T14:00:00.000Z"),
-      checkOutDate: new Date("2026-12-12T11:00:00.000Z"),
+      checkInDate: new Date(`${futureDay(70)}T14:00:00.000Z`),
+      checkOutDate: new Date(`${futureDay(72)}T11:00:00.000Z`),
       numberOfGuests: 2,
       totalPrice: 300,
       status: BOOKING_STATUS.CONFIRMED,

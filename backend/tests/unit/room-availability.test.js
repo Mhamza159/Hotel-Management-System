@@ -4,6 +4,7 @@ const Room = require('../../src/models/Room');
 const Booking = require('../../src/models/Booking');
 const RoomService = require('../../src/services/room.service');
 const { BOOKING_STATUS } = require('../../src/config/constants');
+const { futureDay } = require('../fixtures/dates');
 
 describe('Room Availability Search Service Unit Verification', () => {
   let room1, room2, room3;
@@ -50,8 +51,8 @@ describe('Room Availability Search Service Unit Verification', () => {
 
   it('returns all rooms when no bookings exist', async () => {
     const available = await RoomService.findAvailableRooms({
-      checkInDate: '2026-11-01',
-      checkOutDate: '2026-11-05',
+      checkInDate: futureDay(31),
+      checkOutDate: futureDay(35),
     });
 
     expect(available.length).toBe(3);
@@ -63,8 +64,8 @@ describe('Room Availability Search Service Unit Verification', () => {
       bookingReference: Booking.generateBookingReference(),
       userId: new mongoose.Types.ObjectId(),
       rooms: [{ roomId: room1._id, pricePerNight: 100 }],
-      checkInDate: new Date('2026-11-02'),
-      checkOutDate: new Date('2026-11-06'),
+      checkInDate: new Date(futureDay(32)),
+      checkOutDate: new Date(futureDay(36)),
       numberOfGuests: 2,
       totalPrice: 400,
       status: BOOKING_STATUS.CONFIRMED,
@@ -72,8 +73,8 @@ describe('Room Availability Search Service Unit Verification', () => {
 
     // Query for 2026-11-03 to 2026-11-05 (overlapping with room1)
     const available = await RoomService.findAvailableRooms({
-      checkInDate: '2026-11-03',
-      checkOutDate: '2026-11-05',
+      checkInDate: futureDay(33),
+      checkOutDate: futureDay(35),
     });
 
     expect(available.length).toBe(2);
@@ -89,8 +90,8 @@ describe('Room Availability Search Service Unit Verification', () => {
       bookingReference: Booking.generateBookingReference(),
       userId: new mongoose.Types.ObjectId(),
       rooms: [{ roomId: room1._id, pricePerNight: 100 }],
-      checkInDate: new Date('2026-11-01'),
-      checkOutDate: new Date('2026-11-05'),
+      checkInDate: new Date(futureDay(31)),
+      checkOutDate: new Date(futureDay(35)),
       numberOfGuests: 2,
       totalPrice: 400,
       status: BOOKING_STATUS.CONFIRMED,
@@ -98,8 +99,8 @@ describe('Room Availability Search Service Unit Verification', () => {
 
     // New search starts on 2026-11-05 (the exact checkout day)
     const available = await RoomService.findAvailableRooms({
-      checkInDate: '2026-11-05',
-      checkOutDate: '2026-11-08',
+      checkInDate: futureDay(35),
+      checkOutDate: futureDay(38),
     });
 
     const availableIds = available.map((r) => r._id.toString());
@@ -112,16 +113,16 @@ describe('Room Availability Search Service Unit Verification', () => {
       bookingReference: Booking.generateBookingReference(),
       userId: new mongoose.Types.ObjectId(),
       rooms: [{ roomId: room1._id, pricePerNight: 100 }],
-      checkInDate: new Date('2026-11-01'),
-      checkOutDate: new Date('2026-11-05'),
+      checkInDate: new Date(futureDay(31)),
+      checkOutDate: new Date(futureDay(35)),
       numberOfGuests: 2,
       totalPrice: 400,
       status: BOOKING_STATUS.CANCELLED,
     });
 
     const available = await RoomService.findAvailableRooms({
-      checkInDate: '2026-11-02',
-      checkOutDate: '2026-11-04',
+      checkInDate: futureDay(32),
+      checkOutDate: futureDay(34),
     });
 
     const availableIds = available.map((r) => r._id.toString());
@@ -130,8 +131,8 @@ describe('Room Availability Search Service Unit Verification', () => {
 
   it('filters by room type and capacity correctly', async () => {
     const suites = await RoomService.findAvailableRooms({
-      checkInDate: '2026-11-01',
-      checkOutDate: '2026-11-05',
+      checkInDate: futureDay(31),
+      checkOutDate: futureDay(35),
       type: 'suite',
     });
 
@@ -139,8 +140,8 @@ describe('Room Availability Search Service Unit Verification', () => {
     expect(suites[0]._id.toString()).toBe(room2._id.toString());
 
     const largeRooms = await RoomService.findAvailableRooms({
-      checkInDate: '2026-11-01',
-      checkOutDate: '2026-11-05',
+      checkInDate: futureDay(31),
+      checkOutDate: futureDay(35),
       minCapacity: 3,
     });
 
@@ -151,8 +152,8 @@ describe('Room Availability Search Service Unit Verification', () => {
   it('throws ApiError.badRequest for inverted date ranges', async () => {
     await expect(
       RoomService.findAvailableRooms({
-        checkInDate: '2026-11-10',
-        checkOutDate: '2026-11-05',
+        checkInDate: futureDay(40),
+        checkOutDate: futureDay(35),
       })
     ).rejects.toThrow(/checkOutDate must be strictly after checkInDate/);
   });
