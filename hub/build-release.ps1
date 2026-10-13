@@ -65,13 +65,15 @@ foreach ($dir in @('hub\lib', 'backend', 'downloads', 'staff-app')) {
     New-Item -ItemType Directory -Force -Path (Join-Path $target $dir) | Out-Null
 }
 
-foreach ($file in @('install-hub.ps1', 'setup-this-laptop.ps1', 'uninstall-hub.ps1', 'hub-status.ps1', 'backup-hub.ps1', 'configure-sync.ps1', 'versions.json', 'README.md')) {
+foreach ($file in @('install-hub.ps1', 'setup-this-laptop.ps1', 'uninstall-hub.ps1', 'hub-status.ps1', 'backup-hub.ps1', 'configure-sync.ps1', 'versions.json', 'README.md', 'COMMANDS.md')) {
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot $file) -Destination (Join-Path $target 'hub') -Force
 }
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'lib\HubCommon.ps1') -Destination (Join-Path $target 'hub\lib') -Force
 Copy-Item -LiteralPath $setupExe -Destination (Join-Path $target 'staff-app') -Force
 # Poori setup + istemal guide (browser me khulti hai, offline bhi, print ho sakti hai)
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'SETUP-GUIDE.html') -Destination $target -Force
+# Saari zaroori commands ek file me
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'COMMANDS.md') -Destination $target -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'SETUP-GUIDE.html') -Destination (Join-Path $target 'staff-app') -Force
 
 # Backend + production dependencies (Hub install ko internet nahi chahiye)
