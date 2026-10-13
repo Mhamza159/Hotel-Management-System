@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="ur-Latn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grand Horizon Setup Guide</title>
+<style>
+  :root {
+    --bg: #f6f4ee; --card: #ffffff; --ink: #22261f; --muted: #5f6659; --line: #e2ded2;
+    --brand: #143d2b; --gold: #b8893f; --ok: #1f7a4d; --warn: #9a5b00; --warn-bg: #fff4dc;
+    --danger: #a3312b; --danger-bg: #fdecea; --code-bg: #f1eee6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12160f; --card: #1a2017; --ink: #e9ece4; --muted: #a5ad9c; --line: #2e3629;
+      --brand: #7fd1a4; --gold: #d8b06a; --ok: #6fd39f; --warn: #f0c060; --warn-bg: #2d2513;
+      --danger: #ff8a80; --danger-bg: #2e1715; --code-bg: #232a1f;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12160f; --card: #1a2017; --ink: #e9ece4; --muted: #a5ad9c; --line: #2e3629;
+    --brand: #7fd1a4; --gold: #d8b06a; --ok: #6fd39f; --warn: #f0c060; --warn-bg: #2d2513;
+    --danger: #ff8a80; --danger-bg: #2e1715; --code-bg: #232a1f;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 "Segoe UI", system-ui, sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 30px; margin: 0 0 4px; color: var(--brand); }
+  h2 { font-size: 22px; margin: 40px 0 12px; padding-top: 8px; border-top: 2px solid var(--line); color: var(--brand); }
+  h3 { font-size: 17px; margin: 22px 0 8px; }
+  p { margin: 8px 0; }
+  .sub { color: var(--muted); margin-bottom: 20px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin: 14px 0; }
+  .note { background: var(--warn-bg); border-left: 4px solid var(--warn); border-radius: 8px; padding: 12px 14px; margin: 14px 0; }
+  .danger { background: var(--danger-bg); border-left: 4px solid var(--danger); border-radius: 8px; padding: 12px 14px; margin: 14px 0; }
+  .ok { color: var(--ok); font-weight: 600; }
+  code, pre { font-family: Consolas, "Cascadia Mono", monospace; font-size: 14px; }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 5px; overflow-wrap: anywhere; }
+  pre { background: var(--code-bg); padding: 12px 14px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
+  ol, ul { padding-left: 22px; }
+  li { margin: 6px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 15px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  .step { display: inline-block; min-width: 26px; height: 26px; line-height: 26px; text-align: center; border-radius: 50%; background: var(--brand); color: var(--card); font-weight: 700; font-size: 14px; margin-right: 6px; }
+  .blank { display: inline-block; min-width: 260px; border-bottom: 1.5px solid var(--muted); }
+  .toc a { color: var(--brand); text-decoration: none; }
+  .toc li { margin: 2px 0; }
+  .diagram { font-family: Consolas, monospace; font-size: 13px; line-height: 1.35; background: var(--code-bg); padding: 12px; border-radius: 8px; overflow-x: auto; white-space: pre; }
+  .theme { float: right; font-size: 13px; background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+  @media print {
+    body { background: #fff; color: #000; }
+    .theme, .toc { display: none; }
+    h2 { break-before: auto; }
+    .card, .note, .danger, pre, table { break-inside: avoid; }
+  }
+  @media (max-width: 560px) { h1 { font-size: 24px; } .blank { min-width: 160px; } }
+</style>
+</head>
+<body>
+<main>
+  <button class="theme" type="button" onclick="toggleTheme()">Light / Dark</button>
+  <h1>Grand Horizon — Setup aur Istemal Guide</h1>
+  <p class="sub">Hub laptop, staff laptops, pehla din aur roz ka kaam — sab ek jagah. Ye page internet ke baghair bhi khulta hai aur print ho sakta hai.</p>
+
+  <div class="card">
+    <strong>Apni maloomat yahan likh lein (print karke bhar dein):</strong>
+    <table>
+      <tr><td>Hub ka address (URL)</td><td><span class="blank">http://</span></td></tr>
+      <tr><td>Hub laptop ka WiFi naam</td><td><span class="blank">&nbsp;</span></td></tr>
+      <tr><td>Super-admin email</td><td><span class="blank">&nbsp;</span></td></tr>
+      <tr><td>Setup ki tareekh</td><td><span class="blank">&nbsp;</span></td></tr>
+    </table>
+    <p style="color:var(--muted);font-size:14px">Password yahan kabhi na likhein.</p>
+  </div>
+
+  <ol class="toc">
+    <li><a href="#samjhein">System kaise kaam karta hai</a></li>
+    <li><a href="#tayyari">Shuru karne se pehle</a></li>
+    <li><a href="#hub">Hissa A — Hub laptop setup</a></li>
+    <li><a href="#staff">Hissa B — Staff laptops setup</a></li>
+    <li><a href="#pehla-din">Hissa C — Pehla din (admin)</a></li>
+    <li><a href="#roz">Hissa D — Roz ka istemal (har role)</a></li>
+    <li><a href="#masle">Masle aur un ka hal</a></li>
+    <li><a href="#hub-dekh-bhal">Hub ki dekh-bhal (status, backup, update)</a></li>
+    <li><a href="#sync">Cloud sync (baad mein)</a></li>
+  </ol>
+
+  <h2 id="samjhein">1. System kaise kaam karta hai</h2>
+  <div class="diagram">         Hotel ka WiFi / Router  (internet ki zaroorat NAHI)
+                   |
+   +---------------+----------------+-----------------+
+   |               |                |                 |
+ HUB LAPTOP     Reception        Housekeeping      Manager
+ (hamesha ON)   laptop           laptop            laptop
+ database +     Staff app        Staff app         Staff app
+ backend
+</div>
+  <ul>
+    <li><strong>Hub laptop</strong> par hotel ka saara data hota hai (rooms, bookings, staff, payments). Ye hamesha on rehta hai.</li>
+    <li><strong>Staff laptops</strong> par "Grand Horizon Staff" app chalti hai jo WiFi ke zariye Hub se baat karti hai.</li>
+    <li>Sab laptops ka <strong>ek hi WiFi/router</strong> par hona zaroori hai. Internet chahiye nahi.</li>
+    <li>Website (guests ki online booking) alag chalti hai; Hub se us ka rabta baad mein "cloud sync" se hoga.</li>
+  </ul>
+
+  <h2 id="tayyari">2. Shuru karne se pehle</h2>
+  <div class="card">
+    <ul>
+      <li>☐ Hub laptop: Windows 10/11, <strong>charger hamesha laga</strong> (behtar: UPS)</li>
+      <li>☐ Sab laptops ek hi WiFi se jud sakte hon</li>
+      <li>☐ Setup folder: <code>GrandHorizon-Hotel-Setup-0.2.0</code> (Hub laptop par) — ya USB par copy</li>
+      <li>☐ Staff laptops ke liye USB jis me ye file ho: <code>staff-app\GrandHorizonStaff-Setup-0.2.0.exe</code></li>
+      <li>☐ Admin ke liye ek email aur mazboot password (10+ harf, harf aur number dono)</li>
+    </ul>
+  </div>
+  <div class="note"><strong>Behtar:</strong> router ki settings me Hub laptop ko <em>fixed IP</em> (DHCP reservation) dein. Warna IP badalne par staff apps ko naya address dena padega.</div>
+
+  <h2 id="hub">3. Hissa A — Hub laptop setup</h2>
+
+  <h3>Option 1: Developer laptop ko Hub banana (jis par project code bhi hai)</h3>
+  <p>Ye port <code>5100</code> use karta hai taake development backend (port 5000) se na takraye.</p>
+  <ol>
+    <li><span class="step">1</span>File Explorer me setup folder kholein: <code>GrandHorizon-Hotel-Setup-0.2.0</code></li>
+    <li><span class="step">2</span><strong><code>Setup-This-Laptop-As-Hub.cmd</code></strong> par double-click karein.</li>
+    <li><span class="step">3</span>Windows poochhe "Allow this app to make changes?" → <strong>Yes</strong>. Neeli window khulegi.</li>
+    <li><span class="step">4</span>Agar purana test Hub laga hai to wo poochhega <code>Type DELETE to continue</code> → <code>DELETE</code> likh kar Enter. (Purana test data mit jayega.)</li>
+    <li><span class="step">5</span>Admin account banayein: <strong>Full name</strong>, <strong>Email</strong>, <strong>Password</strong> (do dafa).</li>
+    <li><span class="step">6</span>Aakhir me likha aayega <code>Staff app Hub URL: http://192.168.x.x:5100</code> aur <span class="ok">MUKAMMAL</span>. Ye URL upar box me likh lein.</li>
+  </ol>
+  <p>Ye script khud ye bhi karti hai: WiFi ko <em>Private</em> banana (taake doosre laptops aa sakein) aur charger par laptop ka <em>sleep</em> band karna.</p>
+
+  <h3>Option 2: Kisi alag PC ko Hub banana</h3>
+  <ol>
+    <li>Poora setup folder us PC par copy karein (jaise <code>C:\GrandHorizon-Setup</code>).</li>
+    <li><strong><code>Install-Hub.cmd</code></strong> par double-click → <strong>Yes</strong>. (Port 5000 use hota hai.)</li>
+    <li>Admin account banayein, URL note karein.</li>
+    <li>Agar window kahe ke network "Public" hai, to jo command wo dikhaye wo admin PowerShell me chalayein.</li>
+    <li>Settings → System → Power: <em>Sleep = Never</em> (jab charger laga ho).</li>
+  </ol>
+
+  <div class="note"><strong>Install ke liye internet nahi chahiye.</strong> Saari files setup folder me hain, aur har file ka checksum check hota hai.</div>
+
+  <h2 id="staff">4. Hissa B — Staff laptops setup</h2>
+  <ol>
+    <li><span class="step">1</span>Staff laptop ko <strong>Hub wale WiFi</strong> se jodein.</li>
+    <li><span class="step">2</span>USB se <code>GrandHorizonStaff-Setup-0.2.0.exe</code> chalayein.</li>
+    <li><span class="step">3</span>"Windows protected your PC" aaye to <strong>More info → Run anyway</strong>. Install ho jayega.</li>
+    <li><span class="step">4</span>Desktop par <strong>Grand Horizon Staff</strong> kholein.</li>
+    <li><span class="step">5</span>Hub address daalein (jaise <code>http://192.168.18.140:5100</code>) → <strong>Test</strong> (hara "connected") → <strong>Save</strong>.</li>
+    <li><span class="step">6</span>Apne account se login karein.</li>
+  </ol>
+  <p>Hub address baad me badalna ho: app me <strong>File → Hub Connection…</strong></p>
+  <p>Hub laptop par bhi yehi app install kar sakte hain (admin kaam ke liye).</p>
+
+  <h2 id="pehla-din">5. Hissa C — Pehla din (super-admin)</h2>
+  <ol>
+    <li><strong>Login:</strong> Staff app me super-admin email/password se.</li>
+    <li><strong>Rooms:</strong> <em>Room Inventory</em> → har room: number, type, price, capacity, photos.</li>
+    <li><strong>Staff accounts:</strong> <em>Staff &amp; Roles</em> → har bande ka <u>alag</u> account (receptionist ya housekeeping), password kam az kam 8 harf.</li>
+    <li><strong>Permissions:</strong> <em>PBAC Matrix</em> → staff chunein → zaroori permissions on/off → <strong>Save Permissions</strong> (Save ke baghair kuch nahi badalta).</li>
+    <li>Har staff ko unka email aur password khud dein; share na karne ko kahein.</li>
+  </ol>
+  <div class="note">Kisi ki permissions badlein to us staff member ko <strong>logout karke dobara login</strong> karne ko kahein, taake nayi permissions foran lag jayein.</div>
+
+  <h2 id="roz">6. Hissa D — Roz ka istemal</h2>
+
+  <h3>Subah</h3>
+  <ul>
+    <li>Hub laptop on aur charger par ho. (Bijli gayi thi to on karne ke 1–2 minute baad sab khud chal padta hai.)</li>
+    <li>Staff apne laptop par app kholein aur login karein.</li>
+  </ul>
+
+  <h3>Receptionist</h3>
+  <table>
+    <tr><th>Kaam</th><th>Kahan</th></tr>
+    <tr><td>Aaj aane/jane wale mehmaan</td><td><strong>Arrivals &amp; Departures</strong></td></tr>
+    <tr><td>Bina booking aaya mehmaan</td><td>Upar <strong>New Reservation</strong> / <strong>Walk-In Booking</strong> — naam, phone, room, dates; paise abhi liye to cash/card</td></tr>
+    <tr><td>Check-in</td><td>Booking kholein → <em>clean</em> room allot → check-in</td></tr>
+    <tr><td>Payment</td><td>Booking me payment record (cash ya card)</td></tr>
+    <tr><td>Check-out</td><td>Pehle balance zero; check-out ke baad room khud "dirty" ho jata hai</td></tr>
+    <tr><td>Cancellation darkhwast</td><td><strong>Cancellations Queue</strong> — refund system qaide se khud nikalta hai</td></tr>
+  </table>
+
+  <h3>Housekeeping</h3>
+  <ul>
+    <li><strong>ROOM BOARD</strong> par rooms ka haal.</li>
+    <li>Safai ke sath status: <code>Dirty → Cleaning → Clean</code>. Kharab room: <code>Maintenance</code>.</li>
+    <li>Sirf <em>Clean</em> room check-in ke liye mil sakta hai.</li>
+  </ul>
+
+  <h3>Manager / Owner</h3>
+  <ul>
+    <li><strong>Manager Analytics</strong>: revenue, occupancy</li>
+    <li><strong>All Reservations</strong>: saari bookings</li>
+    <li><strong>Security Audit Log</strong>: kis ne kya kiya</li>
+    <li><strong>Staff &amp; Roles / PBAC Matrix</strong>: accounts aur permissions</li>
+  </ul>
+
+  <h3>Shift khatam</h3>
+  <ul><li>Har staff <strong>Logout</strong> kare. Hub laptop band <strong>na</strong> karein.</li></ul>
+
+  <h2 id="masle">7. Masle aur un ka hal</h2>
+  <table>
+    <tr><th>Masla</th><th>Kya karein</th></tr>
+    <tr><td>App kahe "Hub tak nahi pohnch saka"</td><td>Hub laptop on hai? Staff laptop usi WiFi par hai? Hub laptop par status check (neeche) chalayein.</td></tr>
+    <tr><td>Kal tak chal raha tha, aaj nahi</td><td>Router ne Hub ka IP badal diya hoga. Hub par status check se naya URL dekhein → staff app me <em>File → Hub Connection…</em></td></tr>
+    <tr><td>Internet band</td><td>Kuch nahi karna — hotel ke andar sab chalta rahega.</td></tr>
+    <tr><td>Bijli gayi</td><td>Hub on karein, 1–2 minute intezar, phir apps dobara kholein.</td></tr>
+    <tr><td>Staff ka password bhool gaya</td><td>Admin <em>Staff &amp; Roles</em> se naya password set kare.</td></tr>
+    <tr><td>Permissions badli par asar nahi</td><td>Us staff ko logout karke dobara login karwayein. PBAC page par <strong>Save</strong> dabaya tha?</td></tr>
+    <tr><td>"Windows protected your PC"</td><td>Normal hai (app abhi signed nahi): <strong>More info → Run anyway</strong></td></tr>
+  </table>
+
+  <h2 id="hub-dekh-bhal">8. Hub ki dekh-bhal</h2>
+  <p>Ye commands Hub laptop par <strong>admin PowerShell</strong> me chalti hain (Start → "PowerShell" → right-click → <em>Run as administrator</em>).</p>
+
+  <h3>Status check (sab theek hai?)</h3>
+  <pre>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\hub-status.ps1"</pre>
+  <p>Services <em>Running</em>, API <em>Healthy</em>, Network <em>Private</em> hona chahiye. Isi me staff app ka Hub URL bhi likha hota hai.</p>
+
+  <h3>Backup</h3>
+  <ul>
+    <li>Har raat 02:00 baje khud: <code>C:\ProgramData\GrandHorizonHub\backups</code> (aakhri 14 din).</li>
+    <li>Abhi backup lena ho:</li>
+  </ul>
+  <pre>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\backup-hub.ps1"</pre>
+  <div class="note">Hafte me ek dafa <code>backups</code> folder ki copy USB par bhi rakhein — laptop kharab ho to data bach jayega.</div>
+
+  <h3>Naya version (update)</h3>
+  <p>Naya setup folder mile to Hub laptop par wahi double-click file dobara chalayein (<code>Setup-This-Laptop-As-Hub.cmd</code> ya <code>Install-Hub.cmd</code>).
+  <strong>Update me data, accounts aur bookings mehfooz rehte hain</strong> — sirf program badalta hai. Staff laptops par naya <code>.exe</code> chala dein.</p>
+  <div class="danger"><strong>Dhyan:</strong> <code>Setup-This-Laptop-As-Hub.cmd</code> agar <code>Type DELETE</code> poochhe to wo data mitane ka sawal hai. Sirf update karna ho to window band kar dein aur us ke bajaye ye chalayein:
+  <pre>powershell -ExecutionPolicy Bypass -File "&lt;setup folder&gt;\hub\install-hub.ps1" -ApiPort 5100 -MongoPort 27100</pre></div>
+
+  <h3>Hub hatana</h3>
+  <pre>powershell -ExecutionPolicy Bypass -File "C:\Program Files\GrandHorizonHub\scripts\uninstall-hub.ps1"</pre>
+  <p>Data rakhta hai. Sab mitana ho to aakhir me <code>-RemoveData</code> lagayein (DELETE poochhega).</p>
+
+  <h2 id="sync">9. Cloud sync (baad mein)</h2>
+  <p>Hub aur website ka data aapas me milane ke liye ek dafa setup hota hai (secret key Vercel par aur Hub par). Ye developer ke saath mil kar karein — tafseel <code>hub\README.md</code> ke "Cloud sync" hisse me. Tab tak Hub aur website alag alag chalte hain.</p>
+</main>
+<script>
+  function toggleTheme() {
+    var root = document.documentElement;
+    var dark = root.getAttribute('data-theme') === 'dark' ||
+      (!root.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    root.setAttribute('data-theme', dark ? 'light' : 'dark');
+  }
+</script>
+</body>
+</html>

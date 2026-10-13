@@ -65,11 +65,14 @@ foreach ($dir in @('hub\lib', 'backend', 'downloads', 'staff-app')) {
     New-Item -ItemType Directory -Force -Path (Join-Path $target $dir) | Out-Null
 }
 
-foreach ($file in @('install-hub.ps1', 'uninstall-hub.ps1', 'hub-status.ps1', 'backup-hub.ps1', 'configure-sync.ps1', 'versions.json', 'README.md')) {
+foreach ($file in @('install-hub.ps1', 'setup-this-laptop.ps1', 'uninstall-hub.ps1', 'hub-status.ps1', 'backup-hub.ps1', 'configure-sync.ps1', 'versions.json', 'README.md')) {
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot $file) -Destination (Join-Path $target 'hub') -Force
 }
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'lib\HubCommon.ps1') -Destination (Join-Path $target 'hub\lib') -Force
 Copy-Item -LiteralPath $setupExe -Destination (Join-Path $target 'staff-app') -Force
+# Poori setup + istemal guide (browser me khulti hai, offline bhi, print ho sakti hai)
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'SETUP-GUIDE.html') -Destination $target -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'SETUP-GUIDE.html') -Destination (Join-Path $target 'staff-app') -Force
 
 # Backend + production dependencies (Hub install ko internet nahi chahiye)
 $backend = Join-Path $target 'backend'
@@ -104,9 +107,16 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell
 '@
 Write-HubTextFile -Path (Join-Path $target 'Install-Hub.cmd') -Content ($launcher -replace "`r?`n", "`r`n")
 
+# Developer laptop ko Hub banana (port 5100, dev backend ka 5000 khali rehta hai)
+$laptopLauncher = $launcher.Replace('install-hub.ps1', 'setup-this-laptop.ps1').Replace('Starting the Grand Horizon Hub installer', 'Making this laptop the Grand Horizon Hub (port 5100)')
+Write-HubTextFile -Path (Join-Path $target 'Setup-This-Laptop-As-Hub.cmd') -Content ($laptopLauncher -replace "`r?`n", "`r`n")
+
 $guide = @"
 GRAND HORIZON - HOTEL SETUP ($version)
 =====================================
+
+Full illustrated guide: open SETUP-GUIDE.html (double-click, opens in the browser).
+Developer laptop as Hub: double-click Setup-This-Laptop-As-Hub.cmd instead of Install-Hub.cmd.
 
 A. HUB PC (one always-on computer, with UPS, connected to the router by cable)
    1. In the router, give this PC a fixed IP (DHCP reservation).
